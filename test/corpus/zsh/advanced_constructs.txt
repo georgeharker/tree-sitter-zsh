@@ -1,0 +1,199 @@
+
+
+result=`date`
+
+----------
+
+(program -
+  (variable_assignment -
+    name: (variable_name -)
+    value: (command_substitution -
+      (command -
+        name: (command_name -
+          (word -))))))
+
+
+==================================================
+
+==================================================
+
+result=$(date)
+
+----------
+
+(program -
+  (variable_assignment -
+    name: (variable_name -)
+    value: (command_substitution -
+      (command -
+        name: (command_name -
+          (word -))))))
+
+
+==================================================
+
+==================================================
+
+outer=$(echo $(date))
+
+----------
+
+(program -
+  (variable_assignment -
+    name: (variable_name -)
+    value: (command_substitution -
+      (command -
+        name: (command_name -
+          (word -))
+        argument: (command_substitution -
+          (command -
+            name: (command_name -
+              (word -))))))))
+
+
+==================================================
+
+==================================================
+
+myfunc() {
+    local var=value
+    echo $var
+}
+
+----------
+
+(program -
+  (function_definition -
+    name: (word -)
+    body: (compound_statement -
+      (declaration_command -
+        (variable_assignment -
+          name: (variable_name -)
+          value: (word -)))
+      (command -
+        name: (command_name -
+          (word -))
+        argument: (simple_expansion -
+          (variable_name -))))))
+
+
+==================================================
+
+==================================================
+
+command < input.txt
+
+----------
+
+(program -
+  (redirected_statement -
+    body: (command -
+      name: (command_name -
+        (word -)))
+    redirect: (file_redirect -
+      destination: (word -))))
+
+
+==================================================
+
+==================================================
+
+command > output.txt
+
+----------
+
+(program -
+  (redirected_statement -
+    body: (command -
+      name: (command_name -
+        (word -)))
+    redirect: (file_redirect -
+      destination: (word -))))
+
+
+==================================================
+
+==================================================
+
+command >> output.txt
+
+----------
+
+(program -
+  (redirected_statement -
+    body: (command -
+      name: (command_name -
+        (word -)))
+    redirect: (file_redirect -
+      destination: (word -))))
+
+
+==================================================
+
+==================================================
+
+cat file.txt | grep pattern | sort | uniq
+
+----------
+
+(program -
+  (pipeline -
+    (command -
+      name: (command_name -
+        (word -))
+      argument: (word -))
+    (command -
+      name: (command_name -
+        (word -))
+      argument: (word -))
+    (command -
+      name: (command_name -
+        (word -)))
+    (command -
+      name: (command_name -
+        (word -)))))
+
+
+==================================================
+
+==================================================
+
+sleep 10 &
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (number -)))
+
+
+==================================================
+
+==================================================
+
+fg %1
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (word -)))
+
+
+==================================================
+
+==================================================
+
+bg %2
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (word -)))

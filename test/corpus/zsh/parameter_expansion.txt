@@ -1,0 +1,87 @@
+
+
+array=(one two three)
+
+----------
+
+(program -
+  (variable_assignment -
+    name: (variable_name -)
+    value: (array -
+      (word -)
+      (word -)
+      (word -))))
+
+
+==================================================
+
+==================================================
+
+typeset -A hash
+hash=(key1 value1 key2 value2)
+
+----------
+
+(program -
+  (declaration_command -
+    (word -)
+    (variable_name -))
+  (variable_assignment -
+    name: (variable_name -)
+    value: (array -
+      (word -)
+      (word -)
+      (word -)
+      (word -))))
+
+
+==================================================
+
+==================================================
+
+echo ${${var}:u}
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -)))
+  (ERROR -
+    (word -)
+    (word -)))
+temp_test.sh	Parse:    0.13 ms	   124 bytes/ms	(ERROR -)
+
+
+==================================================
+
+==================================================
+
+echo ${var:-default}
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (expansion -
+      (variable_name -)
+      (word -))))
+
+
+==================================================
+
+==================================================
+
+echo ${var:=default}
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (expansion -
+      (variable_name -)
+      (word -))))

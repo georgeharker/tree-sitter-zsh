@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-import tree_sitter, tree_sitter_bash
+import tree_sitter, tree_sitter_zsh
 
 
 class TestLanguage(TestCase):
     def test_can_load_grammar(self):
         try:
-            tree_sitter.Language(tree_sitter_bash.language())
+            tree_sitter.Language(tree_sitter_zsh.language())
         except Exception:
             self.fail("Error loading Bash grammar")

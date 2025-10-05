@@ -1,19 +1,4 @@
-===============================
-Comments
-===============================
 
-#!/bin/bash
-# hi
-
----
-
-(program
-  (comment)
-  (comment))
-
-===============================
-Escaped newlines
-===============================
 
 abc \
   d \
@@ -24,28 +9,29 @@ f=g   \
   j   \
   --k
 
----
+----------
 
-(program
-  (command
-    (command_name
-      (word))
-    (word)
-    (word))
-  (command
-    (variable_assignment
-      (variable_name)
-      (word))
-    (variable_assignment
-      (variable_name)
-      (word))
-    (command_name
-      (word))
-    (word)))
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (word -)
+    argument: (word -))
+  (command -
+    (variable_assignment -
+      name: (variable_name -)
+      value: (word -))
+    (variable_assignment -
+      name: (variable_name -)
+      value: (word -))
+    name: (command_name -
+      (word -))
+    argument: (word -)))
 
-=============================
-escaped newline immediately after a char
-=============================
+
+==================================================
+
+==================================================
 
 echo a \
     b
@@ -57,52 +43,54 @@ echo a\
     b\
     c
 
+----------
 
------------------------------
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (word -)
+    argument: (word -))
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (word -)
+    argument: (word -))
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (word -)
+    argument: (word -)
+    argument: (word -)))
 
-(program
-  (command
-    (command_name
-      (word))
-    (word)
-    (word))
-  (command
-    (command_name
-      (word))
-    (word)
-    (word))
-  (command
-    (command_name
-      (word))
-    (word)
-    (word)
-    (word)))
 
-=============================
-Escaped whitespace
-=============================
+==================================================
+
+==================================================
 
 echo 1 \ 2 \ 3
 
----
+----------
 
-(program
-  (command
-    (command_name
-      (word))
-    (number)
-    (number)
-    (number)))
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (number -)
+    argument: (number -)
+    argument: (number -)))
 
-====================================
-Files without trailing terminators
-====================================
+
+==================================================
+
+==================================================
 
 echo hi
----
 
-(program
-  (command
-    (command_name
-      (word))
-    (word)))
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (word -)))

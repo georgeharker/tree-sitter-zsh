@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(tree-sitter-bash
+project(tree-sitter-zsh
         VERSION "0.25.0"
         DESCRIPTION "Bash grammar for tree-sitter"
-        HOMEPAGE_URL "https://github.com/tree-sitter/tree-sitter-bash"
+        HOMEPAGE_URL "https://github.com/tree-sitter/tree-sitter-zsh"
         LANGUAGES C)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
@@ -24,38 +24,38 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/parser.c"
                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                    COMMENT "Generating parser.c")
 
-add_library(tree-sitter-bash src/parser.c)
+add_library(tree-sitter-zsh src/parser.c)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/scanner.c)
-  target_sources(tree-sitter-bash PRIVATE src/scanner.c)
+  target_sources(tree-sitter-zsh PRIVATE src/scanner.c)
 endif()
-target_include_directories(tree-sitter-bash
+target_include_directories(tree-sitter-zsh
                            PRIVATE src
                            INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/bindings/c>
                                      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 
-target_compile_definitions(tree-sitter-bash PRIVATE
+target_compile_definitions(tree-sitter-zsh PRIVATE
                            $<$<BOOL:${TREE_SITTER_REUSE_ALLOCATOR}>:TREE_SITTER_REUSE_ALLOCATOR>
                            $<$<CONFIG:Debug>:TREE_SITTER_DEBUG>)
 
-set_target_properties(tree-sitter-bash
+set_target_properties(tree-sitter-zsh
                       PROPERTIES
                       C_STANDARD 11
                       POSITION_INDEPENDENT_CODE ON
                       SOVERSION "${TREE_SITTER_ABI_VERSION}.${PROJECT_VERSION_MAJOR}"
                       DEFINE_SYMBOL "")
 
-configure_file(bindings/c/tree-sitter-bash.pc.in
-               "${CMAKE_CURRENT_BINARY_DIR}/tree-sitter-bash.pc" @ONLY)
+configure_file(bindings/c/tree-sitter-zsh.pc.in
+               "${CMAKE_CURRENT_BINARY_DIR}/tree-sitter-zsh.pc" @ONLY)
 
 include(GNUInstallDirs)
 
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bindings/c/tree_sitter"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
         FILES_MATCHING PATTERN "*.h")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/tree-sitter-bash.pc"
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/tree-sitter-zsh.pc"
         DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig")
-install(TARGETS tree-sitter-bash
+install(TARGETS tree-sitter-zsh
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
 add_custom_target(ts-test "${TREE_SITTER_CLI}" test

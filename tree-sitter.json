@@ -1,38 +1,34 @@
 {
   "grammars": [
     {
-      "name": "bash",
-      "camelcase": "Bash",
-      "scope": "source.bash",
+      "name": "zsh",
+      "camelcase": "Zsh",
+      "scope": "source.zsh",
       "path": ".",
       "file-types": [
-        "sh",
-        "bash",
-        ".bashrc",
-        ".bash_profile",
-        "ebuild",
-        "eclass"
+        "zsh",
+        ".zshrc",
+        ".zprofile",
+        ".zshenv",
+        ".zlogin",
+        ".zlogout"
       ],
-      "injection-regex": "^(shell|bash|sh)$",
-      "first-line-regex": "^#!.*\\b(sh|bash|dash)\\b.*$"
+      "injection-regex": "^(shell|zsh)$",
+      "first-line-regex": "^#!.*\\bzsh\\b.*$"
     }
   ],
   "metadata": {
-    "version": "0.25.0",
+    "version": "0.1.0",
     "license": "MIT",
-    "description": "Bash grammar for tree-sitter",
+    "description": "Zsh grammar for tree-sitter",
     "authors": [
       {
-        "name": "Max Brunsfeld",
-        "email": "maxbrunsfeld@gmail.com"
-      },
-      {
-        "name": "Amaan Qureshi",
-        "email": "amaanq12@gmail.com"
+        "name": "George Harrison",
+        "email": "geohar@example.com"
       }
     ],
     "links": {
-      "repository": "https://github.com/tree-sitter/tree-sitter-bash"
+      "repository": "https://github.com/geohar/tree-sitter-zsh"
     }
   },
   "bindings": {

@@ -1,26 +1,20 @@
 {
-  "name": "tree-sitter-bash",
-  "version": "0.25.0",
-  "description": "Bash grammar for tree-sitter",
-  "repository": "https://github.com/tree-sitter/tree-sitter-bash",
+  "name": "tree-sitter-zsh",
+  "version": "0.1.0",
+  "description": "Zsh grammar for tree-sitter",
+  "repository": "https://github.com/geohar/tree-sitter-zsh",
   "license": "MIT",
   "author": {
-    "name": "Max Brunsfeld",
-    "email": "maxbrunsfeld@gmail.com"
+    "name": "George Harrison",
+    "email": "geohar@example.com"
   },
-  "maintainers": [
-    {
-      "name": "Amaan Qureshi",
-      "email": "amaanq12@gmail.com"
-    }
-  ],
   "main": "bindings/node",
   "types": "bindings/node",
   "keywords": [
     "incremental",
     "parsing",
     "tree-sitter",
-    "bash"
+    "zsh"
   ],
   "files": [
     "grammar.js",
@@ -39,8 +33,8 @@
   "devDependencies": {
     "eslint": "^9.12.0",
     "eslint-config-treesitter": "^1.0.2",
-    "tree-sitter-cli": "^0.25.6",
-    "prebuildify": "^6.0.1"
+    "prebuildify": "^6.0.1",
+    "tree-sitter-cli": "^0.25.6"
   },
   "peerDependencies": {
     "tree-sitter": "^0.25.0"

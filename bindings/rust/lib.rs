@@ -10,7 +10,7 @@
 //! echo "hello world!"
 //! "#;
 //! let mut parser = Parser::new();
-//! let language = tree_sitter_bash::LANGUAGE;
+//! let language = tree_sitter_zsh::LANGUAGE;
 //! parser
 //!     .set_language(&language.into())
 //!     .expect("Error loading Bash parser");
@@ -24,13 +24,13 @@
 use tree_sitter_language::LanguageFn;
 
 extern "C" {
-    fn tree_sitter_bash() -> *const ();
+    fn tree_sitter_zsh() -> *const ();
 }
 
 /// The tree-sitter [`LanguageFn`][LanguageFn] for this grammar.
 ///
 /// [LanguageFn]: https://docs.rs/tree-sitter-language/*/tree_sitter_language/struct.LanguageFn.html
-pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_bash) };
+pub const LANGUAGE: LanguageFn = unsafe { LanguageFn::from_raw(tree_sitter_zsh) };
 
 /// The content of the [`node-types.json`][] file for this grammar.
 ///

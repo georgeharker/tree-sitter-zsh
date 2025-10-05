@@ -1,0 +1,173 @@
+================================================================================
+Nested parameter expansion - sequential operations
+================================================================================
+
+echo ${${var#head}%tail}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (expansion
+          (expansion_pattern
+            name: (simple_variable_name)
+            pattern: (word)))
+        pattern: (word)))))
+
+================================================================================
+Nested parameter expansion - path manipulation
+================================================================================
+
+echo ${${path%/*}/file.txt/more.txt}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (expansion
+          (expansion_pattern
+            name: (simple_variable_name)
+            pattern: (word)))
+        pattern: (word)
+        replacement: (word)))))
+
+================================================================================
+Triple nested parameter expansion
+================================================================================
+
+echo ${${${path%/*}#*/}%.txt}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (expansion
+          (expansion_pattern
+            name: (expansion
+              (expansion_pattern
+                name: (simple_variable_name)
+                pattern: (word)))
+            pattern: (word)))
+        pattern: (word)))))
+
+================================================================================
+Parameter expansion with arithmetic offset
+================================================================================
+
+echo ${var:$((start + 1))}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_substring
+        name: (simple_variable_name)
+        offset: (arithmetic_expansion
+          (binary_expression
+            left: (word)
+            right: (number)))))))
+
+================================================================================
+Parameter expansion with multiple arithmetic expressions
+================================================================================
+
+echo ${array:$((index * 2)):$((length / 2))}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_substring
+        name: (simple_variable_name)
+        offset: (arithmetic_expansion
+          (binary_expression
+            left: (word)
+            right: (number)))
+        length: (arithmetic_expansion
+          (binary_expression
+            left: (word)
+            right: (number)))))))
+
+================================================================================
+Complex nested expansion with arithmetic
+================================================================================
+
+echo ${${data:$((start)):$((end - start))}%.*}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (expansion
+          (expansion_substring
+            name: (simple_variable_name)
+            offset: (arithmetic_expansion
+              (word))
+            length: (arithmetic_expansion
+              (binary_expression
+                left: (word)
+                right: (word)))))
+        pattern: (word)))))
+
+================================================================================
+Nested expansion with variable patterns and replacements
+================================================================================
+
+echo ${path/${HOME}/~}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (expansion
+          name: (simple_variable_name))
+        replacement: (word)))))
+
+================================================================================
+Known failure - array subscript with arithmetic (for future work)
+================================================================================
+
+echo ${array[$((i + 1))]}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      index: (command_substitution
+        (subshell
+          (command
+            name: (command_name
+              (word))
+            argument: (word)
+            argument: (number)))))))

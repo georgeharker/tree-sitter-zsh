@@ -1,0 +1,89 @@
+
+
+diff =(sort file1) =(sort file2)
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (process_substitution -
+      (command -
+        name: (command_name -
+          (word -))
+        argument: (word -)))
+    argument: (process_substitution -
+      (command -
+        name: (command_name -
+          (word -))
+        argument: (word -)))))
+
+
+==================================================
+
+==================================================
+
+echo ${array[(i)pattern]}
+
+----------
+
+(program -
+  (command -
+    name: (command_name -
+      (word -))
+    argument: (expansion -
+      (subscript -
+        name: (variable_name -)
+        (ERROR -
+          (parenthesized_expression -
+            (word -)))
+        index: (word -)))))
+temp_test.sh	Parse:    0.10 ms	   253 bytes/ms	(ERROR -)
+
+
+==================================================
+
+==================================================
+
+[[ foo.txt == *.txt(#qN) ]]
+
+----------
+
+(program -
+  (test_command -
+    (binary_expression -
+      left: (word -)
+      right: (word -))))
+
+
+==================================================
+
+==================================================
+
+[[ -nt file1 file2 ]]
+
+----------
+
+(program -
+  (test_command -
+    (unary_expression -
+      operator: (test_operator -)
+      (ERROR -
+        (word -))
+      (word -))))
+temp_test.sh	Parse:    0.21 ms	   100 bytes/ms	(ERROR -)
+
+
+==================================================
+
+==================================================
+
+local -a array
+
+----------
+
+(program -
+  (declaration_command -
+    (word -)
+    (variable_name -)))

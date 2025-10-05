@@ -1,7 +1,8 @@
 /**
- * @file Bash grammar for tree-sitter
+ * @file Zsh grammar for tree-sitter
  * @author Max Brunsfeld <maxbrunsfeld@gmail.com>
  * @author Amaan Qureshi <amaanq12@gmail.com>
+ * @author George Harker <george@georgeharker.com>
  * @license MIT
  */
 
@@ -43,15 +44,16 @@ const PREC = {
 };
 
 module.exports = grammar({
-  name: 'bash',
+  name: 'zsh',
 
   conflicts: $ => [
     [$._expression, $.command_name],
     [$.command, $.variable_assignments],
     [$.redirected_statement, $.command],
-    [$.redirected_statement, $.command_substitution],
-    [$.function_definition, $.command_name],
     [$.pipeline],
+    [$.repeat_statement, $.command],
+    [$.binary_expression],
+    [$._test_command_binary_expression, $.binary_expression],
   ],
 
   inline: $ => [
@@ -61,7 +63,6 @@ module.exports = grammar({
     $._terminated_statement,
     $._primary_expression,
     $._simple_variable_name,
-    $._multiline_variable_name,
     $._special_variable_name,
     $._c_word,
     $._statement_not_subshell,
@@ -78,30 +79,44 @@ module.exports = grammar({
     $._empty_value,
     $._concat,
     $.variable_name, // Variable name followed by an operator like '=' or '+='
+    $.simple_variable_name,
+    $.special_variable_name,
     $.test_operator,
     $.regex,
     $._regex_no_slash,
     $._regex_no_space,
     $._expansion_word,
     $.extglob_pattern,
+    $._raw_dollar,
     $._bare_dollar,
+    $._peek_bare_dollar, // peek ahead for $ without consuming
     $._brace_start,
     $._immediate_double_hash,
-    $._external_expansion_sym_hash,
-    $._external_expansion_sym_bang,
-    $._external_expansion_sym_equal,
-    '}',
-    ']',
-    '<<',
-    '<<-',
-    /\n/,
-    '(',
-    'esac',
+    $._array_star_token,
+    $._array_at_token,
+    '}',                               // CLOSING_BRACE
+    ']',                               // CLOSING_BRACKET
+    ')',                               // CLOSING_PAREN
+    '))',                              // CLOSING_DOUBLE_PAREN
+    '<<',                              // HEREDOC_ARROW
+    '<<-',                             // HEREDOC_ARROW_DASH
+    $._hash_pattern,
+    $._double_hash_pattern,
+    $._enter_pattern,
+    $._pattern_start,
+    $._pattern_suffix_start,
+    /\n/,                              // NEWLINE
+    '(',                               // OPENING_PAREN
+    '((',                              // DOUBLE_OPENING_PAREN
+    '[',                               // OPENING_BRACKET  
+    '[[',                              // TEST_COMMAND_START
+    ']]',                              // TEST_COMMAND_END
+    'esac',                            // ESAC
+    $._zsh_extended_glob_flags,
     $.__error_recovery,
   ],
 
   extras: $ => [
-    $.comment,
     /\s/,
     /\\\r?\n/,
     /\\( |\t|\v|\f)/,
@@ -121,10 +136,28 @@ module.exports = grammar({
     _statements: $ => prec(1, seq(
       repeat(seq(
         $._statement,
+        optional($.comment),
         $._terminator,
       )),
       $._statement,
+      optional($.comment),
       optional($._terminator),
+    )),
+
+    // Zsh glob qualifiers: (.) (/) (*) etc.
+    zsh_glob_qualifier: _ => token.immediate(seq(
+      '(',
+      /[./*@=p%\-^rwxugoaLkamcFNDMsShHbBfFdcaAtImCYoOnPUGzZ+\d]+/,
+      ')',
+    )),
+
+    // Zsh glob modifiers: (:t) (:h) (:r) (:e) etc.  
+    zsh_glob_modifier: _ => token.immediate(seq(
+      '(',
+      ':',
+      /[threuoOnPAlUsSqQxXfFlW]/,
+      optional(/[^)]*/),
+      ')',
     )),
 
     _terminated_statement: $ => repeat1(seq(
@@ -137,6 +170,7 @@ module.exports = grammar({
     _statement: $ => choice(
       $._statement_not_subshell,
       $.subshell,
+      $.comment,
     ),
 
     _statement_not_subshell: $ => choice(
@@ -151,9 +185,12 @@ module.exports = grammar({
       $.for_statement,
       $.c_style_for_statement,
       $.while_statement,
+      $.repeat_statement,
+      $.select_statement,
       $.if_statement,
       $.case_statement,
       $.pipeline,
+      $.coprocess_statement,
       $.list,
       $.compound_statement,
       $.function_definition,
@@ -171,6 +208,8 @@ module.exports = grammar({
       $.for_statement,
       $.c_style_for_statement,
       $.while_statement,
+      $.repeat_statement,
+      $.select_statement,
       $.if_statement,
       $.case_statement,
       $.list,
@@ -198,7 +237,7 @@ module.exports = grammar({
     ))),
 
     for_statement: $ => seq(
-      choice('for', 'select'),
+      'for',
       field('variable', $._simple_variable_name),
       optional(seq(
         'in',
@@ -233,7 +272,7 @@ module.exports = grammar({
     ),
     _c_expression_not_assignment: $ => choice(
       $._c_word,
-      $.simple_expansion,
+      $.variable_ref,
       $.expansion,
       $.number,
       $.string,
@@ -293,6 +332,26 @@ module.exports = grammar({
     while_statement: $ => seq(
       choice('while', 'until'),
       field('condition', $._terminated_statement),
+      field('body', $.do_group),
+    ),
+
+    repeat_statement: $ => prec.right(seq(
+      'repeat',
+      field('count', choice($.number, $.word, $._simple_variable_name, $.expansion)),
+      choice(
+        seq($._terminator, field('body', $.do_group)),
+        $._statement,
+      ),
+    )),
+
+    select_statement: $ => seq(
+      'select',
+      field('variable', $.variable_name),
+      optional(seq(
+        'in',
+        repeat1($._literal),
+      )),
+      $._terminator,
       field('body', $.do_group),
     ),
 
@@ -362,15 +421,15 @@ module.exports = grammar({
       optional(prec(1, ';;')),
     ),
 
-    function_definition: $ => prec.right(seq(
+    function_definition: $ => prec(4, prec.right(seq(
       choice(
         seq(
           'function',
-          field('name', $.word),
+          field('name', optional($.word)),
           optional(seq('(', ')')),
         ),
         seq(
-          field('name', $.word),
+          field('name', optional($.word)),
           '(', ')',
         ),
       ),
@@ -384,13 +443,31 @@ module.exports = grammar({
         ),
       ),
       field('redirect', optional($._redirect)),
-    )),
+    ))),
 
-    compound_statement: $ => seq(
+    compound_statement: $ => prec.right(seq(
       '{',
       optional($._terminated_statement),
       token(prec(-1, '}')),
+      optional($.always_clause),
+    )),
+
+    // Always clause that can attach to compound statements
+    always_clause: $ => seq(
+      'always',
+      field('always', choice(
+        $.compound_statement,
+        $.command,
+        $.pipeline
+      ))
     ),
+
+    // Zsh coprocess: coproc [name] command
+    coprocess_statement: $ => prec(2, seq(
+      'coproc',
+      optional(field('name', $.word)),
+      field('command', $.command)
+    )),
 
     subshell: $ => seq(
       '(',
@@ -424,31 +501,44 @@ module.exports = grammar({
       ),
     ),
 
-    test_command: $ => seq(
+    test_command: $ => prec(2, seq(
       choice(
         seq('[', optional(choice($._expression, $.redirected_statement)), ']'),
         seq(
           '[[',
           choice(
-            $._expression,
-            alias($._test_command_binary_expression, $.binary_expression),
+            prec.dynamic(10, alias($._test_command_binary_expression, $.binary_expression)),
+            prec.dynamic(5, $._expression),
           ),
           ']]',
         ),
         seq('((', optional($._expression), '))'),
-      ),
+      )),
     ),
 
-    _test_command_binary_expression: $ => prec(PREC.ASSIGN,
-      seq(
-        field('left', $._expression),
-        field('operator', '='),
-        field('right', alias($._regex_no_space, $.regex)),
+    _test_command_binary_expression: $ => prec(PREC.COMPARE,
+      choice(
+        // Regex matching operator
+        prec(PREC.COMPARE, seq(
+          field('left', $._expression),
+          field('operator', '=~'),
+          //field('right', alias($._regex_no_space, $.regex)),
+          field('right', choice(
+            alias($._regex_no_space, $.regex),
+            $._expression
+          )),
+        )),
+        // Pattern/string matching operators  
+        prec(PREC.COMPARE - 1, seq(
+          field('left', $._expression),
+          field('operator', choice('=', '==', '!=', $.test_operator)),
+          field('right', $._expression),
+        )),
       ),
     ),
 
     declaration_command: $ => prec.left(seq(
-      choice('declare', 'typeset', 'export', 'readonly', 'local'),
+      choice('declare', 'typeset', 'export', 'readonly', 'local', 'integer', 'float'),
       repeat(choice(
         $._literal,
         $._simple_variable_name,
@@ -473,7 +563,8 @@ module.exports = grammar({
       choice(
         repeat(choice(
           field('argument', $._literal),
-          field('argument', alias($._bare_dollar, '$')),
+          field('argument', $._bare_dollar),
+          field('argument', $.glob_pattern),
           field('argument', seq(
             choice('=~', '=='),
             choice($._literal, $.regex),
@@ -505,14 +596,106 @@ module.exports = grammar({
 
     variable_assignments: $ => seq($.variable_assignment, repeat1($.variable_assignment)),
 
-    subscript: $ => seq(
+    subscript: $ => prec.left(seq(
       field('name', $.variable_name),
       '[',
-      field('index', choice($._literal, $.binary_expression, $.unary_expression, $.parenthesized_expression)),
-      optional($._concat),
+      optional(field('flags', $.zsh_array_subscript_flags)),
+      field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
       ']',
-      optional($._concat),
+    )),
+
+    // Arithmetic expressions for parameter subscripts (avoids subscript recursion)
+    _param_arithmetic_expression: $ => prec(1, choice(
+      $._param_arithmetic_literal,
+      alias($._param_arithmetic_unary_expression, $.unary_expression),
+      alias($._param_arithmetic_ternary_expression, $.ternary_expression),
+      alias($._param_arithmetic_binary_expression, $.binary_expression),
+      alias($._param_arithmetic_postfix_expression, $.postfix_expression),
+      alias($._param_arithmetic_parenthesized_expression, $.parenthesized_expression),
+      $.command_substitution,
+    )),
+
+    _param_arithmetic_literal: $ => prec(1, choice(
+      $.number,
+      // Note: no $.subscript to avoid recursion
+      $.variable_ref,
+      $.expansion,
+      $.variable_name,
+      $.string,
+      $.word,  // Allow bare identifiers in parameter arithmetic context
+    )),
+
+    _param_arithmetic_binary_expression: $ => {
+      const table = [
+        [choice('+=', '-=', '*=', '/=', '%=', '**=', '<<=', '>>=', '&=', '^=', '|='), PREC.UPDATE],
+        [choice('=', '=~'), PREC.ASSIGN],
+        ['||', PREC.LOGICAL_OR],
+        ['&&', PREC.LOGICAL_AND],
+        ['|', PREC.BITWISE_OR],
+        ['^', PREC.BITWISE_XOR],
+        ['&', PREC.BITWISE_AND],
+        [choice('==', '!='), PREC.EQUALITY],
+        [choice('<', '>', '<=', '>='), PREC.COMPARE],
+        [choice('<<', '>>'), PREC.SHIFT],
+        [choice('+', '-'), PREC.ADD],
+        [choice('*', '/', '%'), PREC.MULTIPLY],
+        ['**', PREC.EXPONENT],
+      ];
+
+      return choice(...table.map(([operator, precedence]) => {
+        // @ts-ignore
+        return prec.left(precedence, seq(
+          field('left', $._param_arithmetic_expression),
+          // @ts-ignore
+          field('operator', operator),
+          field('right', $._param_arithmetic_expression),
+        ));
+      }));
+    },
+
+    _param_arithmetic_ternary_expression: $ => prec.left(PREC.TERNARY, seq(
+      field('condition', $._param_arithmetic_expression),
+      '?',
+      field('consequence', $._param_arithmetic_expression),
+      ':',
+      field('alternative', $._param_arithmetic_expression),
+    )),
+
+    _param_arithmetic_unary_expression: $ => choice(
+      prec(PREC.PREFIX, seq(
+        field('operator', tokenLiterals(1, '++', '--')),
+        $._param_arithmetic_expression,
+      )),
+      prec(PREC.UNARY, seq(
+        field('operator', tokenLiterals(1, '-', '+', '~')),
+        $._param_arithmetic_expression,
+      )),
+      prec.right(PREC.UNARY, seq(
+        field('operator', '!'),
+        $._param_arithmetic_expression,
+      )),
     ),
+
+    _param_arithmetic_postfix_expression: $ => prec(PREC.POSTFIX, seq(
+      $._param_arithmetic_expression,
+      field('operator', choice('++', '--')),
+    )),
+
+    _param_arithmetic_parenthesized_expression: $ => seq(
+      '(',
+      $._param_arithmetic_expression,
+      ')',
+    ),
+    // Array expansion operators: [*] and [@]
+    array_star: $ => $._array_star_token,
+    array_at: $ => $._array_at_token,
+
+    // Zsh array subscript flags: (i) (I) (r) (R) etc.
+    zsh_array_subscript_flags: _ => token.immediate(seq(
+      '(',
+      /[iIrRnbs]+/,
+      ')',
+    )),
 
     file_redirect: $ => prec.left(seq(
       field('descriptor', optional($.file_descriptor)),
@@ -566,7 +749,7 @@ module.exports = grammar({
       $._heredoc_body_beginning,
       repeat(choice(
         $.expansion,
-        $.simple_expansion,
+        $.variable_ref,
         $.command_substitution,
         $.heredoc_content,
       )),
@@ -628,7 +811,7 @@ module.exports = grammar({
         prec(PREC.ASSIGN, seq(
           field('left', $._expression),
           field('operator', '=~'),
-          field('right', alias($._regex_no_space, $.regex)),
+          field('right', choice(alias($._regex_no_space, $.regex), $._expression)),
         )),
         prec(PREC.EQUALITY, seq(
           field('left', $._expression),
@@ -679,12 +862,13 @@ module.exports = grammar({
     // Literals
 
     _literal: $ => choice(
-      $.concatenation,
       $._primary_expression,
+      $.concatenation,
       alias(prec(-2, repeat1($._special_character)), $.word),
     ),
 
     _primary_expression: $ => choice(
+      $.glob_pattern,
       $.word,
       alias($.test_operator, $.word),
       $.string,
@@ -692,18 +876,23 @@ module.exports = grammar({
       $.translated_string,
       $.ansi_c_string,
       $.number,
-      $.expansion,
-      $.simple_expansion,
+      $._expansion_or_variable,
       $.command_substitution,
       $.process_substitution,
       $.arithmetic_expansion,
       $.brace_expression,
     ),
-
-    arithmetic_expansion: $ => choice(
-      seq(choice('$((', '(('), commaSep1($._arithmetic_expression), '))'),
-      seq('$[', $._arithmetic_expression, ']'),
+    
+    // Unified rule for all dollar-based patterns to eliminate competition  
+    _expansion_or_variable: $ => choice(
+      $.expansion,      // Try ${...} patterns first
+      $.variable_ref,   // Fall back to $var patterns
     ),
+
+    arithmetic_expansion: $ => prec(4, choice(
+      seq(choice(seq($._bare_dollar, '(('), '(('), commaSep1($._arithmetic_expression), '))'),
+      seq($._bare_dollar, '[', $._arithmetic_expression, ']'),
+    )),
 
     brace_expression: $ => seq(
       alias($._brace_start, '{'),
@@ -712,6 +901,65 @@ module.exports = grammar({
       alias(token.immediate(/\d+/), $.number),
       token.immediate('}'),
     ),
+
+    _glob_innards: $ => token(seq(
+      repeat(/[^\s'"*?\[{~(<=]/),
+      choice(
+        /\*\*/,                                    // **
+        /\*/,                                      // *
+        /\?/,                                      // ?
+        /\[[!^]?[^\]]*\]/,                        // [...]
+        /<[0-9]+-[0-9]+>/,                        // <1-10>
+        /\{[^}]*,[^}]*\}/,                        // {a,b}
+        /~/,                                       // ~
+        /\([^)|]+(\|[^)|]*)*\)/                   // (a|b|c)
+      ),
+      repeat(choice(
+        /[^\s'"*?\[{~(<=]/,                         // regular chars
+        /\*\*/,                                    // **
+        /\*/,                                      // *
+        /\?/,                                      // ?
+        /\[[!^]?[^\]]*\]/,                        // [...]
+        /<[0-9]+-[0-9]+>/,                        // <1-10>
+        /\{[^}]+,[^}]*\}/,                        // {a,b}
+        /\([^)|]*(\|[^)|]*)*\)/                   // (a|b|c)
+      ))
+    )),
+
+    // Unified glob pattern that handles **, *, ?, [] patterns with optional zsh qualifiers/modifiers
+    glob_pattern: $ => prec.dynamic(-1, choice(
+      // True glob patterns with wildcards
+      seq(
+        optional(field('flags', $.zsh_extended_glob_flags)),
+        field('pattern', $._glob_innards),
+        optional(choice(
+          field('qualifier', $.zsh_glob_qualifier),
+          field('modifier', $.zsh_glob_modifier),
+          seq(
+            field('qualifier', $.zsh_glob_qualifier),
+            field('modifier', $.zsh_glob_modifier),
+          ),
+        )),
+      ),
+      // Words with qualifiers/modifiers (like /path/file(:h))
+      prec(1, seq(
+        optional(field('flags', $.zsh_extended_glob_flags)),
+        field('pattern', $.word),
+        choice(
+          field('qualifier', $.zsh_glob_qualifier),
+          field('modifier', $.zsh_glob_modifier),
+          seq(
+            field('qualifier', $.zsh_glob_qualifier),
+            field('modifier', $.zsh_glob_modifier),
+          ),
+        ),
+      )),
+    )),
+    
+
+
+    // Zsh extended glob flags: (#i) (#q) (#a2) etc.
+    zsh_extended_glob_flags: $ => $._zsh_extended_glob_flags,
 
     _arithmetic_expression: $ => prec(1, choice(
       $._arithmetic_literal,
@@ -726,11 +974,11 @@ module.exports = grammar({
     _arithmetic_literal: $ => prec(1, choice(
       $.number,
       $.subscript,
-      $.simple_expansion,
+      $.variable_ref,
       $.expansion,
-      $._simple_variable_name,
       $.variable_name,
       $.string,
+      $.word,  // Allow bare identifiers in arithmetic context (e.g., 'start' in $((start)))
     )),
 
     _arithmetic_binary_expression: $ => {
@@ -796,7 +1044,8 @@ module.exports = grammar({
     ),
 
 
-    concatenation: $ => prec(-1, seq(
+    concatenation: $ => prec(-1, 
+      seq(
       choice(
         $._primary_expression,
         alias($._special_character, $.word),
@@ -807,10 +1056,12 @@ module.exports = grammar({
           $._primary_expression,
           alias($._special_character, $.word),
           alias($._comment_word, $.word),
-          alias($._bare_dollar, '$'),
+          // Use PEEK to check for $ without consuming it for concatenation
+          $._peek_bare_dollar,
         ),
       )),
-      optional(seq($._concat, '$')),
+      // Use PEEK for trailing $ in concatenation
+      optional(seq($._concat, $._peek_bare_dollar)),
     )),
 
     _special_character: _ => token(prec(-1, choice('{', '}', '[', ']'))),
@@ -819,21 +1070,21 @@ module.exports = grammar({
       '"',
       repeat(seq(
         choice(
-          seq(optional('$'), $.string_content),
+          seq(optional($._bare_dollar), $.string_content),
           $.expansion,
-          $.simple_expansion,
+          $.variable_ref,
           $.command_substitution,
           $.arithmetic_expansion,
         ),
         optional($._concat),
       )),
-      optional('$'),
+      optional($._raw_dollar),
       '"',
     ),
 
     string_content: _ => token(prec(-1, /([^"`$\\\r\n]|\\(.|\r?\n))+/)),
 
-    translated_string: $ => seq('$', $.string),
+    translated_string: $ => prec(1, seq($._bare_dollar, $.string)),
 
     array: $ => seq(
       '(',
@@ -851,74 +1102,216 @@ module.exports = grammar({
       seq(/-?(0x)?[0-9]+#/, choice($.expansion, $.command_substitution)),
     ),
 
-    simple_expansion: $ => seq(
-      '$',
+    variable_ref: $ => prec(1, seq(
+      $._bare_dollar,
+      $._variable_ref,
+    )),
+
+    _variable_ref: $ => choice(
+      $._simple_variable_name,
+      $.subscript,
+      $._special_variable_name,
+      // alias('!', $.special_variable_name),
+      // alias('#', $.special_variable_name),
+    ),
+
+    // Variable references within expansion contexts (similar to _variable_ref)
+    _expansion_variable_ref: $ => seq(
       choice(
         $._simple_variable_name,
-        $._multiline_variable_name,
         $._special_variable_name,
-        $.variable_name,
-        alias('!', $.special_variable_name),
-        alias('#', $.special_variable_name),
       ),
+      optional(seq(  // Postfix subscript operator (left-associating)
+        '[',
+        optional(field('flags', $.zsh_array_subscript_flags)),
+        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
+        ']'
+      ))
     ),
 
-    string_expansion: $ => seq('$', $.string),
+    string_expansion: $ => seq($._bare_dollar, $.string),
+    
+    // Visible rule for parameter expansion assignments  
+    expansion_assignment: $ => seq(
+      field('name', choice($._expansion_variable_ref, $.expansion)),
+      seq(token.immediate(':'), token.immediate('=')),
+      field('operator', $.assignment_operator),
+      optional(field('value', $._param_pattern))
+    ),
+
+    // Visible wrapper for assignment operators
+    assignment_operator: $ => choice('=', '-', '+', '?'),
+
+    // Visible rule for parameter expansion substring operations
+    expansion_substring: $ => seq(
+      field('name', choice($._expansion_variable_ref, $.expansion)),
+      token.immediate(':'),
+      field('offset', $._expansion_number),
+      optional(seq(
+        token.immediate(':'),
+        field('length', $._expansion_number)
+      ))
+    ),
+    
+    // Visible rule for parameter expansion defaults
+    expansion_default: $ => seq(
+      field('name', choice($._expansion_variable_ref, $.expansion)),
+      choice(
+        seq(token.immediate('-'), field('default', $.word)),
+        seq(token.immediate(':'), token.immediate('-'), field('default', $.word)),
+        seq(token.immediate('+'), field('default', $.word)),
+        seq(token.immediate(':'), token.immediate('+'), field('default', $.word)),
+        seq(token.immediate('='), field('default', $.word)),
+        seq(token.immediate(':'), token.immediate('='), field('default', $.word)),
+        seq(token.immediate('='), field('default', $.word)),
+        seq(token.immediate(':'), token.immediate(':'), token.immediate('='), field('default', $.word)),
+        seq(token.immediate('?'), field('default', $.word)),
+        seq(token.immediate(':'), token.immediate('?'), field('default', $.word)),
+      )
+    ),
+
+    // Visible rule for parameter expansion patterns 
+    expansion_pattern: $ => seq(
+      field('name', choice($._expansion_variable_ref, $.expansion)),
+      choice(
+        seq($._hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq($._double_hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq(token.immediate('%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq(token.immediate('%%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq(token.immediate(':'), $._hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq(token.immediate(':'), $._double_hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq(token.immediate(':'), token.immediate('%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq(token.immediate(':'), token.immediate('%%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq(token.immediate('//'), 
+            $._pattern_start, 
+            field('pattern', $._param_pattern),
+            '/',
+            field('replacement', $._param_pattern)
+        ),
+        seq(token.immediate('/'), 
+            $._pattern_start, 
+            field('pattern', $._param_pattern),
+            '/',
+            field('replacement', $._param_pattern),
+        ),
+        seq(token.immediate(':'), token.immediate('/'), 
+            $._pattern_start,
+            field('pattern', $._param_pattern),
+            '/',
+            field('replacement', $._param_pattern)),
+      )
+    ),
+
+    // Visible rule for parameter expansion arrays
+    expansion_array: $ => seq(
+      field('name', choice($._expansion_variable_ref, $.expansion)),
+      choice(
+        seq(token.immediate(':'), token.immediate('|'), field('array', $._literal)),
+        seq(token.immediate(':'), token.immediate('*'), field('array', $._literal)),
+        seq(token.immediate(':'), token.immediate('^'), field('array', $._literal)),
+        seq(token.immediate(':'), token.immediate('^'), token.immediate('^'), field('array', $._literal)),
+      )
+    ),
+    
+    // Maintain same order as zsh docs
+    expansion_modifier: $ => seq(
+      field('name', choice($._expansion_variable_ref, $.expansion)),
+      token.immediate(':'),
+      choice(
+        /[aAce]/,
+        /h[0-9]*/,
+        /[lpPqQr]/,
+        seq(token.immediate('s'), token.immediate('/'), 
+            $._pattern_start, 
+            field('search', $._param_pattern),
+            token.immediate('/'), field('replace', $._param_pattern),
+            optional(seq(
+                token.immediate('/'), optional(
+                  seq(token.immediate(':'), /[Gg]/)
+               )
+            )
+          )
+        ),
+        /[&ux]/,
+        /t[0-9]*/)
+    ),
+
 
     expansion: $ => seq(
-      '${',
-      optional($._expansion_body),
+      prec(2, seq(
+        $._bare_dollar,
+        $._brace_start,
+      )),
+      optional(field('style', choice(
+        token.immediate('#'),  // ${# var} - length
+        token.immediate('!'),  // ${! var} - indirect expansion
+        token.immediate('^'),  // ${^ var} - RC_EXPAND_PARAM
+        seq(token.immediate('^'), token.immediate('^')),  // ${^^ var} - RC_EXPAND_PARAM
+        token.immediate('='),  // ${= var} - SH_WORD_SPLIT
+        seq(token.immediate('='), token.immediate('=')),  // ${== var} - SH_WORD_SPLIT
+        token.immediate('~'),  // ${~ var} - GLOB_SUBST
+        seq(token.immediate('~'), token.immediate('~')),  // ${~~ var} - GLOB_SUBST
+      ))),
+      optional(field('flags', $.expansion_flags)),
+      $._expansion_body,
       '}',
     ),
+
+    // Zsh parameter expansion flags: ${(L)var}, ${(j:,:)array}, etc.
+    expansion_flags: _ => token.immediate(/\([^)]+\)/),
+
     _expansion_body: $ => choice(
-      // ${!##} ${!#}
-      repeat1(field(
-        'operator',
-        choice(
-          alias($._external_expansion_sym_hash, '#'),
-          alias($._external_expansion_sym_bang, '!'),
-          alias($._external_expansion_sym_equal, '='),
-        ),
-      )),
-      seq(
-        optional(field('operator', token.immediate('!'))),
-        choice($.variable_name, $._simple_variable_name, $._special_variable_name, $.subscript),
-        choice(
-          $._expansion_expression,
-          $._expansion_regex,
-          $._expansion_regex_replacement,
-          $._expansion_regex_removal,
-          $._expansion_max_length,
-          $._expansion_operator,
-        ),
-      ),
-      seq(
-        field('operator', token.immediate('!')),
-        choice($._simple_variable_name, $.variable_name),
-        optional(field('operator', choice(
-          token.immediate('@'),
-          token.immediate('*'),
-        ))),
-      ),
-      seq(
-        optional(field('operator', immediateLiterals('#', '!', '='))),
-        choice(
-          $.subscript,
-          $._simple_variable_name,
-          $._special_variable_name,
-          $.command_substitution,
-        ),
-        repeat(field(
-          'operator',
-          choice(
-            alias($._external_expansion_sym_hash, '#'),
-            alias($._external_expansion_sym_bang, '!'),
-            alias($._external_expansion_sym_equal, '='),
-          ),
-        )),
-      ),
+     // HIGHEST PRIORITY: Colon operations (moved to top)
+     $.expansion_modifier,
+     //$.expansion_assignment,
+     
+     $.expansion_substring,
+     
+     $.expansion_pattern,
+     $.expansion_default,
+     $.expansion_array,
+     
+     // Basic variable reference (fallback for ${var})
+     field('name', choice($._expansion_variable_ref, $.expansion)),
     ),
 
+    // Base expressions (recursive)
+    _expansion_pattern: $ => choice(
+      $.regex,
+      $.word,
+      $.string,
+      $.raw_string,
+    ),
+    
+    // Replacement value for substitutions
+    _expansion_replacement: $ => choice(
+      $.word,
+      $.string,
+      $.raw_string,
+      $.expansion,
+      $.variable_ref,
+      $.command_substitution,
+    ),
+    
+    // Values for assignment operations
+    _expansion_value: $ => choice(
+      $.word,
+      $.string,
+      $.raw_string,
+      $.array,
+      $.expansion,
+      $.variable_ref, 
+      $.command_substitution,
+    ),
+    
+    // Numeric expressions for substring operations
+    _expansion_number: $ => choice(
+      $.number,
+      $.expansion,
+      $.variable_ref,
+      $.arithmetic_expansion,
+      $.command_substitution,   // $(echo 5) - allows ${var:$(command)}
+    ),
     _expansion_expression: $ => prec(1, seq(
       field('operator', immediateLiterals('=', ':=', '-', ':-', '+', ':+', '?', ':?')),
       optional(seq(
@@ -927,7 +1320,7 @@ module.exports = grammar({
           $.command_substitution,
           $.word,
           $.expansion,
-          $.simple_expansion,
+          $.variable_ref,
           $.array,
           $.string,
           $.raw_string,
@@ -938,7 +1331,7 @@ module.exports = grammar({
     )),
 
     _expansion_regex: $ => seq(
-      field('operator', choice('#', alias($._immediate_double_hash, '##'), '%', '%%')),
+      field('operator', choice('#', alias($._immediate_double_hash, '##'), '%', '%%', ':#', ':%')),
       repeat(choice(
         $.regex,
         alias(')', $.regex),
@@ -961,7 +1354,7 @@ module.exports = grammar({
         field('operator', '/'),
         optional(seq(
           choice(
-            $._primary_expression,
+            $.concatenation,
             alias(prec(-2, repeat1($._special_character)), $.word),
             seq($.command_substitution, alias($._expansion_word, $.word)),
             alias($._expansion_word, $.word),
@@ -979,7 +1372,7 @@ module.exports = grammar({
     ),
 
     _expansion_max_length: $ => seq(
-      field('operator', ':'),
+      field('operator', token.immediate(':')),
       optional(choice(
         $._simple_variable_name,
         $.number,
@@ -991,10 +1384,9 @@ module.exports = grammar({
         /\n/,
       )),
       optional(seq(
-        field('operator', ':'),
-        optional($.simple_expansion),
+        field('operator', token.immediate(':')),
+        optional($.variable_ref),
         optional(choice(
-          $._simple_variable_name,
           $.number,
           $.arithmetic_expansion,
           $.expansion,
@@ -1033,12 +1425,30 @@ module.exports = grammar({
       field('operator', token.immediate('@')),
       field('operator', immediateLiterals('U', 'u', 'L', 'Q', 'E', 'P', 'A', 'K', 'a', 'k')),
     ),
+    // Zsh parameter expansion modifiers: :u, :l, :h, :t, :r, :e, etc.
+    _expansion_modifier: $ => seq(
+      field('operator', token.immediate(':')),
+      field('modifier', choice(
+        // Simple modifiers
+        immediateLiterals(
+          // Case transformation
+          'u', 'l', 'tu', 'tl', 'U', 'L', 'T',
+          // Path manipulation  
+          'h', 't', 'r', 'e'
+        ),
+        // History-style substitution modifiers
+        seq(
+          immediateLiterals('s', 'gs', 'S'),
+          token.immediate(/\/[^\/]*\/[^\/]*\//)
+        )
+      ))
+    ),
 
     _concatenation_in_expansion: $ => prec(-2, seq(
       choice(
         $.word,
         $.variable_name,
-        $.simple_expansion,
+        $.variable_ref,
         $.expansion,
         $.string,
         $.raw_string,
@@ -1053,7 +1463,7 @@ module.exports = grammar({
         choice(
           $.word,
           $.variable_name,
-          $.simple_expansion,
+          $.variable_ref,
           $.expansion,
           $.string,
           $.raw_string,
@@ -1066,15 +1476,15 @@ module.exports = grammar({
       )),
     )),
 
-    command_substitution: $ => choice(
-      seq('$(', $._statements, ')'),
-      seq('$(', field('redirect', $.file_redirect), ')'),
+    command_substitution: $ => prec(1, choice(
+      seq($._bare_dollar, '(', $._statements, ')'),
+      seq($._bare_dollar, '(', field('redirect', $.file_redirect), ')'),
       prec(1, seq('`', $._statements, '`')),
-      seq('$`', $._statements, '`'),
-    ),
+      //seq('$`', $._statements, '`'), // not legal zsh
+    )),
 
     process_substitution: $ => seq(
-      choice('<(', '>('),
+      choice('<(', '>(', '=('),
       $._statements,
       ')',
     ),
@@ -1088,7 +1498,7 @@ module.exports = grammar({
       ),
     ),
 
-    comment: _ => token(prec(-10, /#.*/)),
+    comment: _ => token(prec(-20, /#[^\r\n]*/)),
 
     _comment_word: _ => token(prec(-8, seq(
       choice(
@@ -1102,13 +1512,10 @@ module.exports = grammar({
       )),
     ))),
 
-    _simple_variable_name: $ => alias(/\w+/, $.variable_name),
-    _multiline_variable_name: $ => alias(
-      token(prec(-1, /(\w|\\\r?\n)+/)),
-      $.variable_name,
-    ),
+    _simple_variable_name: $ => $.simple_variable_name, 
 
-    _special_variable_name: $ => alias(choice('*', '@', '?', '!', '#', '-', '$', '0', '_'), $.special_variable_name),
+    //_special_variable_name: $ => alias(choice('*', '@', '?', '!', '#', '-', '$', '0', '_'), $.special_variable_name),
+    _special_variable_name: $ => $.special_variable_name,
 
     word: _ => token(seq(
       choice(
@@ -1124,6 +1531,162 @@ module.exports = grammar({
 
     _c_terminator: _ => choice(';', /\n/, '&'),
     _terminator: _ => choice(';', ';;', /\n/, '&'),
+    
+
+    // Parameter expansion specific rules - no globs allowed
+    _param_variable_ref: $ => choice(
+      $._simple_variable_name,
+      $._special_variable_name,
+      $.subscript,
+      $.expansion,  // nested expansions
+    ),
+
+    // Parameter-safe expression system (excludes glob_pattern)
+    _param_expression: $ => choice(
+      $._param_literal,
+      $._param_unary_expression,
+      $._param_ternary_expression,
+      $._param_binary_expression,
+      $._param_postfix_expression,
+      $._param_parenthesized_expression,
+    ),
+
+    _param_binary_expression: $ => {
+      const table = [
+        [choice('+=', '-=', '*=', '/=', '%=', '**=', '<<=', '>>=', '&=', '^=', '|='), PREC.UPDATE],
+        ['||', PREC.LOGICAL_OR],
+        ['&&', PREC.LOGICAL_AND],
+        ['|', PREC.BITWISE_OR],
+        ['^', PREC.BITWISE_XOR],
+        ['&', PREC.BITWISE_AND],
+        [choice('==', '!='), PREC.EQUALITY],
+        [choice('<', '>', '<=', '>='), PREC.COMPARE],
+        [$.test_operator, PREC.TEST],
+        [choice('<<', '>>'), PREC.SHIFT],
+        [choice('+', '-'), PREC.ADD],
+        [choice('*', '/', '%'), PREC.MULTIPLY],
+        ['**', PREC.EXPONENT],
+      ];
+
+      return choice(
+        choice(...table.map(([operator, precedence]) => {
+          // @ts-ignore
+          return prec[operator === '**' ? 'right' : 'left'](precedence, seq(
+            field('left', $._param_expression),
+            // @ts-ignore
+            field('operator', operator),
+            field('right', $._param_expression),
+          ));
+        })),
+        prec.right(PREC.ASSIGN, seq(
+          field('left', $._param_expression),
+          field('operator', '='),
+          field('right', $._param_expression),
+        )),
+        prec.right(PREC.ASSIGN, seq(
+          field('left', $._param_expression),
+          field('operator', '=~'),
+          field('right', choice(alias($._regex_no_space, $.regex), $._param_expression)),
+        )),
+      );
+    },
+
+    _param_ternary_expression: $ => prec.left(PREC.TERNARY, seq(
+      field('condition', $._param_expression),
+      '?',
+      field('consequence', $._param_expression),
+      ':',
+      field('alternative', $._param_expression),
+    )),
+
+    _param_unary_expression: $ => choice(
+      prec(PREC.PREFIX, seq(
+        field('operator', tokenLiterals(1, '++', '--')),
+        $._param_expression,
+      )),
+      prec(PREC.UNARY, seq(
+        field('operator', tokenLiterals(1, '-', '+', '~')),
+        $._param_expression,
+      )),
+      prec.right(PREC.UNARY, seq(
+        field('operator', '!'),
+        $._param_expression,
+      )),
+      prec.right(PREC.TEST, seq(
+        field('operator', $.test_operator),
+        $._param_expression,
+      )),
+    ),
+
+    _param_postfix_expression: $ => prec(PREC.POSTFIX, seq(
+      $._param_expression,
+      field('operator', choice('++', '--')),
+    )),
+
+    _param_parenthesized_expression: $ => seq(
+      '(',
+      $._param_expression,
+      ')',
+    ),
+    _param_assignment_value: $ => choice(
+      $._param_literal,
+      $._param_array,
+
+
+      $.command_substitution,
+    ),
+
+    _param_literal: $ => choice(
+      $.word,
+      $.number,
+      $.expansion,
+      $.variable_ref,
+
+      $.string,
+      $.raw_string,
+      $.ansi_c_string,
+      $.translated_string,
+      // Explicitly exclude glob_pattern and test_operator
+    ),
+
+    _param_array: $ => seq(
+      "(",
+      repeat($._param_literal),
+      ")",
+    ),
+
+    _param_pattern: $ => seq(
+      optional(choice(token.immediate('%'),
+                      token.immediate('#'))),
+      choice(
+      //$.word,      // Patterns are treated as literal words, not glob_pattern
+      alias($._expansion_word, $.word),
+      $.string,
+      $.raw_string,
+      $.glob_pattern,
+      $.expansion,              // ${nested} - allows ${foo/${bar}/baz}
+      $.variable_ref,           // $var - allows ${foo/$pattern/repl}
+      $.command_substitution,   // $(cmd) - allows ${foo/$(pattern)/repl}
+      $.arithmetic_expansion,   // $((expr)) - allows ${foo/$((n))/repl}
+    )),
+
+    _param_replacement: $ => choice(
+      $.word,
+      $.string, 
+      $.raw_string,
+      $.expansion,
+      $.variable_ref,
+      $.command_substitution,
+    ),
+
+    _param_numeric_expression: $ => choice(
+      $.number,
+      $.expansion,
+      $.variable_ref,
+      $.arithmetic_expansion,
+      // Could add binary expressions for arithmetic if needed
+    ),
+
   },
 });
 
