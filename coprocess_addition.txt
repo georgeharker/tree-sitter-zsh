@@ -1,8 +1,0 @@
-    coprocess_command: $ => seq(
-      'coproc',
-      optional(field('name', $.word)),
-      field('body', choice(
-        $.compound_statement,
-        $.command,
-      )),
-    ),
