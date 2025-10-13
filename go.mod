@@ -1,4 +1,4 @@
-module github.com/tree-sitter/tree-sitter-zsh
+module github.com/georgeharker/tree-sitter-zsh
 
 go 1.22
 

@@ -3,10 +3,10 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tree-sitter-bash"
+name = "tree-sitter-zsh"
 description = "Bash grammar for tree-sitter"
 version = "0.25.0"
-keywords = ["incremental", "parsing", "tree-sitter", "bash"]
+keywords = ["incremental", "parsing", "tree-sitter", "zsh"]
 classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
@@ -17,13 +17,14 @@ classifiers = [
 authors = [
   { name = "Max Brunsfeld", email = "maxbrunsfeld@gmail.com" },
   { name = "Amaan Qureshi", email = "amaanq12@gmail.com" },
+  { name = "George Harker", email = "georgeharker@gmail.com" },
 ]
 requires-python = ">=3.10"
 license.text = "MIT"
 readme = "README.md"
 
 [project.urls]
-Homepage = "https://github.com/tree-sitter/tree-sitter-bash"
+Homepage = "https://github.com/georgeharker/tree-sitter-zsh"
 
 [project.optional-dependencies]
 core = ["tree-sitter~=0.24"]

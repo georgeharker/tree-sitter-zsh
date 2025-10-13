@@ -3,7 +3,7 @@ $(error Windows is not supported)
 endif
 
 LANGUAGE_NAME := tree-sitter-zsh
-HOMEPAGE_URL := https://github.com/tree-sitter/tree-sitter-zsh
+HOMEPAGE_URL := https://github.com/georgeharker/tree-sitter-zsh
 VERSION := 0.25.0
 
 # repository

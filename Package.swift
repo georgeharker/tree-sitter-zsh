@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "TreeSitterBash",
+    name: "TreeSitterZsh",
     products: [
-        .library(name: "TreeSitterBash", targets: ["TreeSitterBash"])
+        .library(name: "TreeSitterZsh", targets: ["TreeSitterZsh"])
     ],
     dependencies: [
         .package(
@@ -15,7 +15,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "TreeSitterBash",
+            name: "TreeSitterZsh",
             dependencies: [],
             path: ".",
             sources: [
@@ -29,12 +29,12 @@ let package = Package(
             cSettings: [.headerSearchPath("src")]
         ),
         .testTarget(
-            name: "TreeSitterBashTests",
+            name: "TreeSitterZshTests",
             dependencies: [
                 "SwiftTreeSitter",
-                "TreeSitterBash",
+                "TreeSitterZsh",
             ],
-            path: "bindings/swift/TreeSitterBashTests"
+            path: "bindings/swift/TreeSitterZshTests"
         ),
     ],
     cLanguageStandard: .c11

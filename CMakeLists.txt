@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 
 project(tree-sitter-zsh
         VERSION "0.25.0"
-        DESCRIPTION "Bash grammar for tree-sitter"
-        HOMEPAGE_URL "https://github.com/tree-sitter/tree-sitter-zsh"
+        DESCRIPTION "Zsh grammar for tree-sitter"
+        HOMEPAGE_URL "https://github.com/georgeharker/tree-sitter-zsh"
         LANGUAGES C)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)

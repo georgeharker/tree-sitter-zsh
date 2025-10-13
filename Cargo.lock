@@ -178,7 +178,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tree-sitter-bash"
+name = "tree-sitter-zsh"
 version = "0.25.0"
 dependencies = [
  "cc",
