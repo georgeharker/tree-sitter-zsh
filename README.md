@@ -9,6 +9,15 @@
 
 Zsh grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter).
 
+[!Note] this is not the same as [tree-sitter/tree-sitter-zsh](https://github.com/tree-sitter-grammars/tree-sitter-zsh) 
+which has been archived, but rather a complete reworking starting
+from the bash grammar.
+
+### Known issues:
+ 
+Glob qualifier delimeters for 's::' and 'n::' and 'b::' must be ':' rather
+than arbitrary paired chars.
+
 ## Development
 
 Install the dependencies:
