@@ -11,24 +11,24 @@ permissions:
 
 jobs:
   github:
-    uses: ./.github/workflows/tree-sitter-workflows/release.yml
+    uses: ./.github/workflows/tree-sitter-workflows/.github/workflows/release.yml
     with:
       generate: true
       attestations: true
   npm:
-    uses: ./.github/workflows/tree-sitter-workflows/package-npm.yml
+    uses: ./.github/workflows/tree-sitter-workflows/.github/workflows/package-npm.yml
     secrets:
       NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
     with:
       generate: true
   crates:
-    uses: ./.github/workflows/tree-sitter-workflows/package-crates.yml
+    uses: ./.github/workflows/tree-sitter-workflows/.github/workflows/package-crates.yml
     secrets:
       CARGO_REGISTRY_TOKEN: ${{secrets.CARGO_REGISTRY_TOKEN}}
     with:
       generate: true
   pypi:
-    uses: ./.github/workflows/tree-sitter-workflows/package-pypi.yml
+    uses: ./.github/workflows/tree-sitter-workflows/.github/workflows/package-pypi.yml
     secrets:
       PYPI_API_TOKEN: ${{secrets.PYPI_API_TOKEN}}
     with:
