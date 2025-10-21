@@ -1,0 +1,88 @@
+==================================================
+array assign
+==================================================
+
+array=(one two three)
+
+----------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (word)
+      (word)
+      (word))))
+
+==================================================
+typeset hash
+==================================================
+
+typeset -A hash
+hash=(key1 value1 key2 value2)
+
+----------
+
+(program
+  (declaration_command
+    argument: (word)
+    argument: (word))
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (word)
+      (word)
+      (word)
+      (word))))
+
+==================================================
+expand with flags
+==================================================
+
+echo ${${var}:u}
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (expansion
+          name: (simple_variable_name))
+        modifier: (expansion_modifier)))))
+
+==================================================
+expand with default
+==================================================
+
+echo ${var:-default}
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (word)))))
+
+==================================================
+expand with default alternate
+==================================================
+
+echo ${var:=default}
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (word)))))

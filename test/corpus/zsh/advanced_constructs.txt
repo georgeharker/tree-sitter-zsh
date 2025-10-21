@@ -1,0 +1,82 @@
+==================================================
+redirects
+==================================================
+
+command >> output.txt
+
+----------
+
+(program
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word)))
+    redirect: (file_redirect
+      destination: (word))))
+
+==================================================
+pipelines
+==================================================
+
+cat file.txt | grep pattern | sort | uniq
+
+----------
+
+(program
+  (pipeline
+    (command
+      name: (command_name
+        (word))
+      argument: (word))
+    (command
+      name: (command_name
+        (word))
+      argument: (word))
+    (command
+      name: (command_name
+        (word)))
+    (command
+      name: (command_name
+        (word)))))
+
+==================================================
+sleep background
+==================================================
+
+sleep 10 &
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (number)))
+
+==================================================
+foreground job
+==================================================
+
+fg %1
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (word)))
+
+==================================================
+background job
+==================================================
+
+bg %2
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (word)))

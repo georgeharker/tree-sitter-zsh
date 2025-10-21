@@ -1,0 +1,112 @@
+================================================================================
+Arithmetic expansion with variables
+================================================================================
+
+echo $((start))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (word))))
+
+================================================================================
+Arithmetic expansion with binary operations
+================================================================================
+
+echo $((start + offset))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (word)
+        right: (word)))))
+
+================================================================================
+Arithmetic expansion with complex expressions
+================================================================================
+
+echo $((index * 2 + offset))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (binary_expression
+          left: (word)
+          right: (number))
+        right: (word)))))
+
+================================================================================
+Arithmetic expansion in parameter context - offset
+================================================================================
+
+echo ${text:$((pos + offset))}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_substring
+        name: (simple_variable_name)
+        offset: (arithmetic_expansion
+          (binary_expression
+            left: (word)
+            right: (word)))))))
+
+================================================================================
+Arithmetic expansion in parameter context - both offset and length
+================================================================================
+
+echo ${text:$((pos + offset)):$((maxlen - pos))}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_substring
+        name: (simple_variable_name)
+        offset: (arithmetic_expansion
+          (binary_expression
+            left: (word)
+            right: (word)))
+        length: (arithmetic_expansion
+          (binary_expression
+            left: (word)
+            right: (word)))))))
+
+================================================================================
+Arithmetic expansion with mixed variable references
+================================================================================
+
+echo $(($var + offset))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (variable_ref
+          (simple_variable_name))
+        right: (word)))))

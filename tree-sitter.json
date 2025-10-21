@@ -1,0 +1,42 @@
+{
+  "grammars": [
+    {
+      "name": "zsh",
+      "camelcase": "Zsh",
+      "scope": "source.zsh",
+      "path": ".",
+      "file-types": [
+        "zsh",
+        ".zshrc",
+        ".zprofile",
+        ".zshenv",
+        ".zlogin",
+        ".zlogout"
+      ],
+      "injection-regex": "^(shell|zsh)$",
+      "first-line-regex": "^#!.*\\bzsh\\b.*$"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "Zsh grammar for tree-sitter",
+    "authors": [
+      {
+        "name": "George Harrison",
+        "email": "geohar@example.com"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/geohar/tree-sitter-zsh"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true
+  }
+}

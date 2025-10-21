@@ -1,0 +1,269 @@
+================================================================================
+Parameter expansion - capitalize
+================================================================================
+
+echo ${(C)var}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      flags: (expansion_flags)
+      name: (simple_variable_name))))
+
+================================================================================
+Parameter expansion - substring with offset
+================================================================================
+
+echo ${var:2}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_substring
+        name: (simple_variable_name)
+        offset: (number)))))
+
+================================================================================
+Parameter expansion - array subscript
+================================================================================
+
+echo ${array[2]}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      index: (number))))
+
+================================================================================
+Parameter expansion - array slice
+================================================================================
+
+echo ${array[2,4]}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      index: (word))))
+
+================================================================================
+Parameter expansion - substitute first match
+================================================================================
+
+echo ${var/old/new}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (regex)))))
+
+================================================================================
+Parameter expansion - substitute all matches
+================================================================================
+
+echo ${var//old/new}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (regex)))))
+
+================================================================================
+Parameter expansion - substitute at beginning
+================================================================================
+
+echo ${var/#old/new}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (regex)))))
+
+================================================================================
+Parameter expansion - substitute at end
+================================================================================
+
+echo ${var/%old/new}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (regex)))))
+
+================================================================================
+Parameter expansion - indirect expansion
+================================================================================
+
+echo ${!var}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      style: (expansion_style)
+      name: (simple_variable_name))))
+
+================================================================================
+Parameter expansion - nested expansion
+================================================================================
+
+echo ${${var#head}%tail}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (expansion
+          (expansion_pattern
+            name: (simple_variable_name)
+            pattern: (regex)))
+        pattern: (regex)))))
+
+================================================================================
+Parameter expansion - with modifiers (history style)
+================================================================================
+
+echo ${var:s/old/new/}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier
+          search: (regex)
+          replace: (regex))))))
+
+================================================================================
+Parameter expansion - tail modifier
+================================================================================
+
+echo ${var:t}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier)))))
+
+================================================================================
+Parameter expansion - head modifier
+================================================================================
+
+echo ${var:h}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier)))))
+
+================================================================================
+Parameter expansion -- complex empty variable name
+================================================================================
+
+script_name="${${(%):-%x}:A}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    (variable_name)
+    (string
+      (expansion
+        (expansion_with_modifier
+          (expansion
+            (expansion_flags)
+            (expansion_default
+              (word)))
+          (expansion_modifier))))))
+
+================================================================================
+Parameter expansion -- complex empty variable name with string
+================================================================================
+
+local -a raw_patterns=(${(fu)"$(<$exclusion_file)"}(ND))
+
+--------------------------------------------------------------------------------
+
+(program
+  (declaration_command
+    (word)
+    (variable_assignment
+      (variable_name)
+      (array
+        (qualified_expression
+          (expansion
+            (expansion_flags)
+            (string
+              (command_substitution
+                (file_redirect
+                  (variable_ref
+                    (simple_variable_name))))))
+          (zsh_glob_qualifier))))))
