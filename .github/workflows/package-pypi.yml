@@ -1,0 +1,160 @@
+name: Publish package (pypi)
+
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        description: The name of the package
+        default: ${{github.event.repository.name}}
+        type: string
+      environment-name:
+        description: The name of the environment
+        default: pypi
+        type: string
+      python-version:
+        description: The Python version
+        default: ${{vars.PYTHON_VERSION || '3.11'}}
+        type: string
+      generate:
+        description: Generate the parser artifacts
+        default: false
+        type: boolean
+      abi-version:
+        description: The tree-sitter ABI version
+        default: "15"
+        type: string
+    secrets:
+      # TODO: make optional when pypi/warehouse#11096 is fixed
+      PYPI_API_TOKEN:
+        description: An authentication token for pypi
+        required: true
+
+jobs:
+  build_sdist:
+    name: Build source dist
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{inputs.python-version}}
+      - name: Set up tree-sitter CLI
+        if: ${{inputs.generate}}
+        uses: tree-sitter/setup-action/cli@v2
+      - name: Install dependencies
+        run: |-
+          if jq -e "$JQ_SCRIPT" package.json >/dev/null; then
+            npm i --ignore-scripts --omit peer --omit optional
+          fi
+        env:
+          JQ_SCRIPT: >-
+            .dependencies + .devDependencies |
+            with_entries(select(
+            (.key | startswith("tree-sitter-"))
+            and (.key != "tree-sitter-cli")
+            )) |
+            length > 0
+      - name: Regenerate parser
+        if: ${{inputs.generate}}
+        shell: bash
+        run: |
+          while read -r grammar; do
+            grammar_dir=$(dirname "$grammar")
+            cd "$grammar_dir"
+            tree-sitter generate
+            cd - > /dev/null
+          done < <(find . -name grammar.js -not -path './node_modules/*' -not -path './.build/*')
+        env:
+          TREE_SITTER_ABI_VERSION: ${{inputs.abi-version}}
+      - name: Install dependencies
+        run: pip install --upgrade pip build setuptools wheel
+      - name: Build sources
+        run: python -mbuild -n -s
+      - name: Upload sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-sources
+          path: dist/*.tar.gz
+          retention-days: 2
+
+  build_wheels:
+    name: Build wheels on ${{matrix.os}}
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os:
+          - windows-2025
+          - windows-11-arm
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - macos-15
+          - macos-15-intel
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Set up tree-sitter CLI
+        if: ${{inputs.generate}}
+        uses: tree-sitter/setup-action/cli@v2
+      - name: Install dependencies
+        shell: bash
+        run: |-
+          if jq -e "$JQ_SCRIPT" package.json >/dev/null; then
+            npm i --ignore-scripts --omit peer --omit optional
+          fi
+        env:
+          JQ_SCRIPT: >-
+            .dependencies + .devDependencies |
+            with_entries(select(
+            (.key | startswith("tree-sitter-"))
+            and (.key != "tree-sitter-cli")
+            )) | length > 0
+      - name: Regenerate parser
+        if: ${{inputs.generate}}
+        shell: bash
+        run: |
+          while read -r grammar; do
+            grammar_dir=$(dirname "$grammar")
+            cd "$grammar_dir"
+            tree-sitter generate
+            cd - > /dev/null
+          done < <(find . -name grammar.js -not -path './node_modules/*' -not -path './.build/*')
+        env:
+          TREE_SITTER_ABI_VERSION: ${{inputs.abi-version}}
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.2
+        with:
+          output-dir: dist
+        env:
+          CIBW_ARCHS: native
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: dist/*.whl
+          name: dist-wheels-${{matrix.os}}
+          retention-days: 2
+
+  package:
+    name: Publish Python package
+    needs: [build_sdist, build_wheels]
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{inputs.environment-name}}
+      url: https://pypi.org/project/${{inputs.package-name}}/
+    # permissions:
+    #   id-token: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: dist
+          pattern: dist-*
+          merge-multiple: true
+      - name: Check build artifacts
+        run: ls -l dist
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{secrets.PYPI_API_TOKEN}}
