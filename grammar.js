@@ -1313,7 +1313,7 @@ module.exports = grammar({
     ),
 
     expansion: $ => seq(
-      prec(2, alias(seq($._bare_dollar, $._brace_start), '${')),
+      prec(2, alias(seq($._bare_dollar, $._brace_start), "${")),
       choice(
         prec.right(10, seq(field('style', $.expansion_style), 
              field('flags', $.expansion_flags), $._expansion_body)),
@@ -1565,8 +1565,8 @@ module.exports = grammar({
     )),
 
     command_substitution: $ => prec(1, choice(
-      seq(alias(seq($._bare_dollar, '(', "$(")), $._statements, ')'),
-      seq(alias(seq($._bare_dollar, '(', "$(")), field('redirect', $.file_redirect), ')'),
+      seq(alias(seq($._bare_dollar, '('), "$("), $._statements, ')'),
+      seq(alias(seq($._bare_dollar, '('), "$("), field('redirect', $.file_redirect), ')'),
       prec(1, seq('`', $._statements, '`')),
       //seq('$`', $._statements, '`'), // not legal zsh
     )),
