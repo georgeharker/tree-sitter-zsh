@@ -9,14 +9,38 @@
 
 Zsh grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter).
 
-> [!NOTE] this is not the same as [tree-sitter/tree-sitter-zsh](https://github.com/tree-sitter-grammars/tree-sitter-zsh) 
-which has been archived, but rather a complete reworking starting
-from the bash grammar.
+> [!NOTE]
+> this is not the same as [tree-sitter/tree-sitter-zsh](https://github.com/tree-sitter-grammars/tree-sitter-zsh) 
+> which has been archived, but rather a complete reworking starting
+> from the bash grammar.
 
 ### Known issues:
  
 Glob qualifier delimeters for 's::' and 'n::' and 'b::' must be ':' rather
 than arbitrary paired chars.
+
+## Installation
+
+For neovim, add the following to your config 
+
+```lua
+    vim.api.nvim_create_autocmd("User", {
+        pattern = "TSUpdate",
+        callback = function()
+            require("nvim-treesitter.parsers").zsh = {
+                install_info = {
+                    "https://github.com/georgeharker/tree-sitter-zsh",
+                    generate_from_json = false, -- only needed if repo does not contain `src/grammar.json` either
+                    queries = 'queries', -- also install queries from given directory
+                },
+                tier = 3,
+            }
+        end,
+    })
+
+```
+
+In addition to enabling treesitter for zsh files.
 
 ## Development
 
