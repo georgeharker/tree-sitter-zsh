@@ -934,15 +934,14 @@ module.exports = grammar({
     arithmetic_expansion: $ => prec(4, choice(
       seq(
         choice(
-          seq($._bare_dollar, '(('),
+          alias(seq($._bare_dollar, '(('), "$(("),
           '(('
         ),
         commaSep1($._arithmetic_expression),
         '))'
       ),
       seq(
-        $._bare_dollar, 
-        '[', 
+        alias(seq($._bare_dollar, '['), "$["),
         $._arithmetic_expression,
         ']'),
       )
@@ -1171,7 +1170,7 @@ module.exports = grammar({
     // but more importably, variable_name is used with
     // assignment like semantics
     variable_ref: $ => prec.right(1, seq(
-      $._bare_dollar,
+      alias($._bare_dollar, "$"),
       $._variable_ref,
     )),
 
@@ -1188,7 +1187,7 @@ module.exports = grammar({
     )),
 
     dollar_variable: $ => prec(1, seq(
-      $._bare_dollar,
+      alias($._bare_dollar, "$"),
       choice(
         $._simple_variable_name,
         $._special_variable_name,
@@ -1314,10 +1313,7 @@ module.exports = grammar({
     ),
 
     expansion: $ => seq(
-      prec(2, seq(
-        $._bare_dollar,
-        alias($._brace_start, '{')
-      )),
+      prec(2, alias(seq($._bare_dollar, $._brace_start), '${')),
       choice(
         prec.right(10, seq(field('style', $.expansion_style), 
              field('flags', $.expansion_flags), $._expansion_body)),
@@ -1569,8 +1565,8 @@ module.exports = grammar({
     )),
 
     command_substitution: $ => prec(1, choice(
-      seq($._bare_dollar, '(', $._statements, ')'),
-      seq($._bare_dollar, '(', field('redirect', $.file_redirect), ')'),
+      seq(alias(seq($._bare_dollar, '(', "$(")), $._statements, ')'),
+      seq(alias(seq($._bare_dollar, '(', "$(")), field('redirect', $.file_redirect), ')'),
       prec(1, seq('`', $._statements, '`')),
       //seq('$`', $._statements, '`'), // not legal zsh
     )),
