@@ -5389,17 +5389,22 @@
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "SEQ",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "_bare_dollar"
-                      },
-                      {
-                        "type": "STRING",
-                        "value": "(("
-                      }
-                    ]
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "SYMBOL",
+                          "name": "_bare_dollar"
+                        },
+                        {
+                          "type": "STRING",
+                          "value": "(("
+                        }
+                      ]
+                    },
+                    "named": false,
+                    "value": "$(("
                   },
                   {
                     "type": "STRING",
@@ -5442,12 +5447,22 @@
             "type": "SEQ",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "_bare_dollar"
-              },
-              {
-                "type": "STRING",
-                "value": "["
+                "type": "ALIAS",
+                "content": {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_bare_dollar"
+                    },
+                    {
+                      "type": "STRING",
+                      "value": "["
+                    }
+                  ]
+                },
+                "named": false,
+                "value": "$["
               },
               {
                 "type": "SYMBOL",
@@ -6978,8 +6993,13 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "SYMBOL",
-            "name": "_bare_dollar"
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_bare_dollar"
+            },
+            "named": false,
+            "value": "$"
           },
           {
             "type": "SYMBOL",
@@ -7037,8 +7057,13 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "SYMBOL",
-            "name": "_bare_dollar"
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_bare_dollar"
+            },
+            "named": false,
+            "value": "$"
           },
           {
             "type": "CHOICE",
@@ -8194,22 +8219,22 @@
           "type": "PREC",
           "value": 2,
           "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_bare_dollar"
-              },
-              {
-                "type": "ALIAS",
-                "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_bare_dollar"
+                },
+                {
                   "type": "SYMBOL",
                   "name": "_brace_start"
-                },
-                "named": false,
-                "value": "{"
-              }
-            ]
+                }
+              ]
+            },
+            "named": false,
+            "value": "${"
           }
         },
         {
@@ -9490,12 +9515,22 @@
             "type": "SEQ",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "_bare_dollar"
-              },
-              {
-                "type": "STRING",
-                "value": "("
+                "type": "ALIAS",
+                "content": {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_bare_dollar"
+                    },
+                    {
+                      "type": "STRING",
+                      "value": "("
+                    }
+                  ]
+                },
+                "named": false,
+                "value": "$("
               },
               {
                 "type": "SYMBOL",
@@ -9511,12 +9546,22 @@
             "type": "SEQ",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "_bare_dollar"
-              },
-              {
-                "type": "STRING",
-                "value": "("
+                "type": "ALIAS",
+                "content": {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_bare_dollar"
+                    },
+                    {
+                      "type": "STRING",
+                      "value": "("
+                    }
+                  ]
+                },
+                "named": false,
+                "value": "$("
               },
               {
                 "type": "FIELD",
