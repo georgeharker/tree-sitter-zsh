@@ -201,7 +201,7 @@
 
 (file_descriptor) @operator
 
-(simple_expansion
+(variable_ref
   "$" @punctuation.special) @none
 
 (expansion
