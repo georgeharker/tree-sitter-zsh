@@ -211,11 +211,6 @@
 (expansion
   operator: _ @punctuation.special)
 
-(expansion
-  "@"
-  .
-  operator: _ @character.special)
-
 ((expansion
   (subscript
     index: (word) @character.special))
