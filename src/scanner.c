@@ -846,6 +846,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             if (lexer->lookahead == '\n') {
                 // Just ignore the newline
                 skip(lexer);
+                skip_ws(lexer);
             } else {
               // we consumed things we should not have
               lexer->mark_end(lexer);
