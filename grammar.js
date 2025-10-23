@@ -18,7 +18,8 @@ const SPECIAL_CHARACTERS = [
   '`', '$',
   '|', '&', ';',
   '\\', //':',
-  ' ', '\t', '\n'
+  '\\s'
+  //' ', '\t', '\n'
 ];
 
 const PREC = {
@@ -121,8 +122,9 @@ module.exports = grammar({
   ],
 
   extras: $ => [
+    //$.comment,
     /\s/,
-    /\\\r?\n/,  // FIXME
+    /\\\r?\n/,
     /\\( |\t|\v|\f)/,
   ],
 

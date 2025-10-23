@@ -686,6 +686,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               lexer->lookahead == '{' ||
               // prevent concat over newline after string ends
               (was_just_exited_string && lexer->lookahead == '\n') ||
+              (lexer->lookahead == '"' && ctx == CTX_STRING) ||
               (was_just_newline) ||
               // Prevent recursion on / pattern
               (lexer->lookahead == '/' &&
@@ -838,6 +839,17 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->mark_end(lexer);
             lexer->result_symbol = NEWLINE;
             return true;
+        }
+        else if (lexer->lookahead == '\\') {
+            lexer->mark_end(lexer);
+            skip(lexer);
+            if (lexer->lookahead == '\n') {
+                // Just ignore the newline
+                skip(lexer);
+            } else {
+              // we consumed things we should not have
+              lexer->mark_end(lexer);
+            }
         }
     }
 
