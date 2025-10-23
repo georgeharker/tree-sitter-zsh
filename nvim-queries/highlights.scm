@@ -208,9 +208,6 @@
   "${" @punctuation.special
   "}" @punctuation.special) @none
 
-(expansion
-  operator: _ @punctuation.special)
-
 ((expansion
   (subscript
     index: (word) @character.special))
