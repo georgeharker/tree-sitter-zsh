@@ -209,8 +209,7 @@
   "}" @punctuation.special) @none
 
 ((expansion
-  (subscript
-    index: (word) @character.special))
+  index: (word) @character.special)
   (#any-of? @character.special "@" "*"))
 
 "``" @punctuation.special
