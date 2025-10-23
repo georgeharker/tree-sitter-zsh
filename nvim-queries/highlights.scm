@@ -208,10 +208,6 @@
   "${" @punctuation.special
   "}" @punctuation.special) @none
 
-((expansion
-  index: (word) @character.special)
-  (#any-of? @character.special "@" "*"))
-
 "``" @punctuation.special
 
 (variable_name) @variable
