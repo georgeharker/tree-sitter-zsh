@@ -1539,7 +1539,11 @@
         "required": true,
         "types": [
           {
-            "type": "word",
+            "type": "_primary_expression",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           }
         ]

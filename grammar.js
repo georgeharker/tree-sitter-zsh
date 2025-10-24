@@ -637,7 +637,7 @@ module.exports = grammar({
       field('name', $.variable_name),
       '[',
       optional(field('flags', $.zsh_array_subscript_flags)),
-      field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
+      field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at, $.string)),
       ']',
     )),
 
@@ -1219,16 +1219,16 @@ module.exports = grammar({
     expansion_default: $ => seq(
       optional(field('name', choice($._expansion_variable_ref, $.expansion))),
       choice(
-        seq(token.immediate('-'), field('default', $.word)),
-        seq(token.immediate(':'), token.immediate('-'), field('default', $.word)),
-        seq(token.immediate('+'), field('default', $.word)),
-        seq(token.immediate(':'), token.immediate('+'), field('default', $.word)),
-        seq(token.immediate('='), field('default', $.word)),
-        seq(token.immediate(':'), token.immediate('='), field('default', $.word)),
-        seq(token.immediate('='), field('default', $.word)),
-        seq(token.immediate(':'), token.immediate(':'), token.immediate('='), field('default', $.word)),
-        seq(token.immediate('?'), field('default', $.word)),
-        seq(token.immediate(':'), token.immediate('?'), field('default', $.word)),
+        seq(token.immediate('-'), field('default', $._literal)),
+        seq(token.immediate(':'), token.immediate('-'), field('default', $._literal)),
+        seq(token.immediate('+'), field('default', $._literal)),
+        seq(token.immediate(':'), token.immediate('+'), field('default', $._literal)),
+        seq(token.immediate('='), field('default', $._literal)),
+        seq(token.immediate(':'), token.immediate('='), field('default', $._literal)),
+        seq(token.immediate('='), field('default', $._literal)),
+        seq(token.immediate(':'), token.immediate(':'), token.immediate('='), field('default', $._literal)),
+        seq(token.immediate('?'), field('default', $._literal)),
+        seq(token.immediate(':'), token.immediate('?'), field('default', $._literal)),
       )
     ),
 
