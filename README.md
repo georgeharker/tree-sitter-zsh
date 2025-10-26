@@ -31,7 +31,7 @@ For neovim, add the following to your config
                 install_info = {
                     "https://github.com/georgeharker/tree-sitter-zsh",
                     generate_from_json = false, -- only needed if repo does not contain `src/grammar.json` either
-                    queries = 'queries', -- also install queries from given directory
+                    queries = 'nvim-queries', -- also install queries from given directory
                 },
                 tier = 3,
             }
