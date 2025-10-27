@@ -76,7 +76,7 @@ jobs:
             npm x -- tree-sitter build --wasm "${grammar%/grammar.js}"
           done < <(find . -name grammar.js -not -path './node_modules/*')
       - name: Upload binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           path: "*.wasm"
           name: prebuilds-wasm
@@ -117,7 +117,7 @@ jobs:
       - name: Build binary
         run: npm x -- prebuildify -t 20.19.5
       - name: Upload binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           path: prebuilds/**
           name: prebuilds-${{matrix.os}}
