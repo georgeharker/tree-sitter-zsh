@@ -74,7 +74,7 @@ jobs:
       - name: Build sources
         run: python -mbuild -n -s
       - name: Upload sources
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: dist-sources
           path: dist/*.tar.gz
@@ -130,7 +130,7 @@ jobs:
         env:
           CIBW_ARCHS: native
       - name: Upload wheel artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           path: dist/*.whl
           name: dist-wheels-${{matrix.os}}
