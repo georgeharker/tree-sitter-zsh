@@ -86,3 +86,26 @@ echo ${var:=default}
       (expansion_default
         name: (simple_variable_name)
         default: (word)))))
+
+==================================================
+expand with default blank
+==================================================
+
+echo ${var:-}
+echo ${var:=}
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)))))

@@ -1340,7 +1340,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
     if (valid_symbols[EMPTY_VALUE]) {
         if (iswspace(lexer->lookahead) || lexer->eof(lexer) ||
-            lexer->lookahead == ';' || lexer->lookahead == '&') {
+            lexer->lookahead == ';' || lexer->lookahead == '&' ||
+            lexer->lookahead == '}') {
             lexer->mark_end(lexer);
             lexer->result_symbol = EMPTY_VALUE;
             return true;

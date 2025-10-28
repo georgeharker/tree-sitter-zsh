@@ -7178,6 +7178,19 @@
       "type": "SYMBOL",
       "name": "_expansion_max_length"
     },
+    "_expansion_default_value": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_empty_value"
+        }
+      ]
+    },
     "expansion_default": {
       "type": "SEQ",
       "members": [
@@ -7224,7 +7237,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]
@@ -7251,7 +7264,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]
@@ -7271,7 +7284,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]
@@ -7298,7 +7311,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]
@@ -7318,7 +7331,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]
@@ -7326,6 +7339,60 @@
             {
               "type": "SEQ",
               "members": [
+                {
+                  "type": "IMMEDIATE_TOKEN",
+                  "content": {
+                    "type": "STRING",
+                    "value": ":"
+                  }
+                },
+                {
+                  "type": "IMMEDIATE_TOKEN",
+                  "content": {
+                    "type": "STRING",
+                    "value": "="
+                  }
+                },
+                {
+                  "type": "FIELD",
+                  "name": "default",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_expansion_default_value"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "IMMEDIATE_TOKEN",
+                  "content": {
+                    "type": "STRING",
+                    "value": "="
+                  }
+                },
+                {
+                  "type": "FIELD",
+                  "name": "default",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_expansion_default_value"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "IMMEDIATE_TOKEN",
+                  "content": {
+                    "type": "STRING",
+                    "value": ":"
+                  }
+                },
                 {
                   "type": "IMMEDIATE_TOKEN",
                   "content": {
@@ -7345,61 +7412,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "IMMEDIATE_TOKEN",
-                  "content": {
-                    "type": "STRING",
-                    "value": "="
-                  }
-                },
-                {
-                  "type": "FIELD",
-                  "name": "default",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_literal"
-                  }
-                }
-              ]
-            },
-            {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "IMMEDIATE_TOKEN",
-                  "content": {
-                    "type": "STRING",
-                    "value": ":"
-                  }
-                },
-                {
-                  "type": "IMMEDIATE_TOKEN",
-                  "content": {
-                    "type": "STRING",
-                    "value": ":"
-                  }
-                },
-                {
-                  "type": "IMMEDIATE_TOKEN",
-                  "content": {
-                    "type": "STRING",
-                    "value": "="
-                  }
-                },
-                {
-                  "type": "FIELD",
-                  "name": "default",
-                  "content": {
-                    "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]
@@ -7419,7 +7432,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]
@@ -7446,7 +7459,7 @@
                   "name": "default",
                   "content": {
                     "type": "SYMBOL",
-                    "name": "_literal"
+                    "name": "_expansion_default_value"
                   }
                 }
               ]

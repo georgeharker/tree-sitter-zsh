@@ -1215,20 +1215,25 @@ module.exports = grammar({
     // Visible rule for parameter expansion substring operations
     expansion_substring: $ => $._expansion_max_length,
     
+    _expansion_default_value: $ => choice(
+      $._literal,
+      $._empty_value
+    ),
+
     // Visible rule for parameter expansion defaults
     expansion_default: $ => seq(
       optional(field('name', choice($._expansion_variable_ref, $.expansion))),
       choice(
-        seq(token.immediate('-'), field('default', $._literal)),
-        seq(token.immediate(':'), token.immediate('-'), field('default', $._literal)),
-        seq(token.immediate('+'), field('default', $._literal)),
-        seq(token.immediate(':'), token.immediate('+'), field('default', $._literal)),
-        seq(token.immediate('='), field('default', $._literal)),
-        seq(token.immediate(':'), token.immediate('='), field('default', $._literal)),
-        seq(token.immediate('='), field('default', $._literal)),
-        seq(token.immediate(':'), token.immediate(':'), token.immediate('='), field('default', $._literal)),
-        seq(token.immediate('?'), field('default', $._literal)),
-        seq(token.immediate(':'), token.immediate('?'), field('default', $._literal)),
+        seq(token.immediate('-'), field('default', $._expansion_default_value)),
+        seq(token.immediate(':'), token.immediate('-'), field('default', $._expansion_default_value)),
+        seq(token.immediate('+'), field('default', $._expansion_default_value)),
+        seq(token.immediate(':'), token.immediate('+'), field('default', $._expansion_default_value)),
+        seq(token.immediate('='), field('default', $._expansion_default_value)),
+        seq(token.immediate(':'), token.immediate('='), field('default', $._expansion_default_value)),
+        seq(token.immediate('='), field('default', $._expansion_default_value)),
+        seq(token.immediate(':'), token.immediate(':'), token.immediate('='), field('default', $._expansion_default_value)),
+        seq(token.immediate('?'), field('default', $._expansion_default_value)),
+        seq(token.immediate(':'), token.immediate('?'), field('default', $._expansion_default_value)),
       )
     ),
 
