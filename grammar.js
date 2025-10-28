@@ -122,7 +122,7 @@ module.exports = grammar({
   ],
 
   extras: $ => [
-    //$.comment,
+    $.comment,
     /\s/,
     /\\\r?\n/,
     /\\( |\t|\v|\f)/,
@@ -408,6 +408,7 @@ module.exports = grammar({
       'case',
       field('value', $._literal),
       optional($._terminator),
+      optional($.comment),
       'in',
       optional($._terminator),
       optional(seq(

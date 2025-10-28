@@ -1786,6 +1786,18 @@
           ]
         },
         {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "comment"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
           "type": "STRING",
           "value": "in"
         },
@@ -2444,7 +2456,12 @@
                 "type": "SEQ",
                 "members": [
                   {
-                    "type": "STRING",
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "STRING",
+                      "value": "["
+                    },
+                    "named": false,
                     "value": "["
                   },
                   {
@@ -2469,7 +2486,12 @@
                     ]
                   },
                   {
-                    "type": "STRING",
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "STRING",
+                      "value": "]"
+                    },
+                    "named": false,
                     "value": "]"
                   }
                 ]
@@ -2478,7 +2500,12 @@
                 "type": "SEQ",
                 "members": [
                   {
-                    "type": "STRING",
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "STRING",
+                      "value": "[["
+                    },
+                    "named": false,
                     "value": "[["
                   },
                   {
@@ -2500,7 +2527,12 @@
                     ]
                   },
                   {
-                    "type": "STRING",
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "STRING",
+                      "value": "]]"
+                    },
+                    "named": false,
                     "value": "]]"
                   }
                 ]
@@ -2509,7 +2541,12 @@
                 "type": "SEQ",
                 "members": [
                   {
-                    "type": "STRING",
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "STRING",
+                      "value": "(("
+                    },
+                    "named": false,
                     "value": "(("
                   },
                   {
@@ -2525,7 +2562,12 @@
                     ]
                   },
                   {
-                    "type": "STRING",
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "STRING",
+                      "value": "))"
+                    },
+                    "named": false,
                     "value": "))"
                   }
                 ]
@@ -11191,6 +11233,10 @@
     }
   },
   "extras": [
+    {
+      "type": "SYMBOL",
+      "name": "comment"
+    },
     {
       "type": "PATTERN",
       "value": "\\s"
