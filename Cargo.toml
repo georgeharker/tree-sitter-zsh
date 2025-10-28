@@ -3,8 +3,6 @@ name = "tree-sitter-zsh"
 description = "Zsh grammar for tree-sitter"
 version = "0.25.0"
 authors = [
-  "Max Brunsfeld <maxbrunsfeld@gmail.com>",
-  "Amaan Qureshi <amaanq12@gmail.com>",
   "George Harker <georgeharker@gmail.com>",
 ]
 license = "MIT"

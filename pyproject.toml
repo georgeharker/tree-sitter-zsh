@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tree-sitter-zsh"
-description = "Bash grammar for tree-sitter"
+description = "Zsh grammar for tree-sitter"
 version = "0.25.0"
 keywords = ["incremental", "parsing", "tree-sitter", "zsh"]
 classifiers = [
@@ -15,8 +15,6 @@ classifiers = [
   "Typing :: Typed",
 ]
 authors = [
-  { name = "Max Brunsfeld", email = "maxbrunsfeld@gmail.com" },
-  { name = "Amaan Qureshi", email = "amaanq12@gmail.com" },
   { name = "George Harker", email = "georgeharker@gmail.com" },
 ]
 requires-python = ">=3.10"
