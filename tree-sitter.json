@@ -18,13 +18,13 @@
     }
   ],
   "metadata": {
-    "version": "0.1.0",
+    "version": "0.30.0",
     "license": "MIT",
     "description": "Zsh grammar for tree-sitter",
     "authors": [
       {
         "name": "George Harrison",
-        "email": "geohar@example.com"
+        "email": "georgeharker@gmail.com"
       }
     ],
     "links": {

@@ -1,12 +1,12 @@
 {
   "name": "tree-sitter-zsh",
-  "version": "0.1.0",
+  "version": "0.30.0",
   "description": "Zsh grammar for tree-sitter",
   "repository": "https://github.com/geohar/tree-sitter-zsh",
   "license": "MIT",
   "author": {
     "name": "George Harrison",
-    "email": "geohar@example.com"
+    "email": "georgeharker@gmail.com"
   },
   "main": "bindings/node",
   "types": "bindings/node",
