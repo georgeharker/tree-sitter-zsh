@@ -79,5 +79,5 @@ local -a array
 
 (program
   (declaration_command
-    (word)
-    (word)))
+    argument: (word)
+    argument: (word)))

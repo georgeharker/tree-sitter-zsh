@@ -26,8 +26,8 @@ integer count=42
 (program
   (declaration_command
     (variable_assignment
-      (variable_name)
-      (number))))
+      name: (variable_name)
+      value: (number))))
 
 ================================================================================
 Type declaration - float
@@ -40,8 +40,8 @@ float pi=3.14
 (program
   (declaration_command
     (variable_assignment
-      (variable_name)
-      (word))))
+      name: (variable_name)
+      value: (word))))
 
 ================================================================================
 Repeat statement
@@ -71,10 +71,10 @@ function func() {
 
 (program
   (function_definition
-    (word)
-    (compound_statement
+    name: (word)
+    body: (compound_statement
       (command
-        (command_name
+        name: (command_name
           (word))
-        (expansion
-          (simple_variable_name))))))
+        argument: (expansion
+          name: (simple_variable_name))))))

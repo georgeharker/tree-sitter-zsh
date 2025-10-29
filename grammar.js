@@ -1523,6 +1523,7 @@ module.exports = grammar({
     _concatenation_in_expansion_regex_no_slash: $ => prec(-2, seq(
       choice(
         alias($._regex_no_slash, $.regex),
+        token.immediate(/\s+/),
         $.dollar_variable,
         $.expansion,
         $.string,
@@ -1535,6 +1536,7 @@ module.exports = grammar({
         choice($._concat, alias(/`\s*`/, '``')),
         choice(
           alias($._regex_no_slash, $.regex),
+          token.immediate(/\s+/),
           $.dollar_variable,
           $.expansion,
           $.string,
@@ -1549,6 +1551,7 @@ module.exports = grammar({
   _concatenation_in_expansion_regex_replacement: $ => prec(-2, seq(
       choice(
         alias($._regex_no_slash, $.regex),
+        token.immediate(/\s+/),
         $.dollar_variable,
         $.expansion,
         $.string,
@@ -1800,8 +1803,9 @@ module.exports = grammar({
       optional(choice(token.immediate('%'),
                       token.immediate('#'))),
       choice(
-        alias($._expansion_word, $.word), // FIXME? YES / NO
         alias($._regex_no_slash, $.regex),
+        token.immediate(/\s+/),
+        alias($._expansion_word, $.word), // FIXME? YES / NO
         $.string,
         $.raw_string,
 

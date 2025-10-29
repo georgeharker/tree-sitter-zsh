@@ -234,15 +234,15 @@ script_name="${${(%):-%x}:A}"
 
 (program
   (variable_assignment
-    (variable_name)
-    (string
+    name: (variable_name)
+    value: (string
       (expansion
         (expansion_with_modifier
-          (expansion
-            (expansion_flags)
+          name: (expansion
+            flags: (expansion_flags)
             (expansion_default
-              (word)))
-          (expansion_modifier))))))
+              default: (word)))
+          modifier: (expansion_modifier))))))
 
 ================================================================================
 Parameter expansion -- complex empty variable name with string
@@ -254,16 +254,53 @@ local -a raw_patterns=(${(fu)"$(<$exclusion_file)"}(ND))
 
 (program
   (declaration_command
-    (word)
+    argument: (word)
     (variable_assignment
-      (variable_name)
-      (array
+      name: (variable_name)
+      value: (array
         (qualified_expression
-          (expansion
-            (expansion_flags)
-            (string
+          expression: (expansion
+            flags: (expansion_flags)
+            name: (string
               (command_substitution
-                (file_redirect
-                  (variable_ref
+                redirect: (file_redirect
+                  destination: (variable_ref
                     (simple_variable_name))))))
-          (zsh_glob_qualifier))))))
+          qualifier: (zsh_glob_qualifier))))))
+
+================================================================================
+Parameter expansion - substitute all matches with spaces
+================================================================================
+
+echo ${var//    /\t}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        replacement: (regex)))))
+
+================================================================================
+Parameter expansion - substitute complex match with spaces
+================================================================================
+
+default_branch="${${line#*: }// /}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        (expansion_pattern
+          name: (expansion
+            (expansion_pattern
+              name: (simple_variable_name)
+              pattern: (regex)))
+          replacement: (regex))))))

@@ -9295,6 +9295,13 @@
                 "value": "regex"
               },
               {
+                "type": "IMMEDIATE_TOKEN",
+                "content": {
+                  "type": "PATTERN",
+                  "value": "\\s+"
+                }
+              },
+              {
                 "type": "SYMBOL",
                 "name": "dollar_variable"
               },
@@ -9365,6 +9372,13 @@
                       "value": "regex"
                     },
                     {
+                      "type": "IMMEDIATE_TOKEN",
+                      "content": {
+                        "type": "PATTERN",
+                        "value": "\\s+"
+                      }
+                    },
+                    {
                       "type": "SYMBOL",
                       "name": "dollar_variable"
                     },
@@ -9422,6 +9436,13 @@
                 },
                 "named": true,
                 "value": "regex"
+              },
+              {
+                "type": "IMMEDIATE_TOKEN",
+                "content": {
+                  "type": "PATTERN",
+                  "value": "\\s+"
+                }
               },
               {
                 "type": "SYMBOL",
@@ -11070,19 +11091,26 @@
               "type": "ALIAS",
               "content": {
                 "type": "SYMBOL",
-                "name": "_expansion_word"
+                "name": "_regex_no_slash"
               },
               "named": true,
-              "value": "word"
+              "value": "regex"
+            },
+            {
+              "type": "IMMEDIATE_TOKEN",
+              "content": {
+                "type": "PATTERN",
+                "value": "\\s+"
+              }
             },
             {
               "type": "ALIAS",
               "content": {
                 "type": "SYMBOL",
-                "name": "_regex_no_slash"
+                "name": "_expansion_word"
               },
               "named": true,
-              "value": "regex"
+              "value": "word"
             },
             {
               "type": "SYMBOL",

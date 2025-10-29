@@ -195,15 +195,15 @@ done
 
 (program
   (terse_for_statement
-    (simple_variable_name)
+    variable: (simple_variable_name)
     (string
       (variable_ref
         (simple_variable_name))
       (string_content))
-    (do_group
+    body: (do_group
       (command
-        (command_name
+        name: (command_name
           (word))
-        (string
+        argument: (string
           (expansion
-            (simple_variable_name)))))))
+            name: (simple_variable_name)))))))

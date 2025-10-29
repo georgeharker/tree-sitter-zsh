@@ -9,7 +9,7 @@ Simple test command
 (program
   (test_command
     (unary_expression
-      (test_operator)
+      operator: (test_operator)
       (word))))
 
 ================================================================================
