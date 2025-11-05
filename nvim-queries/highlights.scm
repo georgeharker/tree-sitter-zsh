@@ -102,7 +102,7 @@
 
 "function" @keyword.function
 
-(special_variable_name) @constant
+(special_variable_name) @variable.builtin
 
 ; trap -l
 ((word) @constant.builtin
@@ -201,13 +201,30 @@
 (file_descriptor) @operator
 
 (variable_ref
-  ("$" @punctuation.special)) 
+  "$" @punctuation.special)
 
 (expansion
   "${" @punctuation.special
   "}" @punctuation.special)
 
 "``" @punctuation.special
+
+(array_star) @variable.builtin
+
+(array_at) @variable.builtin
+
+(expansion_flags) @attribute.builtin
+
+(expansion_style) @attribute.builtin
+
+(expansion_pattern
+  pattern: "#" @attribute.builtin)
+
+(expansion_modifier) @attribute.builtin
+
+(simple_variable_name) @variable
+
+(glob_pattern) @string.regexp
 
 (variable_name) @variable
 
@@ -275,3 +292,4 @@
   .
   (comment) @keyword.directive @nospell)
   (#lua-match? @keyword.directive "^#![ \t]*/"))
+
