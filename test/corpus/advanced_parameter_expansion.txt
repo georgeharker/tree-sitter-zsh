@@ -188,6 +188,8 @@ pretty_dotfiles_dir=`print -D $dotfiles_dir:P`
         name: (command_name
           (word))
         argument: (word)
-        argument: (variable_ref
-          (simple_variable_name)
-          modifier: (expansion_modifier))))))
+        argument: (concatenation
+          (variable_ref
+            (simple_variable_name)
+            modifier: (expansion_modifier))
+          (word))))))
