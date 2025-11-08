@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tree-sitter-zsh"
 description = "Zsh grammar for tree-sitter"
-version = "0.35.0"
+version = "0.36.0"
 keywords = ["incremental", "parsing", "tree-sitter", "zsh"]
 classifiers = [
   "Intended Audience :: Developers",
