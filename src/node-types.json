@@ -4028,6 +4028,10 @@
     "named": false
   },
   {
+    "type": ":G",
+    "named": false
+  },
+  {
     "type": ";",
     "named": false
   },
@@ -4246,6 +4250,10 @@
   },
   {
     "type": "function",
+    "named": false
+  },
+  {
+    "type": "g",
     "named": false
   },
   {
