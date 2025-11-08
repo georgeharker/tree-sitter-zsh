@@ -1287,19 +1287,22 @@ module.exports = grammar({
         token(/[aAce]/),
         token(/h[0-9]*/),
         token(/[lpPqQr]/),
-        seq(token.immediate('s'), token.immediate('/'), 
+        optional(seq(
+            optional(token.immediate('g')), 
+            token.immediate('s'), token.immediate('/'), 
             $._pattern_start, 
             field('search', $._param_pattern_no_slash),
             token.immediate('/'), field('replace', $._param_replacement),
             optional(seq(
-                token.immediate('/'), optional(
-                  seq(token.immediate(':'), /[Gg]/)
-               )
+                token.immediate('/'), 
+                optional(token.immediate(':G'))
             )
           )
-        ),
-        token(/[&ux]/),
-        token(/t[0-9]*/))
+        )
+      ),
+      token(/[&ux]/),
+      token(/t[0-9]*/)
+      )
     )),
     
     // Maintain same order as zsh docs
