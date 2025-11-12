@@ -200,8 +200,8 @@ done
     variable: (simple_variable_name)
     (string
       (variable_ref
-        (simple_variable_name))
-      (string_content))
+        (simple_variable_name)
+        index: (array_at)))
     body: (do_group
       (command
         name: (command_name

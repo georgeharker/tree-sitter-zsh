@@ -1890,8 +1890,7 @@ regex:
                         if (lexer->lookahead == '\\') {
                             advance(lexer);
                             state.advanced_once = true;
-                            if (!lexer->eof(lexer) && lexer->lookahead != '[' &&
-                                lexer->lookahead != '/') {
+                            if (!lexer->eof(lexer) && lexer->lookahead != '[') {
                                 advance(lexer);
                                 lexer->mark_end(lexer);
                             }

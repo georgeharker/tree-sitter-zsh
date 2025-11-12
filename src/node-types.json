@@ -3892,6 +3892,78 @@
     "type": "variable_ref",
     "named": true,
     "fields": {
+      "flags": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "zsh_array_subscript_flags",
+            "named": true
+          }
+        ]
+      },
+      "index": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "array_at",
+            "named": true
+          },
+          {
+            "type": "array_star",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "parenthesized_expression",
+            "named": true
+          },
+          {
+            "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          },
+          {
+            "type": "variable_name",
+            "named": true
+          },
+          {
+            "type": "variable_ref",
+            "named": true
+          },
+          {
+            "type": "word",
+            "named": true
+          }
+        ]
+      },
       "modifier": {
         "multiple": false,
         "required": false,
@@ -3917,10 +3989,6 @@
         },
         {
           "type": "special_variable_name",
-          "named": true
-        },
-        {
-          "type": "subscript",
           "named": true
         }
       ]

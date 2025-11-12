@@ -970,6 +970,7 @@ module.exports = grammar({
 
     _primary_expression: $ => choice(
       $.qualified_expression,    // qualified globs should be first
+      $._expansion_or_variable,
       $.glob_pattern,
       $.word,
       alias($.test_operator, $.word),
@@ -978,7 +979,6 @@ module.exports = grammar({
       $.translated_string,
       $.ansi_c_string,
       $.number,
-      $._expansion_or_variable,
       $.command_substitution,
       $.process_substitution,
       $.arithmetic_expansion,
@@ -1226,11 +1226,13 @@ module.exports = grammar({
             optional($.expansion_style),
             $._simple_variable_name,
         ),
-        seq(
-            optional($.expansion_style),
-            $.subscript,
-        )
       ),
+      optional(seq(
+        '[',
+        optional(field('flags', $.zsh_array_subscript_flags)),
+        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
+        ']'
+      )),
       optional(field('modifier', $.expansion_modifier))
     )),
 
@@ -1299,20 +1301,33 @@ module.exports = grammar({
         seq(token.immediate('//'), 
             $._pattern_start, 
             field('pattern', $._param_pattern_no_slash),
-            '/',
-            field('replacement', $._param_replacement)
+            optional(
+              seq(
+                token.immediate('/'),
+                field('replacement', $._param_replacement)
+              )
+            )
         ),
         seq(token.immediate('/'), 
             $._pattern_start, 
             field('pattern', $._param_pattern_no_slash),
-            '/',
-            field('replacement', $._param_replacement),
+            optional(
+              seq(
+                token.immediate('/'),
+                field('replacement', $._param_replacement),
+              )
+            ),
         ),
         seq(token.immediate(':'), token.immediate('/'), 
             $._pattern_start,
             field('pattern', $._param_pattern_no_slash),
-            '/',
-            field('replacement', $._param_replacement)),
+            optional(
+              seq(
+                token.immediate('/'),
+                field('replacement', $._param_replacement),
+              )
+            ),
+        )
       )
     ),
 
@@ -1684,15 +1699,6 @@ module.exports = grammar({
     _c_terminator: _ => choice(';', /\n/, '&'),
     _terminator: _ => choice(';', ';;', /\n/, '&'),
     
-
-    // Parameter expansion specific rules - no globs allowed
-    _param_variable_ref: $ => choice(
-      $._simple_variable_name,
-      $._special_variable_name,
-      $.subscript,
-      $.expansion,  // nested expansions
-    ),
-
     // Parameter-safe expression system (excludes glob_pattern)
     _param_expression: $ => choice(
       $._param_literal,

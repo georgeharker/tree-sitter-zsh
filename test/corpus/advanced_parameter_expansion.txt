@@ -278,8 +278,8 @@ $+commands[brew]
     name: (command_name
       (variable_ref
         (expansion_style)
-        (simple_variable_name)))
-    argument: (glob_pattern)))
+        (simple_variable_name)
+        index: (word)))))
 
 ================================================================================
 Multiple modifiers
@@ -359,3 +359,76 @@ zstyle -a :omz:plugins:keychain options options
       (word))
     argument: (word)
     argument: (word)))
+
+================================================================================
+Blank replacement
+================================================================================
+
+remote=${$(__git_prompt_git rev-parse --verify ${hook_com[branch]}@{upstream} --symbolic-full-name 2>/dev/null)/refs\/remotes\/}
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_pattern
+        name: (redirected_statement
+          body: (command
+            name: (command_name
+              (word))
+            argument: (word)
+            argument: (word)
+            argument: (concatenation
+              (expansion
+                name: (simple_variable_name)
+                index: (word))
+              (word))
+            argument: (concatenation
+              (word)
+              (word)
+              (word))
+            argument: (word))
+          redirect: (file_redirect
+            descriptor: (file_descriptor)
+            destination: (word)))
+        pattern: (regex)))))
+
+================================================================================
+Host replace
+================================================================================
+
+SHORT_HOST="${HOST/.*/}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          pattern: (regex)
+          replacement: (regex))))))
+
+================================================================================
+Arithmetic expand with style
+================================================================================
+
+(( $+commands[keychain] )) || return
+
+--------------------------------------------------------------------------------
+
+(program
+  (list
+    (command
+      name: (command_name
+        (arithmetic_expansion
+          (variable_ref
+            (expansion_style)
+            (simple_variable_name)
+            index: (word)))))
+    (command
+      name: (command_name
+        (word)))))
