@@ -1,6 +1,6 @@
 # tree-sitter-zsh
 
-[![CI][ci]](https://github.com/tree-sitter/tree-sitter-zsh/actions/workflows/ci.yml)
+[![CI](https://github.com/georgeharker/tree-sitter-zsh/actions/workflows/ci.yml/badge.svg)](https://github.com/georgeharker/tree-sitter-zsh/actions/workflows/ci.yml)
 [![discord][discord]](https://discord.gg/w7nTvsVJhm)
 [![matrix][matrix]](https://matrix.to/#/#tree-sitter-chat:matrix.org)
 [![crates][crates]](https://crates.io/crates/tree-sitter-zsh)
