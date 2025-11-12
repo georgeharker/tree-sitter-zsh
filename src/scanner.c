@@ -1776,7 +1776,6 @@ regex:
     if ((valid_symbols[REGEX] || valid_symbols[REGEX_NO_SLASH] ||
          valid_symbols[REGEX_NO_SPACE]) &&
         !in_error_recovery(valid_symbols)) {
-        fprintf(stderr, "REGEX scan\n");
         if (valid_symbols[REGEX] || valid_symbols[REGEX_NO_SPACE]) {
             while (iswspace(lexer->lookahead)) {
                 skip(lexer);
@@ -1966,7 +1965,6 @@ regex:
                 return false;
             }
 
-                                fprintf(stderr, "GOT REGEX %d\n", state.advanced_once);
             return true;
         }
     }
