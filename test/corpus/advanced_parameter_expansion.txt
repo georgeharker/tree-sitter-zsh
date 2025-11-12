@@ -193,3 +193,169 @@ pretty_dotfiles_dir=`print -D $dotfiles_dir:P`
             (simple_variable_name)
             modifier: (expansion_modifier))
           (word))))))
+
+================================================================================
+Path concat
+================================================================================
+
+export PATH="$PNPM_HOME:$PATH"
+
+--------------------------------------------------------------------------------
+
+(program
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (string
+        (variable_ref
+          (simple_variable_name)
+          modifier: (expansion_modifier))
+        (variable_ref
+          (simple_variable_name))))))
+
+================================================================================
+Global replace
+================================================================================
+
+echo "${ZSH_THEME_GIT_PROMPT_PREFIX}${ref:gs/%/%%}${upstream:gs/%/%%}$(parse_git_dirty)${ZSH_THEME_GIT_PROMPT_SUFFIX}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        name: (simple_variable_name))
+      (expansion
+        (expansion_with_modifier
+          name: (simple_variable_name)
+          modifier: (expansion_modifier
+            search: (regex)
+            replace: (regex))))
+      (expansion
+        (expansion_with_modifier
+          name: (simple_variable_name)
+          modifier: (expansion_modifier
+            search: (regex)
+            replace: (regex))))
+      (command_substitution
+        (command
+          name: (command_name
+            (word))))
+      (expansion
+        name: (simple_variable_name)))))
+
+================================================================================
+String literal expand
+================================================================================
+
+local status_regex=$'(^|\n)'"$status_prefix"
+
+--------------------------------------------------------------------------------
+
+(program
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (concatenation
+        (ansi_c_string)
+        (string
+          (variable_ref
+            (simple_variable_name)))))))
+
+================================================================================
+Raw exists check
+================================================================================
+
+$+commands[brew]
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (variable_ref
+        (expansion_style)
+        (simple_variable_name)))
+    argument: (glob_pattern)))
+
+================================================================================
+Multiple modifiers
+================================================================================
+
+[[ -n "$ZSH" ]] || export ZSH="${${(%):-%x}:a:h}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (list
+    (test_command
+      (unary_expression
+        operator: (test_operator)
+        (string
+          (variable_ref
+            (simple_variable_name)))))
+    (declaration_command
+      (variable_assignment
+        name: (variable_name)
+        value: (string
+          (expansion
+            (expansion_with_modifier
+              name: (expansion
+                flags: (expansion_flags)
+                (expansion_default
+                  default: (word)))
+              modifier: (expansion_modifier))))))))
+
+================================================================================
+zstyle examples
+================================================================================
+
+zstyle -s :omz:plugins:keychain agents agents
+zstyle -a :omz:plugins:keychain identities identities
+zstyle -a :omz:plugins:keychain options options
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (concatenation
+      (word)
+      (word)
+      (word)
+      (word)
+      (word)
+      (word))
+    argument: (word)
+    argument: (word))
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (concatenation
+      (word)
+      (word)
+      (word)
+      (word)
+      (word)
+      (word))
+    argument: (word)
+    argument: (word))
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (concatenation
+      (word)
+      (word)
+      (word)
+      (word)
+      (word)
+      (word))
+    argument: (word)
+    argument: (word)))

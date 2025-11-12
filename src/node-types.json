@@ -227,6 +227,11 @@
     }
   },
   {
+    "type": "ansi_c_string",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "arithmetic_expansion",
     "named": true,
     "fields": {},
@@ -515,6 +520,10 @@
             "named": true
           },
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "command_substitution",
             "named": true
           },
@@ -528,6 +537,10 @@
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "raw_string",
             "named": true
           },
           {
@@ -1241,12 +1254,36 @@
         "required": false,
         "types": [
           {
+            "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": ";;",
+            "named": false
+          },
+          {
             "type": "[",
             "named": false
           },
           {
             "type": "]",
             "named": false
+          },
+          {
+            "type": "_statement",
+            "named": true
           },
           {
             "type": "array_at",
@@ -1455,12 +1492,36 @@
         "required": true,
         "types": [
           {
+            "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": ";;",
+            "named": false
+          },
+          {
             "type": "[",
             "named": false
           },
           {
             "type": "]",
             "named": false
+          },
+          {
+            "type": "_statement",
+            "named": true
           },
           {
             "type": "array_at",
@@ -1629,12 +1690,36 @@
         "required": false,
         "types": [
           {
+            "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": ";;",
+            "named": false
+          },
+          {
             "type": "[",
             "named": false
           },
           {
             "type": "]",
             "named": false
+          },
+          {
+            "type": "_statement",
+            "named": true
           },
           {
             "type": "array_at",
@@ -1713,7 +1798,7 @@
     "named": true,
     "fields": {
       "replace": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -1899,12 +1984,36 @@
         "required": true,
         "types": [
           {
+            "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": ";;",
+            "named": false
+          },
+          {
             "type": "[",
             "named": false
           },
           {
             "type": "]",
             "named": false
+          },
+          {
+            "type": "_statement",
+            "named": true
           },
           {
             "type": "array_at",
@@ -2202,12 +2311,36 @@
         "required": true,
         "types": [
           {
+            "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": ";;",
+            "named": false
+          },
+          {
             "type": "[",
             "named": false
           },
           {
             "type": "]",
             "named": false
+          },
+          {
+            "type": "_statement",
+            "named": true
           },
           {
             "type": "array_at",
@@ -2406,12 +2539,36 @@
         "required": false,
         "types": [
           {
+            "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": ")",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": ";;",
+            "named": false
+          },
+          {
             "type": "[",
             "named": false
           },
           {
             "type": "]",
             "named": false
+          },
+          {
+            "type": "_statement",
+            "named": true
           },
           {
             "type": "array_at",
@@ -3093,6 +3250,11 @@
     }
   },
   {
+    "type": "raw_string",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "redirected_statement",
     "named": true,
     "fields": {
@@ -3742,9 +3904,13 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "expansion_style",
+          "named": true
+        },
         {
           "type": "simple_variable_name",
           "named": true
@@ -3872,6 +4038,16 @@
     "fields": {}
   },
   {
+    "type": "zsh_glob_modifier",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "zsh_glob_qualifier",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "!",
     "named": false
   },
@@ -3885,6 +4061,10 @@
   },
   {
     "type": "#",
+    "named": false
+  },
+  {
+    "type": "#q",
     "named": false
   },
   {
@@ -3937,6 +4117,10 @@
   },
   {
     "type": "&>>",
+    "named": false
+  },
+  {
+    "type": "'",
     "named": false
   },
   {
@@ -4176,10 +4360,6 @@
     "named": false
   },
   {
-    "type": "ansi_c_string",
-    "named": true
-  },
-  {
     "type": "b:",
     "named": false
   },
@@ -4289,10 +4469,6 @@
     "named": false
   },
   {
-    "type": "raw_string",
-    "named": true
-  },
-  {
     "type": "readonly",
     "named": false
   },
@@ -4355,14 +4531,6 @@
   {
     "type": "while",
     "named": false
-  },
-  {
-    "type": "zsh_glob_modifier",
-    "named": true
-  },
-  {
-    "type": "zsh_glob_qualifier",
-    "named": true
   },
   {
     "type": "{",

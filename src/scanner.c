@@ -19,6 +19,7 @@ enum TokenType {
     FILE_DESCRIPTOR,
     EMPTY_VALUE,
     CONCAT,
+    CONCAT_REGEX,
     VARIABLE_NAME,
     SIMPLE_VARIABLE_NAME,
     SPECIAL_VARIABLE_NAME,
@@ -56,6 +57,7 @@ enum TokenType {
     ESAC,
     ZSH_EXTENDED_GLOB_FLAGS,
     DOUBLE_QUOTE,
+    SINGLE_QUOTE,
     BACKTICK,
     ERROR_RECOVERY,
 };
@@ -70,6 +72,7 @@ const char *TokenNames[] = {
     "FILE_DESCRIPTOR",
     "EMPTY_VALUE",
     "CONCAT",
+    "CONCAT_REGEX",
     "VARIABLE_NAME",
     "SIMPLE_VARIABLE_NAME",
     "SPECIAL_VARIABLE_NAME",
@@ -107,6 +110,7 @@ const char *TokenNames[] = {
     "ESAC",
     "ZSH_EXTENDED_GLOB_FLAGS",
     "DOUBLE_QUOTE",
+    "SINGLE_QUOTE",
     "BACKTICK",
     "ERROR_RECOVERY",
 };
@@ -128,7 +132,8 @@ typedef enum {
         7,            // ${var/pattern/replacement} - substitution
     CTX_STRING = 8,   // "..." string context
     CTX_COMPOUND = 9, // "{ x; y; z; }"
-    CTX_BACKTICK = 10 // `a b c`
+    CTX_BACKTICK = 10, // `a b c`
+    CTX_RAW_STRING = 11,   // '...' string context
 } context_type_t;
 
 const char *ContextNames[] = {
@@ -144,7 +149,8 @@ const char *ContextNames[] = {
                                         // substitution
     "CTX_STRING",                       // "..." string context
     "CTX_COMPOUND",                     // "{ x; y; z; }"
-    "CTX_BACKTICK"                      // `a b c`
+    "CTX_BACKTICK",                     // `a b c`
+    "CTX_RAW_STRING",                   // '...' string context
 };
 
 typedef struct {
@@ -667,7 +673,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     bool was_just_newline = scanner->just_newline;
     scanner->just_newline = false;
 
-    if (valid_symbols[CONCAT] && !in_error_recovery(valid_symbols)) {
+    if ((valid_symbols[CONCAT] || valid_symbols[CONCAT_REGEX]) && !in_error_recovery(valid_symbols)) {
         context_type_t ctx = get_current_context(scanner);
 #if DEBUG
         fprintf(stderr,
@@ -681,7 +687,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               (lexer->lookahead == ')' &&
                (valid_symbols[CLOSING_PAREN] ||
                 valid_symbols[CLOSING_DOUBLE_PAREN])) ||
-              lexer->lookahead == '(' || lexer->lookahead == ';' ||
+              (lexer->lookahead == '(' && !valid_symbols[CONCAT_REGEX]) ||
+              lexer->lookahead == ';' ||
               lexer->lookahead == '&' || lexer->lookahead == '|' ||
               lexer->lookahead == '{' ||
               // prevent concat over newline after string ends
@@ -705,6 +712,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             fprintf(stderr, "SCANNER: CONCAT\n");
 #endif
 
+            TSSymbol concat_type = valid_symbols[CONCAT_REGEX] ? CONCAT_REGEX : CONCAT;
             // So for a`b`, we want to return a concat. We check if the
             // 2nd backtick has whitespace after it, and if it does we
             // return concat.
@@ -729,7 +737,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                      lexer->lookahead != '\n' // HACK
                      ) ||
                     lexer->eof(lexer)) {
-                    lexer->result_symbol = CONCAT;
+                    lexer->result_symbol = concat_type;
                     return true;
                 }
             }
@@ -740,7 +748,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 advance(lexer);
                 if (lexer->lookahead == '"' || lexer->lookahead == '\'' ||
                     lexer->lookahead == '\\') {
-                    lexer->result_symbol = CONCAT;
+                    lexer->result_symbol = concat_type;
                     return true;
                 }
                 if (lexer->eof(lexer)) {
@@ -748,9 +756,13 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 }
             } else {
                 lexer->mark_end(lexer);
-                lexer->result_symbol = CONCAT;
+                lexer->result_symbol = concat_type;
                 return true;
             }
+        } else {
+#if DEBUG
+            fprintf(stderr, "SCANNER: not a CONCAT\n");
+#endif
         }
     }
 
@@ -783,6 +795,38 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             advance(lexer);
             lexer->mark_end(lexer);
             lexer->result_symbol = DOUBLE_QUOTE;
+            return true;
+        }
+    }
+
+    if (valid_symbols[SINGLE_QUOTE]) {
+        if (get_current_context(scanner) != CTX_RAW_STRING) {
+            skip_ws(lexer);
+
+            if (lexer->lookahead == '\'') {
+                // Entering a string context
+                enter_context(scanner, CTX_RAW_STRING);
+#if DEBUG
+                fprintf(stderr, "SCANNER: Entering raw string context\n");
+#endif
+                advance(lexer);
+                lexer->mark_end(lexer);
+                lexer->result_symbol = SINGLE_QUOTE;
+                return true;
+            }
+        } else if (lexer->lookahead == '\'') {
+            // Exiting a string context
+            exit_context(scanner, CTX_RAW_STRING);
+            // Set the flag to indicate we just exited a string
+            was_just_exited_string = scanner->just_exited_string = true;
+
+#if DEBUG
+            fprintf(stderr, "SCANNER: Exiting raw string context\n");
+#endif
+
+            advance(lexer);
+            lexer->mark_end(lexer);
+            lexer->result_symbol = SINGLE_QUOTE;
             return true;
         }
     }
@@ -1010,7 +1054,9 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
          valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) &&
         !in_error_recovery(valid_symbols)) {
         skip_ws(lexer);
-        if (lexer->lookahead == '(') {
+        // If a regex is allowed, only proceed with analysis if a bare_dollar preceedes
+        if (lexer->lookahead == '(' && (valid_symbols[OPENING_PAREN] &&
+                (was_just_bare_dollar || !valid_symbols[REGEX_NO_SPACE]))) {
             advance(lexer);
             lexer->mark_end(lexer);
 
@@ -1045,8 +1091,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 enter_context(scanner, CTX_ARITHMETIC);
                 lexer->result_symbol = DOUBLE_OPENING_PAREN;
                 return true;
-            } else if (valid_symbols[OPENING_PAREN] ||
-                       valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) {
+            } else if ((valid_symbols[OPENING_PAREN] ||
+                        valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) && !valid_symbols[REGEX_NO_SPACE]) {
                 // Handle ZSH_EXTENDED_GLOB_FLAGS - (#flags) patterns
                 if (lexer->lookahead == '#' &&
                     valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) {
@@ -1143,7 +1189,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #endif
                 enter_context(scanner, CTX_ARITHMETIC);
                 return true;
-            } else if (valid_symbols[OPENING_BRACKET]) {
+            } else if (valid_symbols[OPENING_BRACKET] && !valid_symbols[REGEX_NO_SPACE]) {
                 // This is single [
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false; // Reset flag
@@ -1573,7 +1619,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             (lexer->lookahead == '*' || lexer->lookahead == '@' ||
              lexer->lookahead == '?' || lexer->lookahead == '-' ||
              lexer->lookahead == '0' || lexer->lookahead == '_' ||
-             lexer->lookahead == '#')) {
+             lexer->lookahead == '#' || lexer->lookahead == '$')) {
             lexer->mark_end(lexer);
             advance(lexer);
             if (lexer->lookahead == '=' || lexer->lookahead == '[' ||
@@ -1730,6 +1776,7 @@ regex:
     if ((valid_symbols[REGEX] || valid_symbols[REGEX_NO_SLASH] ||
          valid_symbols[REGEX_NO_SPACE]) &&
         !in_error_recovery(valid_symbols)) {
+        fprintf(stderr, "REGEX scan\n");
         if (valid_symbols[REGEX] || valid_symbols[REGEX_NO_SPACE]) {
             while (iswspace(lexer->lookahead)) {
                 skip(lexer);
@@ -1770,7 +1817,7 @@ regex:
                         lexer->mark_end(lexer);
 
                         // Track entering parameter expansion context
-                        enter_context(scanner, CTX_PARAMETER);
+                        enter_context(scanner, CTX_RAW_STRING);     // FIXME!
                     }
                 }
                 switch (lexer->lookahead) {
@@ -1905,11 +1952,21 @@ regex:
                 : valid_symbols[REGEX_NO_SPACE] ? REGEX_NO_SPACE
                                                 : REGEX;
             if (valid_symbols[REGEX] && !state.advanced_once) {
+
 #if DEBUG
                 fprintf(stderr, "DEBUG: regex not valid returning false\n");
 #endif
                 return false;
             }
+            if (valid_symbols[REGEX_NO_SPACE] && !state.advanced_once) {
+
+#if DEBUG
+                fprintf(stderr, "DEBUG: regex not valid returning false\n");
+#endif
+                return false;
+            }
+
+                                fprintf(stderr, "GOT REGEX %d\n", state.advanced_once);
             return true;
         }
     }

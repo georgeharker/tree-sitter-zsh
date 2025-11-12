@@ -161,7 +161,9 @@ Test commands with regexes
   (test_command
     (binary_expression
       left: (raw_string)
-      right: (regex)))
+      right: (concatenation
+        (raw_string)
+        (regex))))
   (test_command
     (binary_expression
       left: (variable_ref
