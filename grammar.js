@@ -1304,7 +1304,7 @@ module.exports = grammar({
             optional(
               seq(
                 token.immediate('/'),
-                field('replacement', $._param_replacement)
+                optional(field('replacement', $._param_replacement))
               )
             )
         ),
@@ -1314,7 +1314,7 @@ module.exports = grammar({
             optional(
               seq(
                 token.immediate('/'),
-                field('replacement', $._param_replacement),
+                optional(field('replacement', $._param_replacement)),
               )
             ),
         ),
@@ -1324,7 +1324,7 @@ module.exports = grammar({
             optional(
               seq(
                 token.immediate('/'),
-                field('replacement', $._param_replacement),
+                optional(field('replacement', $._param_replacement)),
               )
             ),
         )

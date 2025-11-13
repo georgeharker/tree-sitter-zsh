@@ -8013,12 +8013,20 @@
                           }
                         },
                         {
-                          "type": "FIELD",
-                          "name": "replacement",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_param_replacement"
-                          }
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "replacement",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_param_replacement"
+                              }
+                            },
+                            {
+                              "type": "BLANK"
+                            }
+                          ]
                         }
                       ]
                     },
@@ -8065,12 +8073,20 @@
                           }
                         },
                         {
-                          "type": "FIELD",
-                          "name": "replacement",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_param_replacement"
-                          }
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "replacement",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_param_replacement"
+                              }
+                            },
+                            {
+                              "type": "BLANK"
+                            }
+                          ]
                         }
                       ]
                     },
@@ -8124,12 +8140,20 @@
                           }
                         },
                         {
-                          "type": "FIELD",
-                          "name": "replacement",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_param_replacement"
-                          }
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "replacement",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_param_replacement"
+                              }
+                            },
+                            {
+                              "type": "BLANK"
+                            }
+                          ]
                         }
                       ]
                     },
