@@ -966,15 +966,11 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 "valid_symbols[CONCAT]=%d, lookahead='%c'\n",
                 valid_symbols[CONCAT], lexer->lookahead);
 #endif
-        if (!valid_symbols[CONCAT] &&
-            (lexer->lookahead == ' ' || lexer->lookahead == '\t')) {
+        if (!valid_symbols[CONCAT] && iswspace(lexer->lookahead)) {
 #if DEBUG
             fprintf(stderr, "SCANNER: BARE_DOLLAR skipping whitespace\n");
 #endif
-            while ((lexer->lookahead == ' ' || lexer->lookahead == '\t') &&
-                   !lexer->eof(lexer)) {
-                skip(lexer);
-            }
+            skip_wsnl(lexer);
         }
 
         if (lexer->lookahead == '$') {
