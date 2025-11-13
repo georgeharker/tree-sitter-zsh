@@ -1805,20 +1805,14 @@ regex:
                 }
             }
 
+#if DEBUG
+        fprintf(stderr, "DEBUG: regex scan start\n");
+#endif
+
             lexer->mark_end(lexer);
 
             State state = {false, false, false, false, false, 0, 0, 0};
             while (!state.done) {
-                if (state.in_single_quote) {
-                    if (lexer->lookahead == '\'') {
-                        state.in_single_quote = false;
-                        advance(lexer);
-                        lexer->mark_end(lexer);
-
-                        // Track entering parameter expansion context
-                        enter_context(scanner, CTX_RAW_STRING);     // FIXME!
-                    }
-                }
                 switch (lexer->lookahead) {
                 case '\\':
                     state.last_was_escape = true;
@@ -1862,8 +1856,26 @@ regex:
                     break;
                 case '\'':
                     // Enter or exit a single-quoted string.
-                    state.in_single_quote = !state.in_single_quote;
+                    if (state.in_single_quote) {
+                        state.in_single_quote = false;
+#if DEBUG
+        fprintf(stderr, "DEBUG: regex scan exit raw string\n");
+#endif
+
+                        // Track entering parameter expansion context
+                        exit_context(scanner, CTX_RAW_STRING);
+                    } else {
+                        state.in_single_quote = true;
+#if DEBUG
+        fprintf(stderr, "DEBUG: regex scan entering raw string\n");
+#endif
+
+                        // Track entering parameter expansion context
+                        enter_context(scanner, CTX_RAW_STRING);
+
+                    }
                     advance(lexer);
+                    lexer->mark_end(lexer);
                     state.advanced_once = true;
                     state.last_was_escape = false;
                     continue;
@@ -1963,6 +1975,10 @@ regex:
 #endif
                 return false;
             }
+
+#if DEBUG
+        fprintf(stderr, "DEBUG: regex scan returning regex\n");
+#endif
 
             return true;
         }

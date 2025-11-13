@@ -432,3 +432,21 @@ Arithmetic expand with style
     (command
       name: (command_name
         (word)))))
+
+================================================================================
+Remove with dollar
+================================================================================
+
+local file="${line#M$'\t'}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (string
+        (expansion
+          (expansion_pattern
+            name: (simple_variable_name)
+            pattern: (regex)))))))
