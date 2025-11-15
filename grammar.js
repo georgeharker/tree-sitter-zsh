@@ -543,7 +543,10 @@ module.exports = grammar({
     compound_statement: $ => prec.right(seq(
       //'{',
       alias($._brace_start, '{'),
-      optional($._terminated_statement),
+      optional(
+          choice($._terminated_statement,
+                 $._statement)
+      ),
       token(prec(-1, '}')),
       optional($.always_clause),
     )),
