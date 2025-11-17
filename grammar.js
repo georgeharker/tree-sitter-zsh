@@ -149,16 +149,19 @@ module.exports = grammar({
 
   inline: $ => [
     $._statement,
+    $._simple_statement,
+    $._statement_or_comment,
     $._terminator,
     $._literal,
     $._terminated_statement,
+    $._maybe_terminated_statement,
     $._primary_expression,
     $._simple_variable_name,
     $._special_variable_name,
     $._c_word,
     $._statement_not_subshell,
     $._redirect,
-    //$.expansion_style
+    $._word_or_word_with_colon
   ],
 
   externals: $ => [
@@ -194,6 +197,7 @@ module.exports = grammar({
     '))',                              // CLOSING_DOUBLE_PAREN
     '<<',                              // HEREDOC_ARROW
     '<<-',                             // HEREDOC_ARROW_DASH
+    '<<<',                             // HERESTRING
     $._hash_pattern,
     $._double_hash_pattern,
     $._enter_pattern,
@@ -222,11 +226,12 @@ module.exports = grammar({
 
   supertypes: $ => [
     $._statement,
+    $._statement_or_comment,
     $._expression,
     $._primary_expression,
   ],
 
-  word: $ => $.word,
+  word: $ => $._word,
 
   rules: {
     program: $ => optional($._statements),
@@ -234,11 +239,11 @@ module.exports = grammar({
     _statements: $ => prec(1, seq(
       repeat($._terminator), // Allow leading terminators/newlines
       repeat(seq(
-        $._statement,
+        $._statement_or_comment,
         optional($.comment),
         $._terminator,
       )),
-      $._statement,
+      $._statement_or_comment,
       optional($.comment),
       optional($._terminator),
     )),
@@ -266,14 +271,34 @@ module.exports = grammar({
       $._statement,
       $._terminator,
     )),
+    
+    _maybe_terminated_statement: $ => prec.right(
+      choice(
+        seq(
+            repeat1(
+                seq(
+                    $._statement,
+                    $._terminator,
+                )
+            ),
+            optional($._simple_statement),
+        ),
+        $._simple_statement
+      )),
 
     // Statements
 
     _statement: $ => choice(
       $._statement_not_subshell,
       $.subshell,
+    ),
+
+    _statement_or_comment: $ => choice(
+      $._statement_not_subshell,
+      $.subshell,
       $.comment,
     ),
+
 
     _statement_not_subshell: $ => choice(
       $.redirected_statement,
@@ -297,6 +322,25 @@ module.exports = grammar({
       $.list,
       $.compound_statement,
       $.function_definition,
+    ),
+    
+    _simple_statement: $ => choice(
+      $.redirected_statement,
+      $.variable_assignment,
+      $.variable_assignments,
+      $.command,
+      $.declaration_command,
+      $.unset_command,
+      $.test_command,
+      $.negated_command,
+      $.for_statement,
+      $.terse_for_statement,
+      $.c_style_for_statement,
+      $.while_statement,
+      $.repeat_statement,
+      $.select_statement,
+      $.if_statement,
+      $.pipeline,
     ),
 
     _statement_not_pipeline: $ => prec(1, choice(
@@ -329,6 +373,7 @@ module.exports = grammar({
           repeat1(choice(
             $.file_redirect,
             $.heredoc_redirect,
+            $.herestring_redirect,  // moved here from standalone
           )),
         )),
       ),
@@ -337,7 +382,6 @@ module.exports = grammar({
         $.herestring_redirect,
       ),
       field('redirect', repeat1($._redirect)),
-      $.herestring_redirect,
     ))),
 
     for_statement: $ => seq(
@@ -351,15 +395,17 @@ module.exports = grammar({
       field('body', $.do_group),
     ),
     
-    terse_for_statement: $ => seq(
+    terse_for_statement: $ => prec(2, seq(
       'for',
       field('variable', $._simple_variable_name),
       '(',
-      $._literal,
+      field('value', repeat1($._literal)),  // Allow multiple values
       ')',
-      $._terminator,
-      field('body', $.do_group),
-    ),
+      field('body', choice(
+        $._statement,                      // Allow single statement (no do/done)
+        seq($._terminator, $.do_group),    // Or traditional do/done
+      )),
+    )),
 
     c_style_for_statement: $ => seq(
       'for',
@@ -519,12 +565,12 @@ module.exports = grammar({
       choice(
         seq(
           'function',
-          field('name', optional($.word)),
-           optional(seq(
+          field('name', optional($._word_or_word_with_colon)),
+          optional(seq(
              '(', ')')),
         ),
         seq(
-          field('name', optional($.word)),
+          field('name', optional($._word_or_word_with_colon)),
           '(', ')',
         ),
       ),
@@ -540,22 +586,30 @@ module.exports = grammar({
       field('redirect', optional($._redirect)),
     ))),
 
-    compound_statement: $ => prec.right(seq(
-      //'{',
+    compound_statement_no_always: $ => prec(2, seq(
       alias($._brace_start, '{'),
       optional(
-          choice($._terminated_statement,
-                 $._statement)
+        $._maybe_terminated_statement,
+        // $._terminated_statement,
+      ),
+      token(prec(-1, '}')),
+    )),
+
+    compound_statement: $ => seq(
+      alias($._brace_start, '{'),
+      optional(
+        $._maybe_terminated_statement,
+        // $._terminated_statement,
       ),
       token(prec(-1, '}')),
       optional($.always_clause),
-    )),
+    ),
 
     // Always clause that can attach to compound statements
     always_clause: $ => seq(
       'always',
       field('always', choice(
-        $.compound_statement,
+        $.compound_statement_no_always,
         $.command,
         $.pipeline
       ))
@@ -662,16 +716,16 @@ module.exports = grammar({
     )),
 
     command: $ => prec.left(seq(
-      repeat(choice(
+      prec(4, repeat(choice(
         $.variable_assignment,
         field('redirect', $._redirect),
-      )),
+      ))),
       field('name', $.command_name),
       choice(
-        repeat(
+        prec(4, repeat(
           choice(
             field('argument', $._literal),
-            prec(2, field('argument', $._bare_dollar)),
+//            prec(-1, field('argument', $._bare_dollar)),
             field('argument', $.glob_pattern),
             field('argument', seq(
               choice('=~', '=='),
@@ -679,7 +733,7 @@ module.exports = grammar({
             ),
             field('redirect', $.herestring_redirect),
           )
-        )),
+        ))),
         $.subshell,
       ),
     )),
@@ -731,7 +785,7 @@ module.exports = grammar({
       $.expansion,
       $.variable_name,
       $.string,
-      $.word,  // Allow bare identifiers in parameter arithmetic context
+      $._word_or_word_with_colon  // Allow bare identifiers in parameter arithmetic context
     )),
 
     _param_arithmetic_binary_expression: $ => createBinaryExpression(
@@ -853,8 +907,8 @@ module.exports = grammar({
       $.heredoc_end,
     ),
 
-    herestring_redirect: $ => prec.left(seq(
-      field('descriptor', optional($.file_descriptor)),
+    herestring_redirect: $ => prec.left(1, seq(
+      optional(field('descriptor', $.file_descriptor)),
       '<<<',
       $._literal,
     )),
@@ -975,7 +1029,7 @@ module.exports = grammar({
       $.qualified_expression,    // qualified globs should be first
       $._expansion_or_variable,
       $.glob_pattern,
-      $.word,
+      $._word_or_word_with_colon,
       alias($.test_operator, $.word),
       $.string,
       $.raw_string,
@@ -986,6 +1040,19 @@ module.exports = grammar({
       $.process_substitution,
       $.arithmetic_expansion,
       $.brace_expression,
+    ),
+    
+    _limited_primary_expression: $ => choice(
+      $.expansion,      // Try ${...} patterns first
+      $.variable_ref,   // Fall back to $var patterns
+      $.string,
+      $.raw_string,
+      $.translated_string,
+      $.ansi_c_string,
+      $.number,
+      $.command_substitution,
+      $.process_substitution,
+      $.arithmetic_expansion,
     ),
     
     // Unified rule for all dollar-based patterns to eliminate competition  
@@ -1018,28 +1085,56 @@ module.exports = grammar({
       token.immediate('}'),
     ),
 
-    _glob_innards: $ => token(seq(
-      repeat(/[^\s'"*?\[{~(<=]/),
-      choice(
-        /\*\*/,                                   // **
-        /\*/,                                     // *
-        /\?/,                                     // ?
-        /\[[!^]?[^\]]*\]/,                        // [...]
-        /<[0-9]+-[0-9]+>/,                        // <1-10>
-        /\{[^}]*,[^}]*\}/,                        // {a,b}
-        /~/,                                      // ~
-        /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+    // A robust glob pattern must contain at least one glob metacharacter
+    // This prevents tilde expansion like ~/foo from being parsed as glob
+    _glob_innards: $ => token(choice(
+      // Pattern starting with glob metacharacter
+      seq(
+        choice(
+          /\*\*/,                                   // **
+          /\*/,                                     // *
+          /\?/,                                     // ?
+          /\[[!^]?[^\]]*\]/,                        // [...]
+          /<[0-9]+-[0-9]+>/,                        // <1-10>
+          /\{[^}]*,[^}]*\}/,                        // {a,b}
+          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+        ),
+        repeat(choice(
+          /[^\s'"*?\[{(<=]/,                        // regular chars (note: ~ removed from exclusion)
+          /\*\*/,                                   // **
+          /\*/,                                     // *
+          /\?/,                                     // ?
+          /\[[!^]?[^\]]*\]/,                        // [...]
+          /<[0-9]+-[0-9]+>/,                        // <1-10>
+          /\{[^}]+,[^}]*\}/,                        // {a,b}
+          /~/,                                      // ~ (allowed after initial char)
+          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+        ))
       ),
-      repeat(choice(
-        /[^\s'"*?\[{~(<=]/,                       // regular chars
-        /\*\*/,                                   // **
-        /\*/,                                     // *
-        /\?/,                                     // ?
-        /\[[!^]?[^\]]*\]/,                        // [...]
-        /<[0-9]+-[0-9]+>/,                        // <1-10>
-        /\{[^}]+,[^}]*\}/,                        // {a,b}
-        /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
-      ))
+      // Pattern with regular chars containing at least one glob metacharacter
+      seq(
+        repeat1(/[^\s'"*?\[{(<=]/),                // regular chars (no ~ in exclusion)
+        choice(
+          /\*\*/,                                   // **
+          /\*/,                                     // *
+          /\?/,                                     // ?
+          /\[[!^]?[^\]]*\]/,                        // [...]
+          /<[0-9]+-[0-9]+>/,                        // <1-10>
+          /\{[^}]*,[^}]*\}/,                        // {a,b}
+          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+        ),
+        repeat(choice(
+          /[^\s'"*?\[{(<=]/,                        // regular chars
+          /\*\*/,                                   // **
+          /\*/,                                     // *
+          /\?/,                                     // ?
+          /\[[!^]?[^\]]*\]/,                        // [...]
+          /<[0-9]+-[0-9]+>/,                        // <1-10>
+          /\{[^}]+,[^}]*\}/,                        // {a,b}
+          /~/,                                      // ~ (allowed after initial char)
+          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+        ))
+      )
     )),
 
     qualified_expression: $ => prec(2, seq(
@@ -1104,7 +1199,7 @@ module.exports = grammar({
       $.expansion,
       $.variable_name,
       $.string,
-      $.word,  // Allow bare identifiers in arithmetic context (e.g., 'start' in $((start)))
+      $._word_or_word_with_colon  // Allow bare identifiers in arithmetic context (e.g., 'start' in $((start)))
     )),
 
     _arithmetic_binary_expression: $ => createBinaryExpression(
@@ -1168,7 +1263,12 @@ module.exports = grammar({
       optional(seq($._concat, $._peek_bare_dollar)),
     )),
 
-    _special_character: _ => token(prec(-1, choice('{', '}', '[', ']', ':'))),
+    _special_character: _ => token(prec(-1,
+      choice(token.immediate('{'), 
+             token.immediate('}'), 
+             token.immediate('['),
+             token.immediate(']'),
+             token.immediate(':')))),
 
     string: $ => seq(
       '"',
@@ -1274,7 +1374,7 @@ module.exports = grammar({
 
     // Visible rule for parameter expansion defaults
     expansion_default: $ => prec(5, seq(
-      optional(field('name', choice($._expansion_variable_ref, $.expansion))),
+      optional(field('name', choice($._expansion_variable_ref, $._limited_primary_expression))),
       choice(
         seq(token.immediate('-'), field('default', $._expansion_default_value)),
         seq(token.immediate(':'), token.immediate('-'), field('default', $._expansion_default_value)),
@@ -1291,7 +1391,7 @@ module.exports = grammar({
 
     // Visible rule for parameter expansion patterns 
     expansion_pattern: $ => seq(
-      field('name', choice($._expansion_variable_ref, $.expansion)),
+      field('name', choice($._expansion_variable_ref, $._limited_primary_expression)),
       choice(
         seq($._hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
         seq($._double_hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
@@ -1336,7 +1436,7 @@ module.exports = grammar({
 
     // Visible rule for parameter expansion arrays
     expansion_array: $ => seq(
-      field('name', choice($._expansion_variable_ref, $.expansion)),
+      field('name', choice($._expansion_variable_ref, $._limited_primary_expression)),
       choice(
         seq(token.immediate(':'), token.immediate('|'), field('array', $._literal)),
         seq(token.immediate(':'), token.immediate('*'), field('array', $._literal)),
@@ -1371,7 +1471,7 @@ module.exports = grammar({
     
     // Maintain same order as zsh docs
     expansion_with_modifier: $ => seq(
-      optional(field('name', choice($._expansion_variable_ref, $.expansion))),
+      optional(field('name', choice($._expansion_variable_ref, $._limited_primary_expression))),
       field('modifier', $.expansion_modifier)
     ),
 
@@ -1425,6 +1525,7 @@ module.exports = grammar({
       $.word,
       $.string,
       $.raw_string,
+      $._limited_primary_expression,
     ),
     
     // Replacement value for substitutions
@@ -1435,6 +1536,7 @@ module.exports = grammar({
       $.expansion,
       $.variable_ref,
       $.command_substitution,
+      $._limited_primary_expression,
     ),
     
     // Values for assignment operations
@@ -1475,7 +1577,7 @@ module.exports = grammar({
     )),
 
     _expansion_max_length: $ => seq(
-      field('name', choice($._expansion_variable_ref, $.expansion)),
+      field('name', choice($._expansion_variable_ref, $._limited_primary_expression)),
       token.immediate(':'),
       field('offset', choice(
         $.variable_ref,
@@ -1687,7 +1789,7 @@ module.exports = grammar({
 
     _special_variable_name: $ => $.special_variable_name,
 
-    word: $ => token(seq(
+    _word: $ => token(seq(
       choice(
         noneOf('#', ':', ...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),
@@ -1698,6 +1800,21 @@ module.exports = grammar({
         '\\ ',
       )),
     )),
+
+    word: $ => $._word,
+
+    _word_with_colon: $ => prec.right(1, seq(
+      $._word,
+      token.immediate(':'),
+      repeat1(choice(
+        token.immediate(':'),
+        $._word
+      )),
+    )),
+
+    _word_or_word_with_colon: $ => choice(
+      $.word,
+      alias($._word_with_colon, $.word)),
 
     _c_terminator: _ => choice(';', /\n/, '&'),
     _terminator: _ => choice(';', ';;', /\n/, '&'),
@@ -1795,18 +1912,6 @@ module.exports = grammar({
       repeat($._param_literal),
       ")",
     ),
-
-    _param_concatenation: $ => prec(-1, seq(
-      choice(
-        $._param_primary_expression,
-      ),
-      repeat1(seq(
-        $._concat,  // Same concat token
-        choice(
-          $._param_primary_expression,
-        ),
-      ))
-    )),
 
     // Parameter-specific primary expressions
     _param_primary_expression: $ => choice(

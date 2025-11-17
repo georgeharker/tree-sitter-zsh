@@ -302,5 +302,4 @@ default_branch="${${line#*: }// /}"
           name: (expansion
             (expansion_pattern
               name: (simple_variable_name)
-              pattern: (regex)))
-          replacement: (regex))))))
+              pattern: (regex))))))))

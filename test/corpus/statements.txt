@@ -198,7 +198,7 @@ done
 (program
   (terse_for_statement
     variable: (simple_variable_name)
-    (string
+    value: (string
       (variable_ref
         (simple_variable_name)
         index: (array_at)))
@@ -209,3 +209,26 @@ done
         argument: (string
           (expansion
             name: (simple_variable_name)))))))
+
+==================================================
+For loop without in, multiple values, single statement
+==================================================
+
+for key ('^[[A' '^P' ${terminfo[kcuu1]}) bindkey ${key} history-substring-search-up
+
+--------------------------------------------------------------------------------
+
+(program
+  (terse_for_statement
+    variable: (simple_variable_name)
+    value: (raw_string)
+    value: (raw_string)
+    value: (expansion
+      name: (simple_variable_name)
+      index: (word))
+    body: (command
+      name: (command_name
+        (word))
+      argument: (expansion
+        name: (simple_variable_name))
+      argument: (word))))

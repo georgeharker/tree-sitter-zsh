@@ -373,25 +373,26 @@ remote=${$(__git_prompt_git rev-parse --verify ${hook_com[branch]}@{upstream} --
     name: (variable_name)
     value: (expansion
       (expansion_pattern
-        name: (redirected_statement
-          body: (command
-            name: (command_name
-              (word))
-            argument: (word)
-            argument: (word)
-            argument: (concatenation
-              (expansion
-                name: (simple_variable_name)
-                index: (word))
-              (word))
-            argument: (concatenation
-              (word)
-              (word)
-              (word))
-            argument: (word))
-          redirect: (file_redirect
-            descriptor: (file_descriptor)
-            destination: (word)))
+        name: (command_substitution
+          (redirected_statement
+            body: (command
+              name: (command_name
+                (word))
+              argument: (word)
+              argument: (word)
+              argument: (concatenation
+                (expansion
+                  name: (simple_variable_name)
+                  index: (word))
+                (word))
+              argument: (concatenation
+                (word)
+                (word)
+                (word))
+              argument: (word))
+            redirect: (file_redirect
+              descriptor: (file_descriptor)
+              destination: (word))))
         pattern: (regex)))))
 
 ================================================================================
@@ -409,8 +410,7 @@ SHORT_HOST="${HOST/.*/}"
       (expansion
         (expansion_pattern
           name: (simple_variable_name)
-          pattern: (regex)
-          replacement: (regex))))))
+          pattern: (regex))))))
 
 ================================================================================
 Arithmetic expand with style
@@ -450,3 +450,72 @@ local file="${line#M$'\t'}"
           (expansion_pattern
             name: (simple_variable_name)
             pattern: (regex)))))))
+
+================================================================================
+Replace after string in expansion
+================================================================================
+
+local fzf_ver=${"$(fzf --version)"#fzf }
+
+--------------------------------------------------------------------------------
+
+(program
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (expansion
+        (expansion_pattern
+          name: (string
+            (command_substitution
+              (command
+                name: (command_name
+                  (word))
+                argument: (word))))
+          pattern: (regex))))))
+
+================================================================================
+heredoc with quoted command substitution
+================================================================================
+
+xargs echo <<< "$(cat ~/foo.txt)"
+
+--------------------------------------------------------------------------------
+
+(program
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (herestring_redirect
+      (string
+        (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (word)))))))
+
+================================================================================
+arg with colons
+================================================================================
+
+(( ${+functions[foo::bar]} ))
+(( ${+functions[foo:bar]} ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (expansion
+          style: (expansion_style)
+          name: (simple_variable_name)
+          index: (word)))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (expansion
+          style: (expansion_style)
+          name: (simple_variable_name)
+          index: (word))))))

@@ -43,6 +43,7 @@ enum TokenType {
     CLOSING_DOUBLE_PAREN,
     HEREDOC_ARROW,
     HEREDOC_ARROW_DASH,
+    HERESTRING,
     HASH_PATTERN,         // #pattern
     DOUBLE_HASH_PATTERN,  // ##pattern
     ENTER_PATTERN,        // implicit / etc
@@ -96,6 +97,7 @@ const char *TokenNames[] = {
     "CLOSING_DOUBLE_PAREN",
     "HEREDOC_ARROW",
     "HEREDOC_ARROW_DASH",
+    "HERESTRING",
     "HASH_PATTERN",        // #pattern
     "DOUBLE_HASH_PATTERN", // ##pattern
     "ENTER_PATTERN",
@@ -698,7 +700,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               // Prevent recursion on / pattern
               (lexer->lookahead == '/' &&
                ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE) ||
-              (lexer->lookahead == '}' && in_parameter_expansion(scanner)) ||
+              (lexer->lookahead == '}' && (in_parameter_expansion(scanner) ||
+                                           get_current_context(scanner) == CTX_COMPOUND)) ||
               // Split subscript out
               (lexer->lookahead == ']' && valid_symbols[CLOSING_BRACKET]) ||
               (lexer->lookahead == '[' &&
@@ -1195,6 +1198,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
                 fprintf(stderr, "DEBUG: Detected OPENING_BRACKET [\n");
 #endif
+                enter_context(scanner, CTX_ARITHMETIC);
                 return true;
             }
         }
@@ -1227,6 +1231,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
                 fprintf(stderr, "DEBUG: Detected CLOSING_BRACKET ]\n");
 #endif
+                exit_context(scanner, CTX_ARITHMETIC);
                 return true;
             }
             // If only one ], don't consume it - let normal parsing handle it
@@ -1515,10 +1520,13 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         fprintf(stderr, "SCANNER: trying SIMPLE_VARIABLE_NAME\n");
 #endif
 
+        context_type_t cur_ctx = get_current_context(scanner);
         skip_ws(lexer);
-        if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {
+        if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
+            (lexer->lookahead == ':' && cur_ctx == CTX_ARITHMETIC)) {
             int consumed = 0;
-            while (iswalnum(lexer->lookahead) || lexer->lookahead == '_') {
+            while (iswalnum(lexer->lookahead) || lexer->lookahead == '_' ||
+                   (lexer->lookahead == ':' && cur_ctx == CTX_ARITHMETIC)) {
                 advance(lexer);
                 consumed++;
             }
@@ -1610,6 +1618,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             }
         }
 
+        context_type_t ctx = get_current_context(scanner);
         // no '*', '@', '?', '-', '$', '0', '_', '#'
         if (!valid_symbols[EXPANSION_WORD] &&
             (lexer->lookahead == '*' || lexer->lookahead == '@' ||
@@ -1619,7 +1628,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->mark_end(lexer);
             advance(lexer);
             if (lexer->lookahead == '=' || lexer->lookahead == '[' ||
-                lexer->lookahead == ':' || lexer->lookahead == '-' ||
+                (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC) || lexer->lookahead == '-' ||
                 lexer->lookahead == '%' || lexer->lookahead == '/') {
                 return false;
             }
@@ -1630,7 +1639,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             }
         }
 
-        if (valid_symbols[HEREDOC_ARROW] && lexer->lookahead == '<') {
+        if ((valid_symbols[HEREDOC_ARROW] || valid_symbols[HEREDOC_ARROW_DASH] || valid_symbols[HERESTRING]) &&
+            lexer->lookahead == '<') {
             advance(lexer);
             if (lexer->lookahead == '<') {
                 advance(lexer);
@@ -1646,7 +1656,14 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                             scanner->heredocs.size);
 #endif
                     lexer->result_symbol = HEREDOC_ARROW_DASH;
-                } else if (lexer->lookahead == '<' || lexer->lookahead == '=') {
+                } else if (lexer->lookahead == '<') {
+                    advance(lexer);
+#if DEBUG
+                    fprintf(stderr, "DEBUG: HERESTRING");
+#endif
+                    lexer->result_symbol = HERESTRING;
+                    return true;
+                } else if (lexer->lookahead == '=') {
                     return false;
                 } else {
                     Heredoc heredoc = heredoc_new();
@@ -1667,7 +1684,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         bool is_number = true;
         if (iswdigit(lexer->lookahead)) {
             advance(lexer);
-        } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {
+        } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
+            (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC)) {
             is_number = false;
             advance(lexer);
         } else {
@@ -1686,7 +1704,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         for (;;) {
             if (iswdigit(lexer->lookahead)) {
                 advance(lexer);
-            } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {
+            } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_'  ||
+                       (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC)) {
                 is_number = false;
                 advance(lexer);
             } else {
