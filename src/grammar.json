@@ -5911,7 +5911,11 @@
                   "members": [
                     {
                       "type": "PATTERN",
-                      "value": "[^\\s'\"*?\\[{()}<=\\]]"
+                      "value": "[^\\s'\"*?\\[{()}<=\\];]"
+                    },
+                    {
+                      "type": "PATTERN",
+                      "value": "\\\\."
                     },
                     {
                       "type": "PATTERN",
@@ -5956,8 +5960,17 @@
               {
                 "type": "REPEAT1",
                 "content": {
-                  "type": "PATTERN",
-                  "value": "[^\\s'\"*?\\[{()}<=\\]]"
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "PATTERN",
+                      "value": "[^\\s'\"*?\\[{()}<=\\];]"
+                    },
+                    {
+                      "type": "PATTERN",
+                      "value": "\\\\."
+                    }
+                  ]
                 }
               },
               {
@@ -6000,7 +6013,11 @@
                   "members": [
                     {
                       "type": "PATTERN",
-                      "value": "[^\\s'\"*?\\[{()}<=\\]]"
+                      "value": "[^\\s'\"*?\\[{()}<=\\];]"
+                    },
+                    {
+                      "type": "PATTERN",
+                      "value": "\\\\."
                     },
                     {
                       "type": "PATTERN",

@@ -1100,7 +1100,8 @@ module.exports = grammar({
           /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
         ),
         repeat(choice(
-          /[^\s'"*?\[{()}<=\]]/,                    // regular chars (note: ~ removed from exclusion)
+          /[^\s'"*?\[{()}<=\];]/,                 // regular chars excluding delimiters and backslash (allow ) for filenames)
+          /\\./,                                   // escaped sequences
           /\*\*/,                                   // **
           /\*/,                                     // *
           /\?/,                                     // ?
@@ -1113,7 +1114,10 @@ module.exports = grammar({
       ),
       // Pattern with regular chars containing at least one glob metacharacter
       seq(
-        repeat1(/[^\s'"*?\[{()}<=\]]/ ),            // regular chars (no ~ in exclusion)
+        repeat1(choice(
+          /[^\s'"*?\[{()}<=\];]/,                 // regular chars excluding delimiters and backslash (allow ) for filenames)
+          /\\./                                    // escaped sequences
+        )),
         choice(
           /\*\*/,                                   // **
           /\*/,                                     // *
@@ -1124,7 +1128,8 @@ module.exports = grammar({
           /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
         ),
         repeat(choice(
-          /[^\s'"*?\[{()}<=\]]/,                    // regular chars
+          /[^\s'"*?\[{()}<=\];]/,                 // regular chars excluding delimiters and backslash (allow ) for filenames)
+          /\\./,                                   // escaped sequences
           /\*\*/,                                   // **
           /\*/,                                     // *
           /\?/,                                     // ?

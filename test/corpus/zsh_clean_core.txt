@@ -144,6 +144,10 @@ a*b*c
 ~/Documents/*
 ~user/*.txt
 
+# Semicolon termination - should work correctly
+for i in foo*; do echo $i; done
+
+
 --------------------------------------------------------------------------------
 
 (program
@@ -191,7 +195,17 @@ a*b*c
       (glob_pattern)))
   (command
     name: (command_name
-      (glob_pattern))))
+      (glob_pattern)))
+  (comment)
+  (for_statement
+    variable: (simple_variable_name)
+    value: (glob_pattern)
+    body: (do_group
+      (command
+        name: (command_name
+          (word))
+        argument: (variable_ref
+          (simple_variable_name))))))
 
 ================================================================================
 Herestring redirects
