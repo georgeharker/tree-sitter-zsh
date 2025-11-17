@@ -705,7 +705,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               // Split subscript out
               (lexer->lookahead == ']' && valid_symbols[CLOSING_BRACKET]) ||
               (lexer->lookahead == '[' &&
-               was_just_variable_name) || // Suppress CONCAT after $var when [
+               (in_parameter_expansion(scanner) || was_just_variable_name)) || // Suppress CONCAT after $var when [
               (lexer->lookahead == ':' &&
                was_just_variable_name) ||  // Suppress CONCAT after $var when :
               (lexer->lookahead == '`' && ctx == CTX_BACKTICK)

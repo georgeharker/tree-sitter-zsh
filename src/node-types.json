@@ -1395,6 +1395,14 @@
             "named": true
           },
           {
+            "type": "ansi_c_string",
+            "named": true
+          },
+          {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -1427,6 +1435,10 @@
             "named": true
           },
           {
+            "type": "process_substitution",
+            "named": true
+          },
+          {
             "type": "raw_string",
             "named": true
           },
@@ -1444,6 +1456,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "translated_string",
             "named": true
           },
           {

@@ -1100,7 +1100,7 @@ module.exports = grammar({
           /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
         ),
         repeat(choice(
-          /[^\s'"*?\[{(<=]/,                        // regular chars (note: ~ removed from exclusion)
+          /[^\s'"*?\[{()}<=\]]/,                    // regular chars (note: ~ removed from exclusion)
           /\*\*/,                                   // **
           /\*/,                                     // *
           /\?/,                                     // ?
@@ -1113,7 +1113,7 @@ module.exports = grammar({
       ),
       // Pattern with regular chars containing at least one glob metacharacter
       seq(
-        repeat1(/[^\s'"*?\[{(<=]/),                // regular chars (no ~ in exclusion)
+        repeat1(/[^\s'"*?\[{()}<=\]]/ ),            // regular chars (no ~ in exclusion)
         choice(
           /\*\*/,                                   // **
           /\*/,                                     // *
@@ -1124,7 +1124,7 @@ module.exports = grammar({
           /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
         ),
         repeat(choice(
-          /[^\s'"*?\[{(<=]/,                        // regular chars
+          /[^\s'"*?\[{()}<=\]]/,                    // regular chars
           /\*\*/,                                   // **
           /\*/,                                     // *
           /\?/,                                     // ?
@@ -1353,6 +1353,7 @@ module.exports = grammar({
         $._simple_variable_name,
         $._special_variable_name,
         $._raw_command_expansion,
+        $._limited_primary_expression
       ),
       optional(seq(  // Postfix subscript operator (left-associating)
         '[',
@@ -1374,7 +1375,7 @@ module.exports = grammar({
 
     // Visible rule for parameter expansion defaults
     expansion_default: $ => prec(5, seq(
-      optional(field('name', choice($._expansion_variable_ref, $._limited_primary_expression))),
+      optional(field('name', $._expansion_variable_ref)),
       choice(
         seq(token.immediate('-'), field('default', $._expansion_default_value)),
         seq(token.immediate(':'), token.immediate('-'), field('default', $._expansion_default_value)),
@@ -1391,7 +1392,7 @@ module.exports = grammar({
 
     // Visible rule for parameter expansion patterns 
     expansion_pattern: $ => seq(
-      field('name', choice($._expansion_variable_ref, $._limited_primary_expression)),
+      field('name', $._expansion_variable_ref),
       choice(
         seq($._hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
         seq($._double_hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
@@ -1436,7 +1437,7 @@ module.exports = grammar({
 
     // Visible rule for parameter expansion arrays
     expansion_array: $ => seq(
-      field('name', choice($._expansion_variable_ref, $._limited_primary_expression)),
+      field('name', $._expansion_variable_ref),
       choice(
         seq(token.immediate(':'), token.immediate('|'), field('array', $._literal)),
         seq(token.immediate(':'), token.immediate('*'), field('array', $._literal)),
@@ -1471,7 +1472,7 @@ module.exports = grammar({
     
     // Maintain same order as zsh docs
     expansion_with_modifier: $ => seq(
-      optional(field('name', choice($._expansion_variable_ref, $._limited_primary_expression))),
+      optional(field('name', $._expansion_variable_ref)),
       field('modifier', $.expansion_modifier)
     ),
 
@@ -1503,7 +1504,7 @@ module.exports = grammar({
     // Zsh parameter expansion flags: ${(L)var}, ${(j:,:)array}, etc.
     expansion_flags: $ => token.immediate(/\([^)]+\)/),
 
-    _expansion_body: $ => choice(
+    _expansion_body: $ => prec(1, choice(
      // HIGHEST PRIORITY: Colon operations (moved to top)
      $.expansion_with_modifier,
     
@@ -1517,7 +1518,7 @@ module.exports = grammar({
      field('name', choice($._expansion_variable_ref,
        $.expansion, $.string, $.raw_string,
        $.command_substitution)),
-    ),
+    )),
 
     // Base expressions (recursive)
     _expansion_pattern: $ => choice(
@@ -1577,7 +1578,7 @@ module.exports = grammar({
     )),
 
     _expansion_max_length: $ => seq(
-      field('name', choice($._expansion_variable_ref, $._limited_primary_expression)),
+      field('name', $._expansion_variable_ref),
       token.immediate(':'),
       field('offset', choice(
         $.variable_ref,
