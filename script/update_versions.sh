@@ -8,6 +8,7 @@ fi
 
 version=$1
 tree-sitter version ${version}
+tree-sitter generate
 
 npm install --package-lock-only
 cargo update
