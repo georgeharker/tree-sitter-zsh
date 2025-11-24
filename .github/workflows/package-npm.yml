@@ -47,7 +47,7 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up NodeJS
         uses: actions/setup-node@v6
         with:
@@ -96,7 +96,7 @@ jobs:
           - macos-15-intel
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up NodeJS
         uses: actions/setup-node@v6
         with:
@@ -132,7 +132,7 @@ jobs:
       url: https://www.npmjs.com/package/${{inputs.package-name}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up NodeJS
         uses: actions/setup-node@v6
         with:

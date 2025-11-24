@@ -37,7 +37,7 @@ jobs:
       url: https://crates.io/crates/${{inputs.package-name}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
