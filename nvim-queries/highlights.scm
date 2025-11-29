@@ -258,9 +258,9 @@
     "WATCH" "WATCHFMT" "WORDCHARS" "ZBEEP" "ZDOTDIR" "ZLE_LINE_ABORTED" "ZLE_REMOVE_SUFFIX_CHARS"
     "ZLE_RPROMPT_INDENT" "ZLE_SPACE_SUFFIX_CHARS"
     ; Array/lowercase tied parameters (used by shell)
-    "argv" "cdpath" "fignore" "fpath" "histchars" "mailpath" "manpath" "match" "mbegin" "mend"
-    "module_path" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch" "words"
-    "killring" "zsh_eval_context"))
+    "argv" "cdpath" "fignore" "fpath" "histchars" "killring" "mailpath" "manpath" "match" "mbegin"
+    "mend" "module_path" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch"
+    "words" "zsh_eval_context"))
 
 ((simple_variable_name) @variable.builtin
   (#any-of? @variable.builtin
@@ -289,9 +289,9 @@
     "WATCH" "WATCHFMT" "WORDCHARS" "ZBEEP" "ZDOTDIR" "ZLE_LINE_ABORTED" "ZLE_REMOVE_SUFFIX_CHARS"
     "ZLE_RPROMPT_INDENT" "ZLE_SPACE_SUFFIX_CHARS"
     ; Array/lowercase tied parameters (used by shell)
-    "argv" "cdpath" "fignore" "fpath" "histchars" "mailpath" "manpath" "match" "mbegin" "mend"
-    "module_path" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch" "words"
-    "killring" "zsh_eval_context"))
+    "argv" "cdpath" "fignore" "fpath" "histchars" "killring" "mailpath" "manpath" "match" "mbegin"
+    "mend" "module_path" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch"
+    "words" "zsh_eval_context"))
 
 ((command
   name: (command_name
