@@ -236,18 +236,21 @@
     ; POSIX shell variables
     "CDPATH" "HOME" "IFS" "MAIL" "MAILPATH" "OPTARG" "OPTIND" "PATH" "PS1" "PS2"
     ; https://zsh.sourceforge.io/Doc/Release/Parameters.html#Parameters-Set-By-The-Shell
-    "_" "ARGC" "CPUTYPE" "EGID" "ERRNO" "EUID" "FUNCNEST" "GID" "HISTCMD" "HOST" "LINENO"
-    "LOGNAME" "MACHTYPE" "OLDPWD" "OSTYPE" "PPID" "PWD" "RANDOM" "SECONDS" "SHLVL" "TRY_BLOCK_ERROR"
-    "TRY_BLOCK_INTERRUPT" "TTY" "TTYIDLE" "UID" "USERNAME" "VENDOR" "ZSH_ARGZERO"
+    "_" "ARGC" "CPUTYPE" "DIRSTACK" "EGID" "EPOCHREALTIME" "EPOCHSECONDS" "ERRNO" "EUID"
+    "FUNCFILETRACE" "FUNCNEST" "FUNCSOURCETRACE" "FUNCSTACK" "GID" "HISTCMD" "HOST" "LINENO"
+    "LOGNAME" "MACHTYPE" "OLDPWD" "OSTYPE" "PIPESTATUS" "PPID" "PWD" "RANDOM" "SECONDS" "SHLVL"
+    "TRY_BLOCK_ERROR" "TRY_BLOCK_INTERRUPT" "TTY" "TTYIDLE" "UID" "USERNAME" "VENDOR" "ZSH_ARGZERO"
     "ZSH_EVAL_CONTEXT" "ZSH_EXECUTION_STRING" "ZSH_NAME" "ZSH_PATCHLEVEL" "ZSH_SCRIPT"
     "ZSH_SUBSHELL" "ZSH_VERSION"
-    ; ZLE parameters (set by shell)
-    "BUFFER" "CONTEXT" "CURSOR" "CUTBUFFER" "HISTNO" "ISEARCHMATCH_ACTIVE" "ISEARCHMATCH_END"
-    "ISEARCHMATCH_START" "KEYS" "KEYS_QUEUED_COUNT" "LASTABORTEDSEARCH" "LASTSEARCH" "LASTWIDGET"
-    "LBUFFER" "MARK" "MATCH" "MBEGIN" "MEND" "NUMERIC" "PENDING" "POSTDISPLAY" "PREBUFFER"
-    "PREDISPLAY" "PREFIX" "QIPREFIX" "QISUFFIX" "RBUFFER" "REGION_ACTIVE" "REPLY" "SAVECURSOR"
-    "SUFFIX" "UNDO_CHANGE_NO" "UNDO_LIMIT_NO" "WIDGET" "WIDGETFUNC" "WIDGETSTYLE" "YANK_ACTIVE"
-    "YANK_END" "YANK_START" "WORDS_STYLE" "ZLE_RECURSIVE" "ZLE_STATE"
+    ; ZLE parameters (set by shell) - https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html
+    "BUFFER" "BUFFERLINES" "CONTEXT" "CURSOR" "CUTBUFFER" "HISTNO" "ISEARCHMATCH_ACTIVE"
+    "ISEARCHMATCH_END" "ISEARCHMATCH_START" "KEYMAP" "KEYS" "KEYS_QUEUED_COUNT" "LASTABORTEDSEARCH"
+    "LASTSEARCH" "LASTWIDGET" "LBUFFER" "MARK" "MATCH" "MBEGIN" "MEND" "NUMERIC" "PENDING"
+    "POSTDISPLAY" "PREBUFFER" "PREDISPLAY" "PREFIX" "QIPREFIX" "QISUFFIX" "RBUFFER" "REGION_ACTIVE"
+    "REPLY" "SAVECURSOR" "SUFFIX" "UNDO_CHANGE_NO" "UNDO_LIMIT_NO" "WIDGET" "WIDGETFUNC"
+    "WIDGETSTYLE" "YANK_ACTIVE" "YANK_END" "YANK_START" "WORDS_STYLE" "ZLE_RECURSIVE" "ZLE_STATE"
+    ; Completion parameters - https://zsh.sourceforge.io/Doc/Release/Completion-Widgets.html
+    "CURRENT" "IPREFIX" "ISUFFIX" "compstate"
     ; https://zsh.sourceforge.io/Doc/Release/Parameters.html#Parameters-Used-By-The-Shell
     "ARGV0" "BAUD" "COLUMNS" "CORRECT_IGNORE" "CORRECT_IGNORE_FILE" "DIRSTACKSIZE" "EDITOR" "ENV"
     "FCEDIT" "FIGNORE" "FPATH" "HISTCHARS" "HISTFILE" "HISTSIZE" "KEYBOARD_HACK" "KEYTIMEOUT"
@@ -257,28 +260,32 @@
     "RPS2" "SAVEHIST" "SHELL" "SPROMPT" "STTY" "TERM" "TIMEFMT" "TMOUT" "TMPPREFIX" "VISUAL"
     "WATCH" "WATCHFMT" "WORDCHARS" "ZBEEP" "ZDOTDIR" "ZLE_LINE_ABORTED" "ZLE_REMOVE_SUFFIX_CHARS"
     "ZLE_RPROMPT_INDENT" "ZLE_SPACE_SUFFIX_CHARS"
-    ; Array/lowercase tied parameters (used by shell)
-    "argv" "cdpath" "fignore" "fpath" "histchars" "killring" "mailpath" "manpath" "match" "mbegin"
-    "mend" "module_path" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch"
-    "words" "zsh_eval_context"))
+    ; Array/lowercase tied parameters - https://zsh.sourceforge.io/Doc/Release/Variables-Index.html
+    "argv" "cdpath" "dirstack" "fignore" "fpath" "funcfiletrace" "funcsourcetrace" "funcstack"
+    "functrace" "histchars" "killring" "mailpath" "manpath" "match" "mbegin" "mend" "module_path"
+    "options" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch" "words"
+    "zsh_eval_context"))
 
 ((simple_variable_name) @variable.builtin
   (#any-of? @variable.builtin
     ; POSIX shell variables
     "CDPATH" "HOME" "IFS" "MAIL" "MAILPATH" "OPTARG" "OPTIND" "PATH" "PS1" "PS2"
     ; https://zsh.sourceforge.io/Doc/Release/Parameters.html#Parameters-Set-By-The-Shell
-    "_" "ARGC" "CPUTYPE" "EGID" "ERRNO" "EUID" "FUNCNEST" "GID" "HISTCMD" "HOST" "LINENO"
-    "LOGNAME" "MACHTYPE" "OLDPWD" "OSTYPE" "PPID" "PWD" "RANDOM" "SECONDS" "SHLVL" "TRY_BLOCK_ERROR"
-    "TRY_BLOCK_INTERRUPT" "TTY" "TTYIDLE" "UID" "USERNAME" "VENDOR" "ZSH_ARGZERO"
+    "_" "ARGC" "CPUTYPE" "DIRSTACK" "EGID" "EPOCHREALTIME" "EPOCHSECONDS" "ERRNO" "EUID"
+    "FUNCFILETRACE" "FUNCNEST" "FUNCSOURCETRACE" "FUNCSTACK" "GID" "HISTCMD" "HOST" "LINENO"
+    "LOGNAME" "MACHTYPE" "OLDPWD" "OSTYPE" "PIPESTATUS" "PPID" "PWD" "RANDOM" "SECONDS" "SHLVL"
+    "TRY_BLOCK_ERROR" "TRY_BLOCK_INTERRUPT" "TTY" "TTYIDLE" "UID" "USERNAME" "VENDOR" "ZSH_ARGZERO"
     "ZSH_EVAL_CONTEXT" "ZSH_EXECUTION_STRING" "ZSH_NAME" "ZSH_PATCHLEVEL" "ZSH_SCRIPT"
     "ZSH_SUBSHELL" "ZSH_VERSION"
-    ; ZLE parameters (set by shell)
-    "BUFFER" "CONTEXT" "CURSOR" "CUTBUFFER" "HISTNO" "ISEARCHMATCH_ACTIVE" "ISEARCHMATCH_END"
-    "ISEARCHMATCH_START" "KEYS" "KEYS_QUEUED_COUNT" "LASTABORTEDSEARCH" "LASTSEARCH" "LASTWIDGET"
-    "LBUFFER" "MARK" "MATCH" "MBEGIN" "MEND" "NUMERIC" "PENDING" "POSTDISPLAY" "PREBUFFER"
-    "PREDISPLAY" "PREFIX" "QIPREFIX" "QISUFFIX" "RBUFFER" "REGION_ACTIVE" "REPLY" "SAVECURSOR"
-    "SUFFIX" "UNDO_CHANGE_NO" "UNDO_LIMIT_NO" "WIDGET" "WIDGETFUNC" "WIDGETSTYLE" "YANK_ACTIVE"
-    "YANK_END" "YANK_START" "WORDS_STYLE" "ZLE_RECURSIVE" "ZLE_STATE"
+    ; ZLE parameters (set by shell) - https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html
+    "BUFFER" "BUFFERLINES" "CONTEXT" "CURSOR" "CUTBUFFER" "HISTNO" "ISEARCHMATCH_ACTIVE"
+    "ISEARCHMATCH_END" "ISEARCHMATCH_START" "KEYMAP" "KEYS" "KEYS_QUEUED_COUNT" "LASTABORTEDSEARCH"
+    "LASTSEARCH" "LASTWIDGET" "LBUFFER" "MARK" "MATCH" "MBEGIN" "MEND" "NUMERIC" "PENDING"
+    "POSTDISPLAY" "PREBUFFER" "PREDISPLAY" "PREFIX" "QIPREFIX" "QISUFFIX" "RBUFFER" "REGION_ACTIVE"
+    "REPLY" "SAVECURSOR" "SUFFIX" "UNDO_CHANGE_NO" "UNDO_LIMIT_NO" "WIDGET" "WIDGETFUNC"
+    "WIDGETSTYLE" "YANK_ACTIVE" "YANK_END" "YANK_START" "WORDS_STYLE" "ZLE_RECURSIVE" "ZLE_STATE"
+    ; Completion parameters - https://zsh.sourceforge.io/Doc/Release/Completion-Widgets.html
+    "CURRENT" "IPREFIX" "ISUFFIX" "compstate"
     ; https://zsh.sourceforge.io/Doc/Release/Parameters.html#Parameters-Used-By-The-Shell
     "ARGV0" "BAUD" "COLUMNS" "CORRECT_IGNORE" "CORRECT_IGNORE_FILE" "DIRSTACKSIZE" "EDITOR" "ENV"
     "FCEDIT" "FIGNORE" "FPATH" "HISTCHARS" "HISTFILE" "HISTSIZE" "KEYBOARD_HACK" "KEYTIMEOUT"
@@ -288,10 +295,11 @@
     "RPS2" "SAVEHIST" "SHELL" "SPROMPT" "STTY" "TERM" "TIMEFMT" "TMOUT" "TMPPREFIX" "VISUAL"
     "WATCH" "WATCHFMT" "WORDCHARS" "ZBEEP" "ZDOTDIR" "ZLE_LINE_ABORTED" "ZLE_REMOVE_SUFFIX_CHARS"
     "ZLE_RPROMPT_INDENT" "ZLE_SPACE_SUFFIX_CHARS"
-    ; Array/lowercase tied parameters (used by shell)
-    "argv" "cdpath" "fignore" "fpath" "histchars" "killring" "mailpath" "manpath" "match" "mbegin"
-    "mend" "module_path" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch"
-    "words" "zsh_eval_context"))
+    ; Array/lowercase tied parameters - https://zsh.sourceforge.io/Doc/Release/Variables-Index.html
+    "argv" "cdpath" "dirstack" "fignore" "fpath" "funcfiletrace" "funcsourcetrace" "funcstack"
+    "functrace" "histchars" "killring" "mailpath" "manpath" "match" "mbegin" "mend" "module_path"
+    "options" "path" "pipestatus" "prompt" "psvar" "reply" "signals" "status" "watch" "words"
+    "zsh_eval_context"))
 
 ((command
   name: (command_name
