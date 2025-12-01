@@ -1235,7 +1235,7 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "simple_variable_name",
@@ -1614,7 +1614,7 @@
       },
       "name": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "$(",
@@ -2146,7 +2146,7 @@
       },
       "name": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "$(",
@@ -2493,7 +2493,7 @@
       },
       "name": {
         "multiple": true,
-        "required": true,
+        "required": false,
         "types": [
           {
             "type": "$(",
@@ -4218,7 +4218,7 @@
     },
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "expansion_style",

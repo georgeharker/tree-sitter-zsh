@@ -303,3 +303,34 @@ default_branch="${${line#*: }// /}"
             (expansion_pattern
               name: (simple_variable_name)
               pattern: (regex))))))))
+
+================================================================================
+Parameter expansion - process id
+================================================================================
+
+echo "${$}"
+echo ${$}
+echo "$$"
+echo $$
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion)))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (variable_ref)))
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref)))

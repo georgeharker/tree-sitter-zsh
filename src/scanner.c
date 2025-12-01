@@ -495,7 +495,7 @@ static inline bool scan_raw_dollar(TSLexer *lexer, const bool *valid_symbols) {
 
     if (lexer->lookahead == '$') {
         advance(lexer);
-        lexer->result_symbol = BARE_DOLLAR;
+        lexer->result_symbol = RAW_DOLLAR;
         lexer->mark_end(lexer);
         return iswspace(lexer->lookahead) || lexer->eof(lexer) ||
                lexer->lookahead == '\"';
@@ -953,8 +953,13 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
 
+    // if (valid_symbols[RAW_DOLLAR] && !in_error_recovery(valid_symbols) &&
+    //     scan_raw_dollar(lexer, valid_symbols)) {
+    //     return true;
+    // }
+
     // Handle BARE_DOLLAR for parameter expansion: $ followed by {
-    if (valid_symbols[BARE_DOLLAR] && !in_error_recovery(valid_symbols)) {
+    if ((valid_symbols[BARE_DOLLAR] || valid_symbols[RAW_DOLLAR]) && !in_error_recovery(valid_symbols)) {
 #if DEBUG
         fprintf(stderr,
                 "SCANNER: Entering BARE_DOLLAR handler, lookahead='%c'\n",
@@ -981,6 +986,24 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             fprintf(stderr, "SCANNER: Found $ character\n");
 #endif
             advance(lexer);
+            // Spwcial case for ${$} which  must be handled with care
+            if (valid_symbols[RAW_DOLLAR] && (
+                    lexer->lookahead == ':' ||
+                    lexer->lookahead == '?' ||
+                    lexer->lookahead == '%' ||
+                    lexer->lookahead == '#' ||
+                    lexer->lookahead == '/' ||
+                    lexer->lookahead == '+' ||
+                    lexer->lookahead == '-' ||
+                    lexer->lookahead == '}' ||
+                    lexer->lookahead == '"' ||
+                    iswspace(lexer->lookahead) ||
+                    lexer->eof(lexer)
+            )) {
+                lexer->mark_end(lexer);
+                lexer->result_symbol = RAW_DOLLAR;
+                return true;
+            }
             if (lexer->lookahead != '\"') {
                 lexer->mark_end(lexer);
                 lexer->result_symbol = BARE_DOLLAR;

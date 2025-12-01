@@ -1325,15 +1325,9 @@ module.exports = grammar({
     )),
 
     _variable_ref: $ => prec.right(40, seq(
-      choice(
-        seq(
-            optional($.expansion_style),
-            $._special_variable_name,
-        ),
-        seq(
-            optional($.expansion_style),
-            $._simple_variable_name,
-        ),
+      seq(
+          optional($.expansion_style),
+          choice($._special_variable_name, $._simple_variable_name)
       ),
       optional(seq(
         '[',
@@ -1793,7 +1787,7 @@ module.exports = grammar({
 
     _simple_variable_name: $ => $.simple_variable_name,
 
-    _special_variable_name: $ => $.special_variable_name,
+    _special_variable_name: $ => choice($.special_variable_name, $._raw_dollar),
 
     _word: $ => token(seq(
       choice(

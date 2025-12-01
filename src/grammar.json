@@ -7551,43 +7551,26 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "CHOICE",
+            "type": "SEQ",
             "members": [
               {
-                "type": "SEQ",
+                "type": "CHOICE",
                 "members": [
                   {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "expansion_style"
-                      },
-                      {
-                        "type": "BLANK"
-                      }
-                    ]
+                    "type": "SYMBOL",
+                    "name": "expansion_style"
                   },
                   {
-                    "type": "SYMBOL",
-                    "name": "_special_variable_name"
+                    "type": "BLANK"
                   }
                 ]
               },
               {
-                "type": "SEQ",
+                "type": "CHOICE",
                 "members": [
                   {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "expansion_style"
-                      },
-                      {
-                        "type": "BLANK"
-                      }
-                    ]
+                    "type": "SYMBOL",
+                    "name": "_special_variable_name"
                   },
                   {
                     "type": "SYMBOL",
@@ -10525,8 +10508,17 @@
       "name": "simple_variable_name"
     },
     "_special_variable_name": {
-      "type": "SYMBOL",
-      "name": "special_variable_name"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "special_variable_name"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_raw_dollar"
+        }
+      ]
     },
     "_word": {
       "type": "TOKEN",
