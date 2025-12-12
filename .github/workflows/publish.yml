@@ -3,6 +3,25 @@ name: Publish packages
 on:
   push:
     tags: ["*"]
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: string
 
 permissions:
   contents: write
