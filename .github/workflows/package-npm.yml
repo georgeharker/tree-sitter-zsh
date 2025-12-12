@@ -36,6 +36,10 @@ on:
         description: An authentication token for npm
         required: true
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 defaults:
   run:
     shell: bash
