@@ -3,10 +3,6 @@ name: Publish packages
 on:
   push:
     tags: ["*"]
-on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       logLevel:
