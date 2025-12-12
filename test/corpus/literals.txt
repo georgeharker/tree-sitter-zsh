@@ -1755,3 +1755,21 @@ echo {0..2}{1..2}
       (brace_expression -
         (number -)
         (number -)))))
+
+==================================================
+Double-quoted string with nested single quotes and dollar (issue #20)
+==================================================
+
+echo "use this command: 's/$/aa/' "
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (string_content)
+      (string_content))))
+
+

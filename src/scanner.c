@@ -986,13 +986,15 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             fprintf(stderr, "SCANNER: Found $ character\n");
 #endif
             advance(lexer);
-            // Spwcial case for ${$} which  must be handled with care
+            // Special case for ${$} which must be handled with care
+            // The / case is for parameter expansion patterns like ${var/pattern/replacement}
+            // but should only apply inside parameter expansion context
             if (valid_symbols[RAW_DOLLAR] && (
                     lexer->lookahead == ':' ||
                     lexer->lookahead == '?' ||
                     lexer->lookahead == '%' ||
                     lexer->lookahead == '#' ||
-                    lexer->lookahead == '/' ||
+                    (lexer->lookahead == '/' && in_parameter_expansion(scanner)) ||
                     lexer->lookahead == '+' ||
                     lexer->lookahead == '-' ||
                     lexer->lookahead == '}' ||
