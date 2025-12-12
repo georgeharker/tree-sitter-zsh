@@ -18,10 +18,6 @@ on:
         - info
         - warning
         - debug
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        type: string
 
 permissions:
   contents: write
