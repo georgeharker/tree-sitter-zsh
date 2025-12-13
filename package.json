@@ -4,7 +4,7 @@
   "description": "Zsh grammar for tree-sitter",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/geohar/tree-sitter-zsh.git"
+    "url": "git+https://github.com/georgeharker/tree-sitter-zsh.git"
   },
   "license": "MIT",
   "author": {
@@ -53,5 +53,8 @@
     "prestart": "tree-sitter build --wasm",
     "start": "tree-sitter playground",
     "test": "node --test bindings/node/*_test.js"
+  },
+  "publishConfig": {
+    "provenance": true
   }
 }
