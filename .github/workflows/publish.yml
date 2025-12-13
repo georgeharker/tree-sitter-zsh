@@ -28,6 +28,8 @@ jobs:
       attestations: true
   npm:
     uses: ./.github/workflows/package-npm.yml
+    secrets:
+      NPM_TOKEN: ${{secrets.NPM_TOKEN}}
     with:
       generate: true
   crates:
@@ -38,7 +40,5 @@ jobs:
       generate: true
   pypi:
     uses: ./.github/workflows/package-pypi.yml
-    secrets:
-      PYPI_API_TOKEN: ${{secrets.PYPI_API_TOKEN}}
     with:
       generate: true

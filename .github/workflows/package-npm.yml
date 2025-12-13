@@ -31,6 +31,10 @@ on:
         description: Generate attestations for the package
         default: false
         type: boolean
+    secrets:
+      NPM_TOKEN:
+        description: An authentication token for npm
+        required: false
 
 defaults:
   run:
@@ -151,3 +155,5 @@ jobs:
         run: mv -v prebuilds/*.wasm .
       - name: Publish to npm
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
