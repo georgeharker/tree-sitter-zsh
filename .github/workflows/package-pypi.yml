@@ -23,10 +23,6 @@ on:
         description: The tree-sitter ABI version
         default: "15"
         type: string
-    secrets:
-      PYPI_API_TOKEN:
-        description: An authentication token for pypi
-        required: false
 
 jobs:
   build_sdist:
@@ -155,5 +151,3 @@ jobs:
         run: ls -l dist
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{secrets.PYPI_API_TOKEN}}

@@ -38,7 +38,5 @@ jobs:
       generate: true
   pypi:
     uses: ./.github/workflows/package-pypi.yml
-    secrets:
-      PYPI_API_TOKEN: ${{secrets.PYPI_API_TOKEN}}
     with:
       generate: true
