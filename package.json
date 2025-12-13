@@ -2,7 +2,7 @@
   "name": "tree-sitter-zsh",
   "version": "0.49.0",
   "description": "Zsh grammar for tree-sitter",
-  "repository": "git+https://github.com/geohar/tree-sitter-zsh.git",
+  "repository": "https://github.com/geohar/tree-sitter-zsh",
   "license": "MIT",
   "author": {
     "name": "George Harrison",

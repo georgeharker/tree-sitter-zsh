@@ -154,4 +154,4 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Publish to npm
-        run: npm publish --provenance --access public
+        run: npm publish --provenance
