@@ -31,10 +31,6 @@ on:
         description: Generate attestations for the package
         default: false
         type: boolean
-    secrets:
-      NODE_AUTH_TOKEN:
-        description: An authentication token for npm
-        required: true
 
 permissions:
   id-token: write  # Required for OIDC
