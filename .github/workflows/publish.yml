@@ -28,8 +28,6 @@ jobs:
       attestations: true
   npm:
     uses: ./.github/workflows/package-npm.yml
-    secrets:
-      NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
     with:
       generate: true
   crates:

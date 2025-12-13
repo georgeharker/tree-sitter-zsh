@@ -38,7 +38,7 @@ on:
 
 permissions:
   id-token: write  # Required for OIDC
-  contents: read
+  contents: write
 
 defaults:
   run:
@@ -155,6 +155,4 @@ jobs:
         continue-on-error: true
         run: mv -v prebuilds/*.wasm .
       - name: Publish to npm
-        run: npm publish
-        env:
-          NPM_CONFIG_PROVENANCE: ${{inputs.attestations}}
+        run: npm publish --provenance --access public
