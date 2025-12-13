@@ -137,6 +137,7 @@ jobs:
         with:
           cache: npm
           node-version: ${{inputs.node-version}}
+          registry-url: 'https://registry.npmjs.org'
       - name: Download binaries
         uses: actions/download-artifact@v6
         with:
