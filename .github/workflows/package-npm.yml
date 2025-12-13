@@ -149,5 +149,7 @@ jobs:
       - name: Move Wasm binaries to root
         continue-on-error: true
         run: mv -v prebuilds/*.wasm .
+      - name: Install dependencies
+        run: npm ci
       - name: Publish to npm
         run: npm publish --provenance --access public
