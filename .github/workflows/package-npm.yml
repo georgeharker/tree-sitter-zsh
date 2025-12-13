@@ -32,10 +32,6 @@ on:
         default: false
         type: boolean
 
-permissions:
-  id-token: write  # Required for OIDC
-  contents: write
-
 defaults:
   run:
     shell: bash
@@ -127,6 +123,9 @@ jobs:
     name: Publish NodeJS package
     needs: [build_wasm, build_node]
     runs-on: ubuntu-24.04
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: write
     environment:
       name: ${{inputs.environment-name}}
       url: https://www.npmjs.com/package/${{inputs.package-name}}
