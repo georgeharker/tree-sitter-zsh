@@ -232,3 +232,35 @@ for key ('^[[A' '^P' ${terminfo[kcuu1]}) bindkey ${key} history-substring-search
       argument: (expansion
         name: (simple_variable_name))
       argument: (word))))
+
+==================================================
+Select loop without in, multiple values, single statement
+==================================================
+
+select choice in "Apple" "Banana" "Orange"; do
+    echo "You picked: $choice"
+    break
+done
+
+----
+
+(program
+  (select_statement
+    (simple_variable_name)
+    (string
+      (string_content))
+    (string
+      (string_content))
+    (string
+      (string_content))
+    (do_group
+      (command
+        (command_name
+          (word))
+        (string
+          (string_content)
+          (variable_ref
+            (simple_variable_name))))
+      (command
+        (command_name
+          (word))))))

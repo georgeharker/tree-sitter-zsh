@@ -485,7 +485,7 @@ module.exports = grammar({
 
     select_statement: $ => seq(
       'select',
-      field('variable', $.variable_name),
+      field('variable', $._simple_variable_name),
       optional(seq(
         'in',
         repeat1($._literal),

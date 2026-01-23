@@ -3590,7 +3590,7 @@
         "required": true,
         "types": [
           {
-            "type": "variable_name",
+            "type": "simple_variable_name",
             "named": true
           }
         ]
