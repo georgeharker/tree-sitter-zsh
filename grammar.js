@@ -1581,11 +1581,27 @@ module.exports = grammar({
       )),
     )),
 
+    // variable_ref without trailing expansion_modifier, so that `:offset:length`
+    // separators are not greedily consumed by the variable itself.
+    _expansion_max_length_variable_ref: $ => prec.left(1, seq(
+      alias($._bare_dollar, "$"),
+      seq(
+        optional($.expansion_style),
+        choice($._special_variable_name, $._simple_variable_name)
+      ),
+      optional(seq(
+        '[',
+        optional(field('flags', $.zsh_array_subscript_flags)),
+        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
+        ']'
+      )),
+    )),
+
     _expansion_max_length: $ => seq(
       field('name', $._expansion_variable_ref),
       token.immediate(':'),
       field('offset', choice(
-        $.variable_ref,
+        alias($._expansion_max_length_variable_ref, $.variable_ref),
         $.number,
         $.arithmetic_expansion,
         $.expansion,
@@ -1597,7 +1613,7 @@ module.exports = grammar({
       optional(seq(
         token.immediate(':'),
         optional(field('length', choice(
-          $.variable_ref,
+          alias($._expansion_max_length_variable_ref, $.variable_ref),
           $.number,
           $.arithmetic_expansion,
           $.expansion,
@@ -1610,7 +1626,7 @@ module.exports = grammar({
     ),
 
     _expansion_max_length_expression: $ => choice(
-      $.variable_ref,
+      alias($._expansion_max_length_variable_ref, $.variable_ref),
       $.number,
       $.expansion,
       alias($._expansion_max_length_binary_expression, $.binary_expression),

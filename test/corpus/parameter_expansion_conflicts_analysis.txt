@@ -277,6 +277,7 @@ Substring operation - variable offset
 ================================================================================
 
 echo "${foo:$offset}"
+echo "${foo:$offset:$len}"
 
 --------------------------------------------------------------------------------
 
@@ -289,6 +290,17 @@ echo "${foo:$offset}"
         (expansion_substring
           name: (simple_variable_name)
           offset: (variable_ref
+            (simple_variable_name))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        (expansion_substring
+          name: (simple_variable_name)
+          offset: (variable_ref
+            (simple_variable_name))
+          length: (variable_ref
             (simple_variable_name)))))))
 
 ================================================================================
