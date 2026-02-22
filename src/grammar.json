@@ -3225,6 +3225,10 @@
             "name": "_param_arithmetic_literal"
           },
           {
+            "type": "SYMBOL",
+            "name": "concatenation"
+          },
+          {
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
@@ -3272,6 +3276,18 @@
           {
             "type": "SYMBOL",
             "name": "command_substitution"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "process_substitution"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "arithmetic_expansion"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "brace_expression"
           }
         ]
       }

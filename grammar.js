@@ -770,12 +770,17 @@ module.exports = grammar({
     // Arithmetic expressions for parameter subscripts (avoids subscript recursion)
     _param_arithmetic_expression: $ => prec(1, choice(
       $._param_arithmetic_literal,
+      $.concatenation,
       alias($._param_arithmetic_unary_expression, $.unary_expression),
       alias($._param_arithmetic_ternary_expression, $.ternary_expression),
       alias($._param_arithmetic_binary_expression, $.binary_expression),
       alias($._param_arithmetic_postfix_expression, $.postfix_expression),
       alias($._param_arithmetic_parenthesized_expression, $.parenthesized_expression),
       $.command_substitution,
+      $.process_substitution,
+      $.arithmetic_expansion,
+      $.brace_expression,
+
     )),
 
     _param_arithmetic_literal: $ => prec(1, choice(

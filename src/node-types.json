@@ -430,6 +430,14 @@
             "named": true
           },
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
             "named": true
           },
@@ -439,6 +447,10 @@
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -618,6 +630,10 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
             "named": true
           },
@@ -631,6 +647,10 @@
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -1301,6 +1321,10 @@
         "required": false,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -1313,7 +1337,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -1330,6 +1362,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -1415,7 +1451,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -1555,6 +1599,10 @@
         "required": false,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -1567,7 +1615,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -1584,6 +1640,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -1669,7 +1729,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -1773,6 +1841,10 @@
         "required": false,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -1785,7 +1857,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -1802,6 +1882,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -1887,7 +1971,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -2087,6 +2179,10 @@
         "required": false,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -2099,7 +2195,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -2116,6 +2220,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -2201,7 +2309,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -2400,6 +2516,10 @@
         "required": false,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -2412,7 +2532,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -2429,6 +2557,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -2548,7 +2680,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -2672,6 +2812,10 @@
         "required": false,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -2684,7 +2828,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -2701,6 +2853,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -2796,7 +2952,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -3302,6 +3466,14 @@
           "named": true
         },
         {
+          "type": "arithmetic_expansion",
+          "named": true
+        },
+        {
+          "type": "brace_expression",
+          "named": true
+        },
+        {
           "type": "command_substitution",
           "named": true
         },
@@ -3311,6 +3483,10 @@
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "process_substitution",
           "named": true
         },
         {
@@ -3379,6 +3555,14 @@
           "named": true
         },
         {
+          "type": "arithmetic_expansion",
+          "named": true
+        },
+        {
+          "type": "brace_expression",
+          "named": true
+        },
+        {
           "type": "command_substitution",
           "named": true
         },
@@ -3388,6 +3572,10 @@
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "process_substitution",
           "named": true
         },
         {
@@ -3661,6 +3849,10 @@
         "required": true,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -3673,7 +3865,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -3690,6 +3890,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -3758,6 +3962,14 @@
             "named": true
           },
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
             "named": true
           },
@@ -3767,6 +3979,10 @@
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -3796,6 +4012,14 @@
             "named": true
           },
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
             "named": true
           },
@@ -3805,6 +4029,10 @@
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -3834,6 +4062,14 @@
             "named": true
           },
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
             "named": true
           },
@@ -3843,6 +4079,10 @@
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {
@@ -4003,6 +4243,14 @@
           "named": true
         },
         {
+          "type": "arithmetic_expansion",
+          "named": true
+        },
+        {
+          "type": "brace_expression",
+          "named": true
+        },
+        {
           "type": "command_substitution",
           "named": true
         },
@@ -4012,6 +4260,10 @@
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "process_substitution",
           "named": true
         },
         {
@@ -4148,6 +4400,10 @@
         "required": false,
         "types": [
           {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "array_at",
             "named": true
           },
@@ -4160,7 +4416,15 @@
             "named": true
           },
           {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -4177,6 +4441,10 @@
           },
           {
             "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
             "named": true
           },
           {

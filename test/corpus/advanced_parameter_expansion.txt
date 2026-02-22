@@ -151,7 +151,7 @@ echo ${path/${HOME}/~}
         replacement: (regex)))))
 
 ================================================================================
-Known failure - array subscript with arithmetic (for future work)
+array subscript with arithmetic
 ================================================================================
 
 echo ${array[$((i + 1))]}
@@ -164,13 +164,10 @@ echo ${array[$((i + 1))]}
       (word))
     argument: (expansion
       name: (simple_variable_name)
-      index: (command_substitution
-        (subshell
-          (command
-            name: (command_name
-              (word))
-            argument: (word)
-            argument: (number)))))))
+      index: (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (number))))))
 
 ================================================================================
 Modifier outside brace
@@ -511,11 +508,102 @@ arg with colons
         (expansion
           style: (expansion_style)
           name: (simple_variable_name)
-          index: (word)))))
+          index: (concatenation
+            (word)
+            (word)
+            (word)
+            (word))))))
   (command
     name: (command_name
       (arithmetic_expansion
         (expansion
           style: (expansion_style)
           name: (simple_variable_name)
-          index: (word))))))
+          index: (concatenation
+            (word)
+            (word)
+            (word)))))))
+
+================================================================================
+expand range with vars
+================================================================================
+
+    local -A edge_set=()
+    for _hid in ${(k)in_degree}; do
+        local _reqs=(${=_ZDOT_HOOK_REQUIRES[$_hid]})
+        for _ph in $_reqs; do
+            # Find who provides this phase in current context
+            for _ctx in "${current_contexts[@]}"; do
+                local _prov="${_ZDOT_PHASE_PROVIDERS_BY_CONTEXT[${_ctx}:${_ph}]}"
+                if [[ -n "$_prov" ]]; then
+                    edge_set["${_prov}:${_hid}"]=1
+                fi
+            done
+        done
+    done
+
+--------------------------------------------------------------------------------
+
+(program
+  (declaration_command
+    (word)
+    (variable_assignment
+      (variable_name)
+      (array)))
+  (for_statement
+    (simple_variable_name)
+    (expansion
+      (expansion_flags)
+      (simple_variable_name))
+    (do_group
+      (declaration_command
+        (variable_assignment
+          (variable_name)
+          (array
+            (expansion
+              (expansion_style)
+              (simple_variable_name)
+              (variable_ref
+                (simple_variable_name))))))
+      (for_statement
+        (simple_variable_name)
+        (variable_ref
+          (simple_variable_name))
+        (do_group
+          (comment)
+          (for_statement
+            (simple_variable_name)
+            (string
+              (expansion
+                (simple_variable_name)
+                (array_at)))
+            (do_group
+              (declaration_command
+                (variable_assignment
+                  (variable_name)
+                  (string
+                    (expansion
+                      (simple_variable_name)
+                      (concatenation
+                        (expansion
+                          (simple_variable_name))
+                        (word)
+                        (expansion
+                          (simple_variable_name)))))))
+              (if_statement
+                (test_command
+                  (unary_expression
+                    (test_operator)
+                    (string
+                      (variable_ref
+                        (simple_variable_name)))))
+                (variable_assignment
+                  (subscript
+                    (variable_name)
+                    (string
+                      (expansion
+                        (simple_variable_name))
+                      (string_content)
+                      (expansion
+                        (simple_variable_name))))
+                  (number))))))))))
