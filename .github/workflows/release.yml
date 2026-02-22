@@ -11,6 +11,10 @@ on:
         description: Generate the parser artifacts
         default: false
         type: boolean
+      wasm:
+        description: Build and attach Wasm binaries to the release
+        default: false
+        type: boolean
       attestations:
         description: Generate attestations for artifacts
         default: false
@@ -38,6 +42,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Set up Emscripten
+        if: inputs.wasm
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: ${{inputs.emscripten-version}}
@@ -69,6 +74,7 @@ jobs:
         env:
           TREE_SITTER_ABI_VERSION: ${{inputs.abi-version}}
       - name: Build Wasm binaries
+        if: inputs.wasm
         shell: bash
         run: |-
           while read -r grammar; do
@@ -86,16 +92,26 @@ jobs:
           tar cvzf "$REPO_NAME.tar.gz" -T <(sort -u "$RUNNER_TEMP/files")
       - name: Generate attestations
         uses: actions/attest-build-provenance@v3
-        if: inputs.attestations
+        if: inputs.attestations && inputs.wasm
         with:
           subject-path: |
             *.wasm
             ${{env.REPO_NAME}}.tar.gz
+      - name: Generate attestations (tarball only)
+        uses: actions/attest-build-provenance@v3
+        if: inputs.attestations && !inputs.wasm
+        with:
+          subject-path: ${{env.REPO_NAME}}.tar.gz
       - name: Create GitHub release
         run: |-
           RELEASE_NOTE="**NOTE:** Download \`$REPO_NAME.tar.gz\` for the *complete* source code."
           RELEASE_NOTE="${RELEASE_BODY}${RELEASE_BODY:+$'\n\n---\n\n'}${RELEASE_NOTE}"
-          gh release create "$GITHUB_REF_NAME" *.wasm "$REPO_NAME.tar.gz" -n "$RELEASE_NOTE"
+          if [[ "$WASM" == "true" ]]; then
+            gh release create "$GITHUB_REF_NAME" *.wasm "$REPO_NAME.tar.gz" -n "$RELEASE_NOTE"
+          else
+            gh release create "$GITHUB_REF_NAME" "$REPO_NAME.tar.gz" -n "$RELEASE_NOTE"
+          fi
         env:
           GH_TOKEN: ${{github.token}}
           RELEASE_BODY: ${{inputs.release-body}}
+          WASM: ${{inputs.wasm}}

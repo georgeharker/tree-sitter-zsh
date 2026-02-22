@@ -25,6 +25,7 @@ jobs:
     uses: ./.github/workflows/release.yml
     with:
       generate: true
+      wasm: false
       attestations: true
   npm:
     uses: ./.github/workflows/package-npm.yml
