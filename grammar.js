@@ -1954,12 +1954,13 @@ module.exports = grammar({
         $.regex,
         $.string,
         $.raw_string,
+        alias(token.immediate(/\s+/), $.word),   // bare whitespace pattern e.g. ${VAR# }
 
         $.glob_pattern,
         $.expansion,              // ${nested} - allows ${foo/${bar}/baz}
         $.command_substitution,   // $(cmd) - allows ${foo/$(pattern)/repl}
         $.arithmetic_expansion,   // $((expr)) - allows ${foo/$((n))/repl}
-        
+
         // FIXME
         // seq($.string, $.regex),
         // seq($.regex, $.string),  // FIXME: expand
@@ -1972,7 +1973,7 @@ module.exports = grammar({
                       token.immediate('#'))),
       choice(
         alias($._regex_no_slash, $.regex),
-        token.immediate(/\s+/),
+        alias(token.immediate(/\s+/), $.word),
         alias($._expansion_word, $.word), // FIXME? YES / NO
         $.string,
         $.raw_string,

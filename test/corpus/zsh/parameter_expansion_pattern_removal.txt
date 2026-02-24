@@ -73,3 +73,22 @@ basenames=("${(@)paths:##*/}")
           (expansion_pattern
             name: (simple_variable_name)
             pattern: (regex)))))))
+
+================================================================================
+Parameter expansion - pattern removal space
+================================================================================
+
+echo "${arr[@]:# }"
+
+---
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          index: (array_at)
+          pattern: (word))))))

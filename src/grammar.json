@@ -11898,6 +11898,18 @@
               "name": "raw_string"
             },
             {
+              "type": "ALIAS",
+              "content": {
+                "type": "IMMEDIATE_TOKEN",
+                "content": {
+                  "type": "PATTERN",
+                  "value": "\\s+"
+                }
+              },
+              "named": true,
+              "value": "word"
+            },
+            {
               "type": "SYMBOL",
               "name": "glob_pattern"
             },
@@ -11978,11 +11990,16 @@
               "value": "regex"
             },
             {
-              "type": "IMMEDIATE_TOKEN",
+              "type": "ALIAS",
               "content": {
-                "type": "PATTERN",
-                "value": "\\s+"
-              }
+                "type": "IMMEDIATE_TOKEN",
+                "content": {
+                  "type": "PATTERN",
+                  "value": "\\s+"
+                }
+              },
+              "named": true,
+              "value": "word"
             },
             {
               "type": "ALIAS",

@@ -283,6 +283,7 @@ echo ${var//    /\t}
     argument: (expansion
       (expansion_pattern
         name: (simple_variable_name)
+        pattern: (word)
         replacement: (regex)))))
 
 ================================================================================
@@ -302,7 +303,8 @@ default_branch="${${line#*: }// /}"
           name: (expansion
             (expansion_pattern
               name: (simple_variable_name)
-              pattern: (regex))))))))
+              pattern: (regex)))
+          pattern: (word))))))
 
 ================================================================================
 Parameter expansion - process id
