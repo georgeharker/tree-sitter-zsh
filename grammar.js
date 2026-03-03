@@ -1960,6 +1960,7 @@ module.exports = grammar({
         $.expansion,              // ${nested} - allows ${foo/${bar}/baz}
         $.command_substitution,   // $(cmd) - allows ${foo/$(pattern)/repl}
         $.arithmetic_expansion,   // $((expr)) - allows ${foo/$((n))/repl}
+        $.ansi_c_string,          // $'...' - allows ${foo%%$'\n'}
 
         // FIXME
         // seq($.string, $.regex),
@@ -1983,7 +1984,8 @@ module.exports = grammar({
         $.dollar_variable,        // $var - allows ${foo/$pattern/repl}
         $.command_substitution,   // $(cmd) - allows ${foo/$(pattern)/repl}
         $.arithmetic_expansion,   // $((expr)) - allows ${foo/$((n))/repl}
-        
+        $.ansi_c_string,          // $'...' - allows ${foo%%$'\n'}
+
         // FIXME
         // seq($.string, alias($._regex_no_slash, $.regex)),
         // seq(alias($._regex_no_slash, $.regex), $.string),  // FIXME: expand

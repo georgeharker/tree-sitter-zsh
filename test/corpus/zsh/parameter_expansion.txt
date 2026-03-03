@@ -109,3 +109,21 @@ echo ${var:=}
     argument: (expansion
       (expansion_default
         name: (simple_variable_name)))))
+
+==================================================
+expand with ansi string
+==================================================
+
+echo "${REPLY%%$'\n'}"
+
+----------
+
+(program
+  (command
+    (command_name
+      (word))
+    (string
+      (expansion
+        (expansion_pattern
+          (simple_variable_name)
+          (ansi_c_string))))))

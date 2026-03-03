@@ -11926,6 +11926,10 @@
               "name": "arithmetic_expansion"
             },
             {
+              "type": "SYMBOL",
+              "name": "ansi_c_string"
+            },
+            {
               "type": "ALIAS",
               "content": {
                 "type": "SYMBOL",
@@ -12037,6 +12041,10 @@
             {
               "type": "SYMBOL",
               "name": "arithmetic_expansion"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "ansi_c_string"
             },
             {
               "type": "ALIAS",

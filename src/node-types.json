@@ -2117,6 +2117,10 @@
             "named": false
           },
           {
+            "type": "ansi_c_string",
+            "named": true
+          },
+          {
             "type": "arithmetic_expansion",
             "named": true
           },
@@ -2397,6 +2401,10 @@
           {
             "type": "%",
             "named": false
+          },
+          {
+            "type": "ansi_c_string",
+            "named": true
           },
           {
             "type": "arithmetic_expansion",
