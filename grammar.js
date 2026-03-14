@@ -208,6 +208,8 @@ module.exports = grammar({
     '((',                              // DOUBLE_OPENING_PAREN
     '[',                               // OPENING_BRACKET  
     '[[',                              // TEST_COMMAND_START
+    $.escaped_open_paren,              // ESCAPED_OPEN_PAREN: \(
+    $.escaped_close_paren,             // ESCAPED_CLOSE_PAREN: \)
     ']]',                              // TEST_COMMAND_END
     'esac',                            // ESAC
     $._zsh_extended_glob_flags,
@@ -1036,6 +1038,8 @@ module.exports = grammar({
       $.glob_pattern,
       $._word_or_word_with_colon,
       alias($.test_operator, $.word),
+      alias($.escaped_open_paren, $.word),
+      alias($.escaped_close_paren, $.word),
       $.string,
       $.raw_string,
       $.translated_string,

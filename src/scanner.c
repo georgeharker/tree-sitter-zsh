@@ -53,8 +53,10 @@ enum TokenType {
     OPENING_PAREN,
     DOUBLE_OPENING_PAREN,
     OPENING_BRACKET,
-    TEST_COMMAND_START, // [[
-    TEST_COMMAND_END,   // ]]
+    TEST_COMMAND_START,  // [[
+    ESCAPED_OPEN_PAREN,  // \(
+    ESCAPED_CLOSE_PAREN, // \)
+    TEST_COMMAND_END,    // ]]
     ESAC,
     ZSH_EXTENDED_GLOB_FLAGS,
     DOUBLE_QUOTE,
@@ -108,6 +110,8 @@ const char *TokenNames[] = {
     "DOUBLE_OPENING_PAREN",
     "OPENING_BRACKET",
     "TEST_COMMAND_START",
+    "ESCAPED_OPEN_PAREN",
+    "ESCAPED_CLOSE_PAREN",
     "TEST_COMMAND_END",
     "ESAC",
     "ZSH_EXTENDED_GLOB_FLAGS",
@@ -757,6 +761,13 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                     lexer->result_symbol = concat_type;
                     return true;
                 }
+                // \( and \) are escaped parens (e.g. find ... \( ... \)).
+                // Return false here so tree-sitter rewinds to the mark_end
+                // position (before \), letting the internal grammar lexer
+                // match \( as a word token via seq('\\', noneOf('\\s')).
+                if (lexer->lookahead == '(' || lexer->lookahead == ')') {
+                    return false;
+                }
                 if (lexer->eof(lexer)) {
                     return false;
                 }
@@ -891,9 +902,19 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             return true;
         } else if (lexer->lookahead == '\\') {
             lexer->mark_end(lexer);
-            skip(lexer);
-            if (lexer->lookahead == '\n') {
-                // Just ignore the newline
+            advance(lexer);
+            if (lexer->lookahead == '(' || lexer->lookahead == ')') {
+                // \( and \) are escaped parens used as word characters
+                // (e.g. find ... \( ... \)). Emit as distinct tokens so
+                // the grammar can treat them as word tokens.
+                bool is_open = lexer->lookahead == '(';
+                advance(lexer);
+                lexer->mark_end(lexer);
+                lexer->result_symbol =
+                    is_open ? ESCAPED_OPEN_PAREN : ESCAPED_CLOSE_PAREN;
+                return true;
+            } else if (lexer->lookahead == '\n') {
+                // Line continuation: skip the backslash and newline
                 skip(lexer);
                 skip_ws(lexer);
             } else {

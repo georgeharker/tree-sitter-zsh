@@ -108,3 +108,38 @@ bg %2
     name: (command_name
       (word))
     argument: (word)))
+
+==================================================
+escaped parentheses as word characters
+==================================================
+
+find . \( -name "*.zsh" \)
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (word)
+    argument: (word)
+    argument: (string
+      (string_content))
+    argument: (word)))
+
+==================================================
+escaped parentheses adjacent to word
+==================================================
+
+echo \(foo\)
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (word)
+      (word))))

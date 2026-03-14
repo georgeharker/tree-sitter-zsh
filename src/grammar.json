@@ -5631,6 +5631,24 @@
           "value": "word"
         },
         {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "escaped_open_paren"
+          },
+          "named": true,
+          "value": "word"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "escaped_close_paren"
+          },
+          "named": true,
+          "value": "word"
+        },
+        {
           "type": "SYMBOL",
           "name": "string"
         },
@@ -10798,6 +10816,14 @@
         {
           "type": "STRING",
           "value": "&"
+        },
+        {
+          "type": "STRING",
+          "value": "&!"
+        },
+        {
+          "type": "STRING",
+          "value": "&|"
         }
       ]
     },
@@ -10819,6 +10845,14 @@
         {
           "type": "STRING",
           "value": "&"
+        },
+        {
+          "type": "STRING",
+          "value": "&!"
+        },
+        {
+          "type": "STRING",
+          "value": "&|"
         }
       ]
     },
@@ -12367,6 +12401,14 @@
     {
       "type": "STRING",
       "value": "[["
+    },
+    {
+      "type": "SYMBOL",
+      "name": "escaped_open_paren"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "escaped_close_paren"
     },
     {
       "type": "STRING",
