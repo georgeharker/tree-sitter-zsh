@@ -131,11 +131,11 @@ typedef enum {
     CTX_PARAMETER_PATTERN_SUFFIX =
         6, // ${var%pattern} and ${var#pattern} - suffix/prefix removal
     CTX_PARAMETER_PATTERN_SUBSTITUTE =
-        7,            // ${var/pattern/replacement} - substitution
-    CTX_STRING = 8,   // "..." string context
-    CTX_COMPOUND = 9, // "{ x; y; z; }"
-    CTX_BACKTICK = 10, // `a b c`
-    CTX_RAW_STRING = 11,   // '...' string context
+        7,               // ${var/pattern/replacement} - substitution
+    CTX_STRING = 8,      // "..." string context
+    CTX_COMPOUND = 9,    // "{ x; y; z; }"
+    CTX_BACKTICK = 10,   // `a b c`
+    CTX_RAW_STRING = 11, // '...' string context
 } context_type_t;
 
 const char *ContextNames[] = {
@@ -675,7 +675,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     bool was_just_newline = scanner->just_newline;
     scanner->just_newline = false;
 
-    if ((valid_symbols[CONCAT] || valid_symbols[CONCAT_REGEX]) && !in_error_recovery(valid_symbols)) {
+    if ((valid_symbols[CONCAT] || valid_symbols[CONCAT_REGEX]) &&
+        !in_error_recovery(valid_symbols)) {
         context_type_t ctx = get_current_context(scanner);
 #if DEBUG
         fprintf(stderr,
@@ -690,9 +691,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                (valid_symbols[CLOSING_PAREN] ||
                 valid_symbols[CLOSING_DOUBLE_PAREN])) ||
               (lexer->lookahead == '(' && !valid_symbols[CONCAT_REGEX]) ||
-              lexer->lookahead == ';' ||
-              lexer->lookahead == '&' || lexer->lookahead == '|' ||
-              lexer->lookahead == '{' ||
+              lexer->lookahead == ';' || lexer->lookahead == '&' ||
+              lexer->lookahead == '|' || lexer->lookahead == '{' ||
               // prevent concat over newline after string ends
               (was_just_exited_string && lexer->lookahead == '\n') ||
               (lexer->lookahead == '"' && ctx == CTX_STRING) ||
@@ -700,22 +700,24 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               // Prevent recursion on / pattern
               (lexer->lookahead == '/' &&
                ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE) ||
-              (lexer->lookahead == '}' && (in_parameter_expansion(scanner) ||
-                                           get_current_context(scanner) == CTX_COMPOUND)) ||
+              (lexer->lookahead == '}' &&
+               (in_parameter_expansion(scanner) ||
+                get_current_context(scanner) == CTX_COMPOUND)) ||
               // Split subscript out
               (lexer->lookahead == ']' && valid_symbols[CLOSING_BRACKET]) ||
               (lexer->lookahead == '[' &&
-               (in_parameter_expansion(scanner) || was_just_variable_name)) || // Suppress CONCAT after $var when [
+               (in_parameter_expansion(scanner) ||
+                was_just_variable_name)) || // Suppress CONCAT after $var when [
               (lexer->lookahead == ':' &&
-               was_just_variable_name) ||  // Suppress CONCAT after $var when :
-              (lexer->lookahead == '`' && ctx == CTX_BACKTICK)
-              )) {
+               was_just_variable_name) || // Suppress CONCAT after $var when :
+              (lexer->lookahead == '`' && ctx == CTX_BACKTICK))) {
             // follows
 #if DEBUG
             fprintf(stderr, "SCANNER: CONCAT\n");
 #endif
 
-            TSSymbol concat_type = valid_symbols[CONCAT_REGEX] ? CONCAT_REGEX : CONCAT;
+            TSSymbol concat_type =
+                valid_symbols[CONCAT_REGEX] ? CONCAT_REGEX : CONCAT;
             // So for a`b`, we want to return a concat. We check if the
             // 2nd backtick has whitespace after it, and if it does we
             // return concat.
@@ -723,7 +725,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 lexer->mark_end(lexer);
                 advance(lexer);
                 bool was_escape = false;
-                while ((lexer->lookahead != '`' || was_escape) && !lexer->eof(lexer)) {
+                while ((lexer->lookahead != '`' || was_escape) &&
+                       !lexer->eof(lexer)) {
                     advance(lexer);
                     was_escape = false;
                     if (lexer->lookahead == '\\') {
@@ -886,8 +889,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->mark_end(lexer);
             lexer->result_symbol = NEWLINE;
             return true;
-        }
-        else if (lexer->lookahead == '\\') {
+        } else if (lexer->lookahead == '\\') {
             lexer->mark_end(lexer);
             skip(lexer);
             if (lexer->lookahead == '\n') {
@@ -895,8 +897,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 skip(lexer);
                 skip_ws(lexer);
             } else {
-              // we consumed things we should not have
-              lexer->mark_end(lexer);
+                // we consumed things we should not have
+                lexer->mark_end(lexer);
             }
         }
     }
@@ -959,7 +961,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // }
 
     // Handle BARE_DOLLAR for parameter expansion: $ followed by {
-    if ((valid_symbols[BARE_DOLLAR] || valid_symbols[RAW_DOLLAR]) && !in_error_recovery(valid_symbols)) {
+    if ((valid_symbols[BARE_DOLLAR] || valid_symbols[RAW_DOLLAR]) &&
+        !in_error_recovery(valid_symbols)) {
 #if DEBUG
         fprintf(stderr,
                 "SCANNER: Entering BARE_DOLLAR handler, lookahead='%c'\n",
@@ -987,21 +990,22 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #endif
             advance(lexer);
             // Special case for ${$} which must be handled with care
-            // The / case is for parameter expansion patterns like ${var/pattern/replacement}
-            // but should only apply inside parameter expansion context
-            if (valid_symbols[RAW_DOLLAR] && (
-                    lexer->lookahead == ':' ||
-                    lexer->lookahead == '?' ||
-                    lexer->lookahead == '%' ||
-                    lexer->lookahead == '#' ||
-                    (lexer->lookahead == '/' && in_parameter_expansion(scanner)) ||
-                    lexer->lookahead == '+' ||
-                    lexer->lookahead == '-' ||
-                    lexer->lookahead == '}' ||
-                    lexer->lookahead == '"' ||
-                    iswspace(lexer->lookahead) ||
-                    lexer->eof(lexer)
-            )) {
+            // The / case is for parameter expansion patterns like
+            // ${var/pattern/replacement} but should only apply inside parameter
+            // expansion context In string context, ?, # and - are special
+            // variable names ($?, $#, $-) not bare dollar signs, so RAW_DOLLAR
+            // must not be emitted for them there.
+            bool in_string = get_current_context(scanner) == CTX_STRING;
+            if (valid_symbols[RAW_DOLLAR] &&
+                (lexer->lookahead == ':' ||
+                 (lexer->lookahead == '?' && !in_string) ||
+                 lexer->lookahead == '%' ||
+                 (lexer->lookahead == '#' && !in_string) ||
+                 (lexer->lookahead == '/' && in_parameter_expansion(scanner)) ||
+                 lexer->lookahead == '+' ||
+                 (lexer->lookahead == '-' && !in_string) ||
+                 lexer->lookahead == '}' || lexer->lookahead == '"' ||
+                 iswspace(lexer->lookahead) || lexer->eof(lexer))) {
                 lexer->mark_end(lexer);
                 lexer->result_symbol = RAW_DOLLAR;
                 return true;
@@ -1078,9 +1082,11 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
          valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) &&
         !in_error_recovery(valid_symbols)) {
         skip_ws(lexer);
-        // If a regex is allowed, only proceed with analysis if a bare_dollar preceedes
-        if (lexer->lookahead == '(' && (valid_symbols[OPENING_PAREN] &&
-                (was_just_bare_dollar || !valid_symbols[REGEX_NO_SPACE]))) {
+        // If a regex is allowed, only proceed with analysis if a bare_dollar
+        // preceedes
+        if (lexer->lookahead == '(' &&
+            (valid_symbols[OPENING_PAREN] &&
+             (was_just_bare_dollar || !valid_symbols[REGEX_NO_SPACE]))) {
             advance(lexer);
             lexer->mark_end(lexer);
 
@@ -1116,7 +1122,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 lexer->result_symbol = DOUBLE_OPENING_PAREN;
                 return true;
             } else if ((valid_symbols[OPENING_PAREN] ||
-                        valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) && !valid_symbols[REGEX_NO_SPACE]) {
+                        valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) &&
+                       !valid_symbols[REGEX_NO_SPACE]) {
                 // Handle ZSH_EXTENDED_GLOB_FLAGS - (#flags) patterns
                 if (lexer->lookahead == '#' &&
                     valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) {
@@ -1213,7 +1220,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #endif
                 enter_context(scanner, CTX_ARITHMETIC);
                 return true;
-            } else if (valid_symbols[OPENING_BRACKET] && !valid_symbols[REGEX_NO_SPACE]) {
+            } else if (valid_symbols[OPENING_BRACKET] &&
+                       !valid_symbols[REGEX_NO_SPACE]) {
                 // This is single [
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false; // Reset flag
@@ -1653,8 +1661,9 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->mark_end(lexer);
             advance(lexer);
             if (lexer->lookahead == '=' || lexer->lookahead == '[' ||
-                (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC) || lexer->lookahead == '-' ||
-                lexer->lookahead == '%' || lexer->lookahead == '/') {
+                (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC) ||
+                lexer->lookahead == '-' || lexer->lookahead == '%' ||
+                lexer->lookahead == '/') {
                 return false;
             }
             if (valid_symbols[EXTGLOB_PATTERN] && iswspace(lexer->lookahead)) {
@@ -1664,7 +1673,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             }
         }
 
-        if ((valid_symbols[HEREDOC_ARROW] || valid_symbols[HEREDOC_ARROW_DASH] || valid_symbols[HERESTRING]) &&
+        if ((valid_symbols[HEREDOC_ARROW] ||
+             valid_symbols[HEREDOC_ARROW_DASH] || valid_symbols[HERESTRING]) &&
             lexer->lookahead == '<') {
             advance(lexer);
             if (lexer->lookahead == '<') {
@@ -1710,7 +1720,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         if (iswdigit(lexer->lookahead)) {
             advance(lexer);
         } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
-            (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC)) {
+                   (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC)) {
             is_number = false;
             advance(lexer);
         } else {
@@ -1729,7 +1739,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         for (;;) {
             if (iswdigit(lexer->lookahead)) {
                 advance(lexer);
-            } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_'  ||
+            } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
                        (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC)) {
                 is_number = false;
                 advance(lexer);
@@ -1846,7 +1856,7 @@ regex:
             }
 
 #if DEBUG
-        fprintf(stderr, "DEBUG: regex scan start\n");
+            fprintf(stderr, "DEBUG: regex scan start\n");
 #endif
 
             lexer->mark_end(lexer);
@@ -1899,7 +1909,7 @@ regex:
                     if (state.in_single_quote) {
                         state.in_single_quote = false;
 #if DEBUG
-        fprintf(stderr, "DEBUG: regex scan exit raw string\n");
+                        fprintf(stderr, "DEBUG: regex scan exit raw string\n");
 #endif
 
                         // Track entering parameter expansion context
@@ -1907,12 +1917,12 @@ regex:
                     } else {
                         state.in_single_quote = true;
 #if DEBUG
-        fprintf(stderr, "DEBUG: regex scan entering raw string\n");
+                        fprintf(stderr,
+                                "DEBUG: regex scan entering raw string\n");
 #endif
 
                         // Track entering parameter expansion context
                         enter_context(scanner, CTX_RAW_STRING);
-
                     }
                     advance(lexer);
                     lexer->mark_end(lexer);
@@ -2017,7 +2027,7 @@ regex:
             }
 
 #if DEBUG
-        fprintf(stderr, "DEBUG: regex scan returning regex\n");
+            fprintf(stderr, "DEBUG: regex scan returning regex\n");
 #endif
 
             return true;
