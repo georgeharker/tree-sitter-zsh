@@ -1839,8 +1839,8 @@ module.exports = grammar({
       $.word,
       alias($._word_with_colon, $.word)),
 
-    _c_terminator: _ => choice(';', /\n/, '&'),
-    _terminator: _ => choice(';', ';;', /\n/, '&'),
+    _c_terminator: _ => choice(';', /\n/, '&', '&!', '&|'),
+    _terminator: _ => choice(';', ';;', /\n/, '&', '&!', '&|'),
     
     // Parameter-safe expression system (excludes glob_pattern)
     _param_expression: $ => choice(

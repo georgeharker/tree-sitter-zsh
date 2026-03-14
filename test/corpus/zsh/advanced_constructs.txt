@@ -54,6 +54,34 @@ sleep 10 &
     argument: (number)))
 
 ==================================================
+background and disown (ksh style)
+==================================================
+
+sleep 10 &!
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (number)))
+
+==================================================
+background and disown (zsh style)
+==================================================
+
+sleep 10 &|
+
+----------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (number)))
+
+==================================================
 foreground job
 ==================================================
 
