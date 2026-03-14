@@ -1372,8 +1372,10 @@ module.exports = grammar({
     // Visible rule for parameter expansion substring operations
     expansion_substring: $ => $._expansion_max_length,
     
+    expansion_default_list: $ => repeat1($._literal),
+
     _expansion_default_value: $ => choice(
-      $._literal,
+      $.expansion_default_list,
       $._empty_value
     ),
 

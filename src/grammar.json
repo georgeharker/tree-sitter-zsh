@@ -7805,12 +7805,19 @@
       "type": "SYMBOL",
       "name": "_expansion_max_length"
     },
+    "expansion_default_list": {
+      "type": "REPEAT1",
+      "content": {
+        "type": "SYMBOL",
+        "name": "_literal"
+      }
+    },
     "_expansion_default_value": {
       "type": "CHOICE",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "_literal"
+          "name": "expansion_default_list"
         },
         {
           "type": "SYMBOL",

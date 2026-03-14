@@ -68,7 +68,8 @@ echo ${var:-default}
     argument: (expansion
       (expansion_default
         name: (simple_variable_name)
-        default: (word)))))
+        default: (expansion_default_list
+          (word))))))
 
 ==================================================
 expand with default alternate
@@ -85,7 +86,8 @@ echo ${var:=default}
     argument: (expansion
       (expansion_default
         name: (simple_variable_name)
-        default: (word)))))
+        default: (expansion_default_list
+          (word))))))
 
 ==================================================
 expand with default blank

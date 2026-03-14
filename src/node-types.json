@@ -1817,11 +1817,7 @@
         "required": false,
         "types": [
           {
-            "type": "_primary_expression",
-            "named": true
-          },
-          {
-            "type": "concatenation",
+            "type": "expansion_default_list",
             "named": true
           }
         ]
@@ -2048,6 +2044,25 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "expansion_default_list",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "_primary_expression",
+          "named": true
+        },
+        {
+          "type": "concatenation",
+          "named": true
+        }
+      ]
     }
   },
   {

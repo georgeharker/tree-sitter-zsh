@@ -303,7 +303,8 @@ Multiple modifiers
               name: (expansion
                 flags: (expansion_flags)
                 (expansion_default
-                  default: (word)))
+                  default: (expansion_default_list
+                    (word))))
               modifier: (expansion_modifier))))))))
 
 ================================================================================
