@@ -1008,11 +1008,12 @@ module.exports = grammar({
       alias($._regex_no_space, $.regex), // Use no-space regex to avoid consuming ]] terminator
       $.word,                     // Simple words
       $.string,                   // "quoted strings" with full internal complexity
-      $.raw_string,              // 'raw strings' 
-      $.expansion,               // ${foo:-default} with full parameter expansion complexity
-      $.variable_ref,            // $var with full variable reference complexity
-      $.command_substitution,    // $(cmd) with full command complexity
-      $.arithmetic_expansion,    // $((expr)) with full arithmetic complexity
+      $.raw_string,               // 'raw strings'
+      $.ansi_c_string,            // $'\t' style literals
+      $.expansion,                // ${foo:-default} with full parameter expansion complexity
+      $.variable_ref,             // $var with full variable reference complexity
+      $.command_substitution,     // $(cmd) with full command complexity
+      $.arithmetic_expansion,     // $((expr)) with full arithmetic complexity
     ),
 
     // Regex concatenation - simple structure, complex components

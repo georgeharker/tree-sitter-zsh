@@ -5514,6 +5514,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "ansi_c_string"
+        },
+        {
+          "type": "SYMBOL",
           "name": "expansion"
         },
         {

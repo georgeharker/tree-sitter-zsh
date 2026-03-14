@@ -162,3 +162,24 @@ echo foo \
     redirect: (file_redirect
       descriptor: (file_descriptor)
       destination: (word))))
+
+==================================================
+ansi_c_string in regex match expression
+==================================================
+
+[[ "$x" =~ "^foo"$'\t'"bar" ]]
+
+----------
+
+(program
+  (test_command
+    (binary_expression
+      left: (string
+        (variable_ref
+          (simple_variable_name)))
+      right: (concatenation
+        (string
+          (string_content))
+        (ansi_c_string)
+        (string
+          (string_content))))))
