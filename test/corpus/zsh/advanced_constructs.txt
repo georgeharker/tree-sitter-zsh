@@ -143,3 +143,22 @@ echo \(foo\)
     argument: (concatenation
       (word)
       (word))))
+
+==================================================
+file redirect with descriptor on continuation line
+==================================================
+
+echo foo \
+    2>/dev/null
+
+----------
+
+(program
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      descriptor: (file_descriptor)
+      destination: (word))))

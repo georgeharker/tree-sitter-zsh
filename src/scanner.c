@@ -1771,6 +1771,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
         if (is_number && valid_symbols[FILE_DESCRIPTOR] &&
             (lexer->lookahead == '>' || lexer->lookahead == '<')) {
+            lexer->mark_end(lexer);
             lexer->result_symbol = FILE_DESCRIPTOR;
             return true;
         }
