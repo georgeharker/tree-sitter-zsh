@@ -1618,6 +1618,11 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->lookahead == '$' || lexer->lookahead == '_' ||
             iswdigit(lexer->lookahead)) {
             advance(lexer);
+            // Consume additional digits for multi-digit positional params
+            // (${10}, ${10:-}, etc.)
+            while (iswdigit(lexer->lookahead)) {
+                advance(lexer);
+            }
             lexer->mark_end(lexer);
             was_just_bare_dollar = scanner->just_returned_bare_dollar = false;
             was_just_variable_name = scanner->just_returned_variable_name =

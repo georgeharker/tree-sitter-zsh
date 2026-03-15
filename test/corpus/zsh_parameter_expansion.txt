@@ -337,3 +337,32 @@ echo $$
     name: (command_name
       (word))
     argument: (variable_ref)))
+
+================================================================================
+Two-digit positional parameters
+================================================================================
+
+x=${10:-}
+echo ${10}
+y=${10:-default}
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_default
+        name: (special_variable_name))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (special_variable_name)))
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_default
+        name: (special_variable_name)
+        default: (expansion_default_list
+          (word))))))
