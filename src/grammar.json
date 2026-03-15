@@ -3338,6 +3338,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "glob_pattern"
+          },
+          {
+            "type": "SYMBOL",
             "name": "_word_or_word_with_colon"
           }
         ]

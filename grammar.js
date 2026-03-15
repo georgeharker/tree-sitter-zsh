@@ -799,6 +799,7 @@ module.exports = grammar({
       $.expansion,
       $.variable_name,
       $.string,
+      $.glob_pattern,           // Allow glob patterns as subscript indices: var[(I)foo_*]
       $._word_or_word_with_colon  // Allow bare identifiers in parameter arithmetic context
     )),
 

@@ -366,3 +366,29 @@ y=${10:-default}
         name: (special_variable_name)
         default: (expansion_default_list
           (word))))))
+
+================================================================================
+Array subscript with glob pattern index
+================================================================================
+
+echo "${parameters[(I)foo_*]}"
+unset "${(@k)parameters[(I)_dotfiler_plan_*]}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        name: (simple_variable_name)
+        flags: (zsh_array_subscript_flags)
+        index: (glob_pattern))))
+  (unset_command
+    (string
+      (expansion
+        flags: (expansion_flags)
+        name: (simple_variable_name)
+        flags: (zsh_array_subscript_flags)
+        index: (glob_pattern)))))

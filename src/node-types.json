@@ -446,6 +446,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -647,6 +651,10 @@
           },
           {
             "type": "extglob_pattern",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
@@ -1357,6 +1365,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -1472,6 +1484,10 @@
           },
           {
             "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
@@ -1639,6 +1655,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -1754,6 +1774,10 @@
           },
           {
             "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
@@ -1881,6 +1905,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -1996,6 +2024,10 @@
           },
           {
             "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
@@ -2246,6 +2278,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -2361,6 +2397,10 @@
           },
           {
             "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
@@ -2591,6 +2631,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -2743,6 +2787,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -2891,6 +2939,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -3016,6 +3068,10 @@
           },
           {
             "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
@@ -3537,6 +3593,10 @@
           "named": true
         },
         {
+          "type": "glob_pattern",
+          "named": true
+        },
+        {
           "type": "number",
           "named": true
         },
@@ -3623,6 +3683,10 @@
         },
         {
           "type": "expansion",
+          "named": true
+        },
+        {
+          "type": "glob_pattern",
           "named": true
         },
         {
@@ -3936,6 +4000,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -4033,6 +4101,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -4083,6 +4155,10 @@
             "named": true
           },
           {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
             "type": "number",
             "named": true
           },
@@ -4130,6 +4206,10 @@
           },
           {
             "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
@@ -4318,6 +4398,10 @@
           "named": true
         },
         {
+          "type": "glob_pattern",
+          "named": true
+        },
+        {
           "type": "number",
           "named": true
         },
@@ -4488,6 +4572,10 @@
           },
           {
             "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
             "named": true
           },
           {
