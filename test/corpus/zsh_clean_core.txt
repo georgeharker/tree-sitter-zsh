@@ -279,3 +279,20 @@ cat <<< "$(date)"
           (command
             name: (command_name
               (word))))))))
+
+================================================================================
+Assignment to special parameter 0
+================================================================================
+
+0=${(%):-%N}
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      flags: (expansion_flags)
+      (expansion_default
+        default: (expansion_default_list
+          (word))))))

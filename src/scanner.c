@@ -1673,6 +1673,33 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
 
         context_type_t ctx = get_current_context(scanner);
+        // Allow a single digit (e.g. '0', '1') as a VARIABLE_NAME when
+        // immediately followed by '=' or '[' so that assignments like
+        // 0=${(%):-%N} are parsed correctly.  Only do this when VARIABLE_NAME
+        // is actually valid (not for FILE_DESCRIPTOR or HEREDOC_ARROW paths).
+        if (valid_symbols[VARIABLE_NAME] && !valid_symbols[EXPANSION_WORD] &&
+            iswdigit(lexer->lookahead)) {
+            uint32_t digit = lexer->lookahead;
+            lexer->mark_end(lexer);
+            advance(lexer);
+            if (lexer->lookahead == '=' || lexer->lookahead == '[') {
+                lexer->mark_end(lexer);
+#if DEBUG
+                fprintf(stderr, "SCANNER: VARIABLE_NAME single-digit %c=\n",
+                        (char)digit);
+#endif
+                (void)digit;
+                lexer->result_symbol = VARIABLE_NAME;
+                was_just_bare_dollar = scanner->just_returned_bare_dollar =
+                    false;
+                scanner->just_returned_variable_name = true;
+                return true;
+            }
+            // Digit not followed by = or [ — fall through to let the normal
+            // VARIABLE_NAME loop or FILE_DESCRIPTOR handler deal with it.
+            // Reset so the rejection block below can work as usual.
+        }
+
         // no '*', '@', '?', '-', '$', '0', '_', '#'
         if (!valid_symbols[EXPANSION_WORD] &&
             (lexer->lookahead == '*' || lexer->lookahead == '@' ||

@@ -264,3 +264,49 @@ done
       (command
         (command_name
           (word))))))
+
+================================================================================
+Case statement with numeric glob ranges
+================================================================================
+
+case $arg in
+  <->) echo "any non-negative" ;;
+  <1-10>) echo "one to ten" ;;
+  <20->) echo "twenty or more" ;;
+  <-5>) echo "five or less" ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (glob_pattern)
+      (command
+        name: (command_name
+          (word))
+        argument: (string
+          (string_content))))
+    (case_item
+      value: (glob_pattern)
+      (command
+        name: (command_name
+          (word))
+        argument: (string
+          (string_content))))
+    (case_item
+      value: (glob_pattern)
+      (command
+        name: (command_name
+          (word))
+        argument: (string
+          (string_content))))
+    (case_item
+      value: (glob_pattern)
+      (command
+        name: (command_name
+          (word))
+        argument: (string
+          (string_content))))))
