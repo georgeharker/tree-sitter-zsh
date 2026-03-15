@@ -2248,19 +2248,14 @@
                       "value": "function"
                     },
                     {
-                      "type": "FIELD",
-                      "name": "name",
+                      "type": "REPEAT1",
                       "content": {
-                        "type": "CHOICE",
-                        "members": [
-                          {
-                            "type": "SYMBOL",
-                            "name": "_word_or_word_with_colon"
-                          },
-                          {
-                            "type": "BLANK"
-                          }
-                        ]
+                        "type": "FIELD",
+                        "name": "name",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "_word_or_word_with_colon"
+                        }
                       }
                     },
                     {

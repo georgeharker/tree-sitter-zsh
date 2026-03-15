@@ -304,6 +304,30 @@ static inline void skip_wsnl(TSLexer *lexer) {
     }
 }
 
+// Like skip_wsnl but also skips backslash-newline continuations (\ at end of
+// line)
+static inline void skip_wsnl_continuation(TSLexer *lexer) {
+    for (;;) {
+        while (iswspace(lexer->lookahead) && !lexer->eof(lexer)) {
+            skip(lexer);
+        }
+        if (lexer->lookahead == '\\') {
+            // Peek: consume \ then check if next char is \n
+            skip(lexer);
+            if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+                // backslash-newline continuation: skip the newline too
+                skip(lexer);
+            } else {
+                // Not a continuation — we consumed \ but it wasn't \<newline>
+                // This shouldn't happen in well-formed zsh but stop here
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+}
+
 static inline bool in_error_recovery(const bool *valid_symbols) {
     return valid_symbols[ERROR_RECOVERY];
 }
@@ -1086,8 +1110,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 return true;
             }
         }
-        // If not after $, we may need to consume spaces
-        skip_ws(lexer);
+        // If not after $, we may need to consume spaces, newlines, and
+        // backslash-newline continuations
+        // (e.g. function body brace on its own line after names)
+        skip_wsnl_continuation(lexer);
         if (lexer->lookahead == '{') {
             advance(lexer);
             lexer->result_symbol = BRACE_START;

@@ -567,7 +567,7 @@ module.exports = grammar({
       choice(
         seq(
           'function',
-          field('name', optional($._word_or_word_with_colon)),
+          repeat1(field('name', $._word_or_word_with_colon)),
           optional(seq(
              '(', ')')),
         ),

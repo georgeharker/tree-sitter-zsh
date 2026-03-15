@@ -296,3 +296,39 @@ Assignment to special parameter 0
       (expansion_default
         default: (expansion_default_list
           (word))))))
+
+================================================================================
+Multi-name function definition (same line)
+================================================================================
+
+function foo bar {}
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_definition
+    name: (word)
+    name: (word)
+    body: (compound_statement)))
+
+================================================================================
+Multi-name function definition (backslash-newline continuation)
+================================================================================
+
+function foo \
+    bar \
+{
+    echo hi
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_definition
+    name: (word)
+    name: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))))
