@@ -815,7 +815,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_c_terminator"
+          "name": "_terminator"
         },
         {
           "type": "FIELD",
@@ -856,7 +856,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_c_terminator"
+          "name": "_terminator"
         },
         {
           "type": "FIELD",
@@ -2118,12 +2118,22 @@
                   "type": "CHOICE",
                   "members": [
                     {
-                      "type": "STRING",
-                      "value": ";&"
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "STRING",
+                        "value": ";&"
+                      },
+                      "named": true,
+                      "value": "case_fallthrough"
                     },
                     {
-                      "type": "STRING",
-                      "value": ";;&"
+                      "type": "ALIAS",
+                      "content": {
+                        "type": "STRING",
+                        "value": ";|"
+                      },
+                      "named": true,
+                      "value": "case_test_next"
                     }
                   ]
                 }
@@ -2217,8 +2227,21 @@
               "type": "PREC",
               "value": 1,
               "content": {
-                "type": "STRING",
-                "value": ";;"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ";;"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": ";&"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": ";|"
+                  }
+                ]
               }
             },
             {
@@ -10801,41 +10824,12 @@
         }
       ]
     },
-    "_c_terminator": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "STRING",
-          "value": ";"
-        },
-        {
-          "type": "PATTERN",
-          "value": "\\n"
-        },
-        {
-          "type": "STRING",
-          "value": "&"
-        },
-        {
-          "type": "STRING",
-          "value": "&!"
-        },
-        {
-          "type": "STRING",
-          "value": "&|"
-        }
-      ]
-    },
     "_terminator": {
       "type": "CHOICE",
       "members": [
         {
           "type": "STRING",
           "value": ";"
-        },
-        {
-          "type": "STRING",
-          "value": ";;"
         },
         {
           "type": "PATTERN",

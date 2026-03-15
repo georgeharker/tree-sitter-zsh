@@ -1022,11 +1022,19 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 "valid_symbols[CONCAT]=%d, lookahead='%c'\n",
                 valid_symbols[CONCAT], lexer->lookahead);
 #endif
-        if (!valid_symbols[CONCAT] && iswspace(lexer->lookahead)) {
+        if (iswspace(lexer->lookahead)) {
+            if (!valid_symbols[CONCAT]) {
 #if DEBUG
-            fprintf(stderr, "SCANNER: BARE_DOLLAR skipping whitespace\n");
+                fprintf(stderr, "SCANNER: BARE_DOLLAR skipping whitespace\n");
 #endif
-            skip_wsnl(lexer);
+                skip_wsnl(lexer);
+            } else if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+                // Skip newlines even in CONCAT context so that expansions on
+                // separate lines inside array literals are recognised.
+                // Spaces and tabs are intentionally NOT skipped here because
+                // they are meaningful for word concatenation.
+                skip_wsnl(lexer);
+            }
         }
 
         if (lexer->lookahead == '$') {

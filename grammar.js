@@ -422,9 +422,9 @@ module.exports = grammar({
     ),
     _for_body: $ => seq(
       field('initializer', commaSep($._c_expression)),
-      $._c_terminator,
+      $._terminator,
       field('condition', commaSep($._c_expression)),
-      $._c_terminator,
+      $._terminator,
       field('update', commaSep($._c_expression)),
     ),
 
@@ -550,7 +550,10 @@ module.exports = grammar({
       optional($._statements),
       prec(1, choice(
         field('termination', ';;'),
-        field('fallthrough', choice(';&', ';;&')),
+        field('fallthrough', choice(
+          alias(';&', $.case_fallthrough),
+          alias(';|', $.case_test_next),
+        )),
       )),
     ),
 
@@ -560,7 +563,11 @@ module.exports = grammar({
       repeat(seq('|', field('value', choice($._literal, $._extglob_blob)))),
       ')',
       optional($._statements),
-      optional(prec(1, ';;')),
+      optional(prec(1, choice(
+        ';;',
+        ';&',
+        ';|',
+      ))),
     ),
 
     function_definition: $ => prec(4, prec.right(seq(
@@ -1844,8 +1851,7 @@ module.exports = grammar({
       $.word,
       alias($._word_with_colon, $.word)),
 
-    _c_terminator: _ => choice(';', /\n/, '&', '&!', '&|'),
-    _terminator: _ => choice(';', ';;', /\n/, '&', '&!', '&|'),
+    _terminator: _ => choice(';', /\n/, '&', '&!', '&|'),
     
     // Parameter-safe expression system (excludes glob_pattern)
     _param_expression: $ => choice(

@@ -310,3 +310,102 @@ esac
           (word))
         argument: (string
           (string_content))))))
+
+================================================================================
+Case statement with empty case item (fall-through pattern)
+================================================================================
+
+case x in
+    ask)
+        echo ask
+        ;;
+    auto) ;; # comment
+    *)
+        echo other
+        ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (word)
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))
+    (case_item
+      value: (word))
+    (comment)
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))))
+
+================================================================================
+Case statement with ;| fallthrough (zsh test-remaining-patterns)
+================================================================================
+
+case x in
+    a)
+        echo a
+        ;|
+    b)
+        echo b
+        ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (word)
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word))
+      fallthrough: (case_test_next))
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))))
+
+================================================================================
+Case statement with ;& fallthrough (zsh execute-next-list)
+================================================================================
+
+case x in
+    a)
+        echo a
+        ;&
+    b)
+        echo b
+        ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (word)
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word))
+      fallthrough: (case_fallthrough))
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))))

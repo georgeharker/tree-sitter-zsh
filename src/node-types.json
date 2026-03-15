@@ -913,12 +913,12 @@
         "required": false,
         "types": [
           {
-            "type": ";&",
-            "named": false
+            "type": "case_fallthrough",
+            "named": true
           },
           {
-            "type": ";;&",
-            "named": false
+            "type": "case_test_next",
+            "named": true
           }
         ]
       },
@@ -1427,10 +1427,6 @@
             "named": false
           },
           {
-            "type": ";;",
-            "named": false
-          },
-          {
             "type": "[",
             "named": false
           },
@@ -1713,10 +1709,6 @@
             "named": false
           },
           {
-            "type": ";;",
-            "named": false
-          },
-          {
             "type": "[",
             "named": false
           },
@@ -1956,10 +1948,6 @@
           },
           {
             "type": ";",
-            "named": false
-          },
-          {
-            "type": ";;",
             "named": false
           },
           {
@@ -2325,10 +2313,6 @@
           },
           {
             "type": ";",
-            "named": false
-          },
-          {
-            "type": ";;",
             "named": false
           },
           {
@@ -2711,10 +2695,6 @@
             "named": false
           },
           {
-            "type": ";;",
-            "named": false
-          },
-          {
             "type": "[",
             "named": false
           },
@@ -2988,10 +2968,6 @@
           },
           {
             "type": ";",
-            "named": false
-          },
-          {
-            "type": ";;",
             "named": false
           },
           {
@@ -3443,10 +3419,6 @@
           },
           {
             "type": ";",
-            "named": false
-          },
-          {
-            "type": ";;",
             "named": false
           },
           {
@@ -4213,10 +4185,6 @@
             "named": false
           },
           {
-            "type": ";;",
-            "named": false
-          },
-          {
             "type": "_statement",
             "named": true
           },
@@ -4629,10 +4597,6 @@
             "named": false
           },
           {
-            "type": ";;",
-            "named": false
-          },
-          {
             "type": "_statement",
             "named": true
           }
@@ -4912,7 +4876,7 @@
     "named": false
   },
   {
-    "type": ";;&",
+    "type": ";|",
     "named": false
   },
   {
@@ -5050,6 +5014,14 @@
   {
     "type": "case",
     "named": false
+  },
+  {
+    "type": "case_fallthrough",
+    "named": true
+  },
+  {
+    "type": "case_test_next",
+    "named": true
   },
   {
     "type": "comment",
