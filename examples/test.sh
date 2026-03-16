@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 
 set -e
 
@@ -35,7 +35,7 @@ EOF
 profile=
 leak_check=no
 mode=normal
-verbose=
+verbose=''
 args=()
 target=tests
 export BUILDTYPE=Test

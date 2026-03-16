@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 
 git log --reverse --format='%aN <%aE>' | perl -wnE '
 BEGIN {

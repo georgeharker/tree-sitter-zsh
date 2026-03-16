@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # look for old 0.x cruft, and get rid of it.
 # Should already be sitting in the npm folder.

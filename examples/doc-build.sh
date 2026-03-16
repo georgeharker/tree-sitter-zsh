@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/zsh
 
 if [[ $DEBUG != "" ]]; then
   set -x

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 if [ "$(uname)" == 'Darwin' ]; then
   OS='Mac'
@@ -12,7 +12,7 @@ fi
 if [ "$(basename $0)" == 'atom-beta' ]; then
   BETA_VERSION=true
 else
-  BETA_VERSION=
+  BETA_VERSION=''
 fi
 
 export ATOM_DISABLE_SHELLING_OUT_FOR_ENVIRONMENT=true
