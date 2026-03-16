@@ -552,6 +552,7 @@ module.exports = grammar({
         field('termination', ';;'),
         field('fallthrough', choice(
           alias(';&', $.case_fallthrough),
+          alias(';;&', $.case_test_next),
           alias(';|', $.case_test_next),
         )),
       )),
@@ -566,6 +567,7 @@ module.exports = grammar({
       optional(prec(1, choice(
         ';;',
         ';&',
+        ';;&',
         ';|',
       ))),
     ),

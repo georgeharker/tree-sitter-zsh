@@ -379,6 +379,38 @@ esac
         argument: (word)))))
 
 ================================================================================
+Case statement with ;;& fallthrough (zsh test-remaining-patterns, ksh style)
+================================================================================
+
+case x in
+    a)
+        echo a
+        ;;&
+    b)
+        echo b
+        ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (word)
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word))
+      fallthrough: (case_test_next))
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))))
+
+================================================================================
 Case statement with ;& fallthrough (zsh execute-next-list)
 ================================================================================
 
@@ -419,6 +451,7 @@ case x in
         echo match
         ;;
     d|e) ;;
+    x) ;;
     *)
         echo other
         ;;
@@ -432,13 +465,15 @@ esac
     (case_item
       value: (extglob_pattern)
       value: (extglob_pattern)
-      value: (word)
+      value: (extglob_pattern)
       (command
         name: (command_name
           (word))
         argument: (word)))
     (case_item
       value: (extglob_pattern)
+      value: (extglob_pattern))
+    (case_item
       value: (word))
     (case_item
       value: (extglob_pattern)
