@@ -1,8 +1,14 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
+      day: sunday
     commit-message:
-      prefix: "ci"
+      prefix: ci
+    labels: [dependencies]
+    open-pull-requests-limit: 1
+    groups:
+      actions:
+        patterns: ["*"]
