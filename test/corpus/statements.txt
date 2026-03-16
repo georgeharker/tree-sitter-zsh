@@ -369,7 +369,8 @@ esac
       (command
         name: (command_name
           (word))
-        argument: (word)))
+        argument: (word))
+      fallthrough: (case_test_next))
     (case_item
       value: (word)
       (command
@@ -400,7 +401,8 @@ esac
       (command
         name: (command_name
           (word))
-        argument: (word)))
+        argument: (word))
+      fallthrough: (case_test_next))
     (case_item
       value: (word)
       (command
@@ -431,7 +433,8 @@ esac
       (command
         name: (command_name
           (word))
-        argument: (word)))
+        argument: (word))
+      fallthrough: (case_fallthrough))
     (case_item
       value: (word)
       (command
