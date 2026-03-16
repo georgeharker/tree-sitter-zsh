@@ -326,6 +326,84 @@
     "fields": {}
   },
   {
+    "type": "arithmetic_call",
+    "named": true,
+    "fields": {
+      "argument": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "arithmetic_call",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "parenthesized_expression",
+            "named": true
+          },
+          {
+            "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "subscript",
+            "named": true
+          },
+          {
+            "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          },
+          {
+            "type": "variable_name",
+            "named": true
+          },
+          {
+            "type": "variable_ref",
+            "named": true
+          },
+          {
+            "type": "word",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "word",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "arithmetic_expansion",
     "named": true,
     "fields": {},
@@ -333,6 +411,10 @@
       "multiple": true,
       "required": true,
       "types": [
+        {
+          "type": "arithmetic_call",
+          "named": true
+        },
         {
           "type": "binary_expression",
           "named": true
@@ -427,6 +509,10 @@
         "types": [
           {
             "type": "_expression",
+            "named": true
+          },
+          {
+            "type": "arithmetic_call",
             "named": true
           },
           {
@@ -631,6 +717,10 @@
           },
           {
             "type": "ansi_c_string",
+            "named": true
+          },
+          {
+            "type": "arithmetic_call",
             "named": true
           },
           {
@@ -3577,6 +3667,10 @@
           "named": true
         },
         {
+          "type": "arithmetic_call",
+          "named": true
+        },
+        {
           "type": "arithmetic_expansion",
           "named": true
         },
@@ -3667,6 +3761,10 @@
       "types": [
         {
           "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "arithmetic_call",
           "named": true
         },
         {
@@ -4085,6 +4183,10 @@
             "named": true
           },
           {
+            "type": "arithmetic_call",
+            "named": true
+          },
+          {
             "type": "arithmetic_expansion",
             "named": true
           },
@@ -4139,6 +4241,10 @@
             "named": true
           },
           {
+            "type": "arithmetic_call",
+            "named": true
+          },
+          {
             "type": "arithmetic_expansion",
             "named": true
           },
@@ -4190,6 +4296,10 @@
         "types": [
           {
             "type": "_expression",
+            "named": true
+          },
+          {
+            "type": "arithmetic_call",
             "named": true
           },
           {
@@ -4379,6 +4489,10 @@
       "types": [
         {
           "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "arithmetic_call",
           "named": true
         },
         {
@@ -4705,6 +4819,10 @@
       "multiple": false,
       "required": false,
       "types": [
+        {
+          "type": "arithmetic_call",
+          "named": true
+        },
         {
           "type": "binary_expression",
           "named": true

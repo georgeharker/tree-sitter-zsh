@@ -1212,6 +1212,7 @@ module.exports = grammar({
       alias($._arithmetic_binary_expression, $.binary_expression),
       alias($._arithmetic_postfix_expression, $.postfix_expression),
       alias($._arithmetic_parenthesized_expression, $.parenthesized_expression),
+      $.arithmetic_call,
       $.command_substitution,
     )),
 
@@ -1264,6 +1265,17 @@ module.exports = grammar({
       $._arithmetic_expression,
       ')',
     ),
+
+    // Function call in arithmetic context: sqrt(x), sin(a), abs(n), etc.
+    arithmetic_call: $ => prec(2, seq(
+      field('name', $.word),
+      token.immediate('('),
+      optional(seq(
+        field('argument', $._arithmetic_expression),
+        repeat(seq(',', field('argument', $._arithmetic_expression))),
+      )),
+      ')',
+    )),
 
 
     concatenation: $ => prec(-1, 

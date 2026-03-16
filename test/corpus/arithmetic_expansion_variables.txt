@@ -105,8 +105,50 @@ echo $(($var + offset))
   (command
     name: (command_name
       (word))
-    argument: (arithmetic_expansion
+     argument: (arithmetic_expansion
       (binary_expression
         left: (variable_ref
           (simple_variable_name))
         right: (word)))))
+
+================================================================================
+Arithmetic expansion with math function calls
+================================================================================
+
+printf "%.3f" $(( sqrt(sumsq / n) ))
+echo $(( sin(a) + cos(b) ))
+echo $(( abs(-5) ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (string_content))
+    argument: (arithmetic_expansion
+      (arithmetic_call
+        name: (word)
+        argument: (binary_expression
+          left: (word)
+          right: (word)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (arithmetic_call
+          name: (word)
+          argument: (word))
+        right: (arithmetic_call
+          name: (word)
+          argument: (word)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (arithmetic_call
+        name: (word)
+        argument: (unary_expression
+          (number))))))
