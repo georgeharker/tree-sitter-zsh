@@ -1133,7 +1133,7 @@ module.exports = grammar({
       // Pattern with regular chars containing at least one glob metacharacter
       seq(
         repeat1(choice(
-          /[^\s'"*?\[{()}<=\];]/,                 // regular chars excluding delimiters and backslash (allow ) for filenames)
+          /[^\s'"*?\[{()}<=\];#]/,                // regular chars excluding delimiters, backslash, and # (# at start is a comment)
           /\\./                                    // escaped sequences
         )),
         choice(

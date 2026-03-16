@@ -1773,3 +1773,22 @@ echo "use this command: 's/$/aa/' "
       (string_content))))
 
 
+==================================================
+Double-hash and hash-with-glob-char comments
+==================================================
+
+##? this is a zsh doc comment
+## double hash comment
+echo ok
+
+----------
+
+(program
+  (comment)
+  (comment)
+  (command
+    name: (command_name
+      (word))
+    argument: (word)))
+
+
