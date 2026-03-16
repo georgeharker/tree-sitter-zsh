@@ -25,10 +25,10 @@ jobs:
     uses: tree-sitter/workflows/.github/workflows/package-pypi.yml@main
     secrets:
       PYPI_API_TOKEN: ${{secrets.PYPI_TOKEN}}
-  maven:
-    uses: tree-sitter/workflows/.github/workflows/package-maven.yml@main
-    secrets:
-      MAVEN_CENTRAL_USERNAME: ${{secrets.MAVEN_USERNAME}}
-      MAVEN_CENTRAL_TOKEN: ${{secrets.MAVEN_TOKEN}}
-      GPG_PRIVATE_KEY: ${{secrets.GPG_PRIVATE_KEY}}
-      GPG_PASSPHRASE: ${{secrets.GPG_PASSPHRASE}}
+  # maven:
+  #   uses: tree-sitter/workflows/.github/workflows/package-maven.yml@main
+  #   secrets:
+  #     MAVEN_CENTRAL_USERNAME: ${{secrets.MAVEN_USERNAME}}
+  #     MAVEN_CENTRAL_TOKEN: ${{secrets.MAVEN_TOKEN}}
+  #     GPG_PRIVATE_KEY: ${{secrets.GPG_PRIVATE_KEY}}
+  #     GPG_PASSPHRASE: ${{secrets.GPG_PASSPHRASE}}
