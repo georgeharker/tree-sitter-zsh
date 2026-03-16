@@ -1,6 +1,6 @@
 {
   "name": "tree-sitter-zsh",
-  "version": "0.60.0",
+  "version": "0.60.1",
   "description": "Zsh grammar for tree-sitter",
   "repository": {
     "type": "git",
