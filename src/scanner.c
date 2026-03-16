@@ -185,6 +185,7 @@ typedef struct {
     bool just_returned_bare_dollar;   // Track if we just returned BARE_DOLLAR
     bool just_exited_string; // Track if we just exited a string context
     bool just_newline;       // Track if we just handled newline
+    bool saw_pipe_in_case;   // Track if | was seen in current case arm pattern
     Array(Heredoc) heredocs;
 } Scanner;
 
@@ -2206,7 +2207,9 @@ extglob_pattern:
                 advance(lexer);
                 if (iswspace(lexer->lookahead)) {
                     lexer->result_symbol = EXTGLOB_PATTERN;
-                    return was_non_alpha;
+                    bool result = scanner->saw_pipe_in_case || was_non_alpha;
+                    scanner->saw_pipe_in_case = false;
+                    return result;
                 }
             }
 
@@ -2229,6 +2232,7 @@ extglob_pattern:
             if (lexer->lookahead == '|') {
                 lexer->mark_end(lexer);
                 advance(lexer);
+                scanner->saw_pipe_in_case = true;
                 lexer->result_symbol = EXTGLOB_PATTERN;
                 return true;
             }
@@ -2289,6 +2293,7 @@ extglob_pattern:
                     advance(lexer);
                     if (state.paren_depth == 0 && state.bracket_depth == 0 &&
                         state.brace_depth == 0) {
+                        scanner->saw_pipe_in_case = true;
                         lexer->result_symbol = EXTGLOB_PATTERN;
                         return true;
                     }
@@ -2351,7 +2356,9 @@ extglob_pattern:
 
             lexer->result_symbol = EXTGLOB_PATTERN;
             scanner->last_glob_paren_depth = 0;
-            return state.saw_non_alphadot;
+            bool result = state.saw_non_alphadot || scanner->saw_pipe_in_case;
+            scanner->saw_pipe_in_case = false;
+            return result;
         }
         scanner->last_glob_paren_depth = 0;
 #if DEBUG
