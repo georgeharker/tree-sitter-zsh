@@ -1,5 +1,9 @@
 name: Publish package
 
+permissions:
+  contents: read
+  id-token: write
+
 on:
   push:
     tags: ["*"]
