@@ -565,10 +565,12 @@ module.exports = grammar({
       ')',
       optional($._case_item_statements),
       optional(prec(1, choice(
-        ';;',
-        ';&',
-        ';;&',
-        ';|',
+        field('termination', ';;'),
+        field('fallthrough', choice(
+          alias(';&', $.case_fallthrough),
+          alias(';;&', $.case_test_next),
+          alias(';|', $.case_test_next),
+        )),
       ))),
     ),
 

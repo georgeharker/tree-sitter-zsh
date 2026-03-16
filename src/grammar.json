@@ -2239,20 +2239,48 @@
                 "type": "CHOICE",
                 "members": [
                   {
-                    "type": "STRING",
-                    "value": ";;"
+                    "type": "FIELD",
+                    "name": "termination",
+                    "content": {
+                      "type": "STRING",
+                      "value": ";;"
+                    }
                   },
                   {
-                    "type": "STRING",
-                    "value": ";&"
-                  },
-                  {
-                    "type": "STRING",
-                    "value": ";;&"
-                  },
-                  {
-                    "type": "STRING",
-                    "value": ";|"
+                    "type": "FIELD",
+                    "name": "fallthrough",
+                    "content": {
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "STRING",
+                            "value": ";&"
+                          },
+                          "named": true,
+                          "value": "case_fallthrough"
+                        },
+                        {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "STRING",
+                            "value": ";;&"
+                          },
+                          "named": true,
+                          "value": "case_test_next"
+                        },
+                        {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "STRING",
+                            "value": ";|"
+                          },
+                          "named": true,
+                          "value": "case_test_next"
+                        }
+                      ]
+                    }
                   }
                 ]
               }
