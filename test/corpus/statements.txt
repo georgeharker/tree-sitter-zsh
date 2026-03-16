@@ -409,3 +409,40 @@ esac
         name: (command_name
           (word))
         argument: (word)))))
+
+================================================================================
+Case statement with pipe-separated alternatives
+================================================================================
+
+case x in
+    a|b|c)
+        echo match
+        ;;
+    d|e) ;;
+    *)
+        echo other
+        ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (word)
+    (case_item
+      value: (extglob_pattern)
+      value: (extglob_pattern)
+      value: (word)
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))
+    (case_item
+      value: (extglob_pattern)
+      value: (word))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))))

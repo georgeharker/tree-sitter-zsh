@@ -2090,7 +2090,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_statements"
+              "name": "_case_item_statements"
             },
             {
               "type": "BLANK"
@@ -2213,7 +2213,7 @@
           "members": [
             {
               "type": "SYMBOL",
-              "name": "_statements"
+              "name": "_case_item_statements"
             },
             {
               "type": "BLANK"
@@ -10852,6 +10852,96 @@
           "value": "&|"
         }
       ]
+    },
+    "_case_body_terminator": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "STRING",
+          "value": ";"
+        },
+        {
+          "type": "PATTERN",
+          "value": "\\n"
+        },
+        {
+          "type": "STRING",
+          "value": "&"
+        },
+        {
+          "type": "STRING",
+          "value": "&!"
+        },
+        {
+          "type": "STRING",
+          "value": "&|"
+        }
+      ]
+    },
+    "_case_item_statements": {
+      "type": "PREC",
+      "value": 1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "REPEAT",
+            "content": {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_statement_or_comment"
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "comment"
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "_case_body_terminator"
+                }
+              ]
+            }
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_statement_or_comment"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "comment"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_case_body_terminator"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          }
+        ]
+      }
     },
     "_param_expression": {
       "type": "CHOICE",

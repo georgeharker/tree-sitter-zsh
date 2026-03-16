@@ -2292,6 +2292,7 @@ extglob_pattern:
                         lexer->result_symbol = EXTGLOB_PATTERN;
                         return true;
                     }
+                    state.saw_non_alphadot = true;
                 }
 
                 if (!state.done) {

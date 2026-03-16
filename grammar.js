@@ -547,7 +547,7 @@ module.exports = grammar({
           ')',
         ),
       ),
-      optional($._statements),
+      optional($._case_item_statements),
       prec(1, choice(
         field('termination', ';;'),
         field('fallthrough', choice(
@@ -562,7 +562,7 @@ module.exports = grammar({
       field('value', choice($._literal, $._extglob_blob)),
       repeat(seq('|', field('value', choice($._literal, $._extglob_blob)))),
       ')',
-      optional($._statements),
+      optional($._case_item_statements),
       optional(prec(1, choice(
         ';;',
         ';&',
@@ -799,7 +799,7 @@ module.exports = grammar({
       $.expansion,
       $.variable_name,
       $.string,
-      $.glob_pattern,           // Allow glob patterns as subscript indices: var[(I)foo_*]
+      $.glob_pattern,             // Allow glob patterns as subscript indices: var[(I)foo_*]
       $._word_or_word_with_colon  // Allow bare identifiers in parameter arithmetic context
     )),
 
@@ -1853,6 +1853,27 @@ module.exports = grammar({
       alias($._word_with_colon, $.word)),
 
     _terminator: _ => choice(';', /\n/, '&', '&!', '&|'),
+
+    // Terminator for use inside case item bodies (between statements).
+    // Does NOT include ;; ;& ;| so they are not consumed as inter-statement
+    // separators and remain available as the explicit case item termination field.
+    _case_body_terminator: _ => choice(';', /\n/, '&', '&!', '&|'),
+
+    // Like _statements but uses _case_body_terminator between statements so
+    // that ;; ;& ;| on a new line end the body rather than being consumed.
+    // No leading repeat of terminators — whitespace/newlines before the first
+    // statement are handled by extras, and we must NOT consume a leading \n
+    // that is followed by ;; (which should close the case arm, not start body).
+    _case_item_statements: $ => prec(1, seq(
+      repeat(seq(
+        $._statement_or_comment,
+        optional($.comment),
+        $._case_body_terminator,
+      )),
+      $._statement_or_comment,
+      optional($.comment),
+      optional($._case_body_terminator),
+    )),
     
     // Parameter-safe expression system (excludes glob_pattern)
     _param_expression: $ => choice(
