@@ -77,7 +77,7 @@ jobs:
             else "\(.path)/src"
             end
       - name: Generate attestations
-        uses: actions/attest-build-provenance@v3
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             *.wasm
