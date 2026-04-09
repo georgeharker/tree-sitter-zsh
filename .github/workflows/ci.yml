@@ -18,6 +18,7 @@ on:
       - bindings/**
       - tree-sitter.json
       - nvim-queries/**
+  workflow_dispatch:
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}
