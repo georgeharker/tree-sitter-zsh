@@ -9,6 +9,7 @@ on:
       - test/**
       - bindings/**
       - tree-sitter.json
+      - nvim-queries/**
   pull_request:
     paths:
       - grammar.js
@@ -16,6 +17,7 @@ on:
       - test/**
       - bindings/**
       - tree-sitter.json
+      - nvim-queries/**
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}
@@ -86,3 +88,10 @@ jobs:
 
       - name: Check queries
         run: ./ts_query_ls check -f nvim-queries/
+
+  nvim-query:
+    name: Validate nvim queries
+    uses: neovim-treesitter/.github/.github/workflows/self-contained-validate.yml@main
+    with:
+      lang: zsh
+      queries-dir: nvim-queries
