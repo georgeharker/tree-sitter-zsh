@@ -18,7 +18,7 @@
     }
   ],
   "metadata": {
-    "version": "0.63.1",
+    "version": "0.63.2",
     "license": "MIT",
     "description": "Zsh grammar for tree-sitter",
     "authors": [

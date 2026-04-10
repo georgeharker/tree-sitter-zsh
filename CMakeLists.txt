@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(tree-sitter-zsh
-        VERSION "0.63.1"
+        VERSION "0.63.2"
         DESCRIPTION "Zsh grammar for tree-sitter"
         HOMEPAGE_URL "https://github.com/georgeharker/tree-sitter-zsh"
         LANGUAGES C)
