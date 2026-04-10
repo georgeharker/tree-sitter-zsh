@@ -27,7 +27,7 @@ permissions:
 jobs:
   release:
     name: Build release artifacts
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest
     env:
       REPO_NAME: ${{github.event.repository.name}}
     steps:
