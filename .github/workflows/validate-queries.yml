@@ -1,0 +1,19 @@
+name: Validate Queries (Self-Contained)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "nvim-queries/zsh/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "nvim-queries/zsh/**"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    uses: neovim-treesitter/.github/.github/workflows/self-contained-validate.yml@main
+    with:
+      lang: "zsh"
+      queries-dir: "nvim-queries"
