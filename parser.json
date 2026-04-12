@@ -1,4 +1,5 @@
 {
     "lang": "zsh",
-    "queries_dir": "nvim-queries"
+    "queries_dir": "nvim-queries",
+    "test_dir": "nvim-queries/tests"
 }

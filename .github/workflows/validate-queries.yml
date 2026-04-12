@@ -4,16 +4,17 @@ on:
   push:
     branches: [main]
     paths:
-      - "nvim-queries/zsh/**"
+      - "nvim-queries/**"
+      - "tests/**"
+      - "parser.json"
   pull_request:
     branches: [main]
     paths:
-      - "nvim-queries/zsh/**"
+      - "nvim-queries/**"
+      - "tests/**"
+      - "parser.json"
   workflow_dispatch:
 
 jobs:
   validate:
     uses: neovim-treesitter/.github/.github/workflows/self-contained-validate.yml@main
-    with:
-      lang: "zsh"
-      queries-dir: "nvim-queries"
