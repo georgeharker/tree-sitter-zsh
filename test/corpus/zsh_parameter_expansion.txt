@@ -392,3 +392,142 @@ unset "${(@k)parameters[(I)_dotfiler_plan_*]}"
         name: (simple_variable_name)
         flags: (zsh_array_subscript_flags)
         index: (glob_pattern)))))
+
+================================================================================
+Parameter expansion - default with digit-led value (not substring)
+================================================================================
+
+temp="${5:-0.2}"
+x=${var:-1}
+y=${var:--1}
+z=${var:-123}
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        (expansion_default
+          name: (special_variable_name)
+          default: (expansion_default_list
+            (word))))))
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (number)))))
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (number)))))
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (number))))))
+
+================================================================================
+Parameter expansion - default value edge cases
+================================================================================
+
+${var:-1+2}
+${var:-${other:-x}}
+${var:--}
+${var:---1}
+${var-0.5}
+${(L)var:-1}
+${#var:-1}
+${var:-$(cmd)}
+${var:-foo bar}
+${var:-}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word))))))
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (expansion
+              (expansion_default
+                name: (simple_variable_name)
+                default: (expansion_default_list
+                  (word)))))))))
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word))))))
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word))))))
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word))))))
+  (command
+    name: (command_name
+      (expansion
+        flags: (expansion_flags)
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (number))))))
+  (command
+    name: (command_name
+      (expansion
+        style: (expansion_style)
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (number))))))
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (command_substitution
+              (command
+                name: (command_name
+                  (word)))))))))
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word)
+            (word))))))
+  (command
+    name: (command_name
+      (expansion
+        (expansion_default
+          name: (simple_variable_name))))))

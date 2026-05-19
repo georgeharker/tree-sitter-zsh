@@ -1413,15 +1413,19 @@ module.exports = grammar({
       optional(field('name', $._expansion_variable_ref)),
       choice(
         seq(token.immediate('-'), field('default', $._expansion_default_value)),
-        seq(token.immediate(':'), token.immediate('-'), field('default', $._expansion_default_value)),
+        // Single multichar immediate token so the lexer commits to `:-`
+        // before `$.number`'s `-?` can claim the `-`. Same idea for the
+        // other colon-prefixed operators below. Without this, inputs like
+        // ${var:-N} or ${5:-0.2} mis-lex as substring with negative offset.
+        seq(token.immediate(':-'), field('default', $._expansion_default_value)),
         seq(token.immediate('+'), field('default', $._expansion_default_value)),
-        seq(token.immediate(':'), token.immediate('+'), field('default', $._expansion_default_value)),
+        seq(token.immediate(':+'), field('default', $._expansion_default_value)),
         seq(token.immediate('='), field('default', $._expansion_default_value)),
-        seq(token.immediate(':'), token.immediate('='), field('default', $._expansion_default_value)),
+        seq(token.immediate(':='), field('default', $._expansion_default_value)),
         seq(token.immediate('='), field('default', $._expansion_default_value)),
-        seq(token.immediate(':'), token.immediate(':'), token.immediate('='), field('default', $._expansion_default_value)),
+        seq(token.immediate('::='), field('default', $._expansion_default_value)),
         seq(token.immediate('?'), field('default', $._expansion_default_value)),
-        seq(token.immediate(':'), token.immediate('?'), field('default', $._expansion_default_value)),
+        seq(token.immediate(':?'), field('default', $._expansion_default_value)),
       )
     )),
 
