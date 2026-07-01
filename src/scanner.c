@@ -363,6 +363,14 @@ static inline void reset(Scanner *scanner) {
     for (uint32_t i = 0; i < scanner->heredocs.size; i++) {
         reset_heredoc(array_get(&scanner->heredocs, i));
     }
+    // Unlike context_stack.size above, heredocs.size previously survived a
+    // reset untouched. heredocs.size only ever grows during scanning (no
+    // code path pops a finished heredoc), so once it crosses a
+    // serialization limit above, every future serialize() call would keep
+    // bailing out — even for unrelated, small context_stack state — for
+    // the rest of the parse. Dropping it back to 0 here makes a reset
+    // actually restore the scanner to a serializable state.
+    scanner->heredocs.size = 0;
 #if DEBUG
     fprintf(stderr, "DEBUG: Reset done - heredocs.size after=%u %u\n",
             scanner->heredocs.size, scanner->context_stack.size);
@@ -371,6 +379,19 @@ static inline void reset(Scanner *scanner) {
 
 static unsigned serialize(Scanner *scanner, char *buffer) {
     uint32_t size = 0;
+
+    // context_stack.size and heredocs.size are each encoded as a single
+    // byte below. If either count exceeds what a byte can hold, the header
+    // would silently wrap (mod 256) while the loops further down still
+    // serialize the full, untruncated number of entries. That desyncs the
+    // header counts from the actual payload length, which trips the
+    // `assert(size == length)` in deserialize() once the mismatched buffer
+    // is restored. Bail out to a full reset instead of producing a
+    // corrupt buffer, consistent with the capacity checks below.
+    if (scanner->context_stack.size > UINT8_MAX ||
+        scanner->heredocs.size > UINT8_MAX) {
+        return 0;
+    }
 
     buffer[size++] = (char)scanner->last_glob_paren_depth;
     buffer[size++] = (char)scanner->ext_was_in_double_quote;
