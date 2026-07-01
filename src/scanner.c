@@ -372,6 +372,19 @@ static inline void reset(Scanner *scanner) {
 static unsigned serialize(Scanner *scanner, char *buffer) {
     uint32_t size = 0;
 
+    // context_stack.size and heredocs.size are each encoded as a single
+    // byte below. If either count exceeds what a byte can hold, the header
+    // would silently wrap (mod 256) while the loops further down still
+    // serialize the full, untruncated number of entries. That desyncs the
+    // header counts from the actual payload length, which trips the
+    // `assert(size == length)` in deserialize() once the mismatched buffer
+    // is restored. Bail out to a full reset instead of producing a
+    // corrupt buffer, consistent with the capacity checks below.
+    if (scanner->context_stack.size > UINT8_MAX ||
+        scanner->heredocs.size > UINT8_MAX) {
+        return 0;
+    }
+
     buffer[size++] = (char)scanner->last_glob_paren_depth;
     buffer[size++] = (char)scanner->ext_was_in_double_quote;
     buffer[size++] = (char)scanner->ext_saw_outside_quote;
