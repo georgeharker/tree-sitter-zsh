@@ -363,6 +363,14 @@ static inline void reset(Scanner *scanner) {
     for (uint32_t i = 0; i < scanner->heredocs.size; i++) {
         reset_heredoc(array_get(&scanner->heredocs, i));
     }
+    // Unlike context_stack.size above, heredocs.size previously survived a
+    // reset untouched. heredocs.size only ever grows during scanning (no
+    // code path pops a finished heredoc), so once it crosses a
+    // serialization limit above, every future serialize() call would keep
+    // bailing out — even for unrelated, small context_stack state — for
+    // the rest of the parse. Dropping it back to 0 here makes a reset
+    // actually restore the scanner to a serializable state.
+    scanner->heredocs.size = 0;
 #if DEBUG
     fprintf(stderr, "DEBUG: Reset done - heredocs.size after=%u %u\n",
             scanner->heredocs.size, scanner->context_stack.size);
