@@ -1,0 +1,72 @@
+================================================================================
+Parameter substitution - ANSI-C replacement
+================================================================================
+
+query=${query//\\t/$'\t'}
+
+---
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (ansi_c_string)))))
+
+================================================================================
+Parameter expansion - flags before length style
+================================================================================
+
+local width=${(m)#clean}
+
+---
+
+(program
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (expansion
+        flags: (expansion_flags)
+        style: (expansion_style)
+        name: (simple_variable_name)))))
+
+================================================================================
+Conditional - flagged extended glob with backreferences
+================================================================================
+
+[[ "$location" == (#b)(*):([0-9]##) ]]
+
+---
+
+(program
+  (test_command
+    (binary_expression
+      left: (string
+        (variable_ref
+          (simple_variable_name)))
+      right: (glob_pattern
+        flags: (zsh_extended_glob_flags)
+        pattern: (extglob_pattern)))))
+
+================================================================================
+Parameter substitution - concatenated ANSI-C and regex pattern
+================================================================================
+
+local clean="${lines[i]//$'\e'\[[0-9;]#[a-zA-Z]/}"
+
+---
+
+(program
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (string
+        (expansion
+          (expansion_pattern
+            name: (simple_variable_name)
+            index: (word)
+            pattern: (concatenation
+              (ansi_c_string)
+              (regex))))))))

@@ -2891,8 +2891,26 @@
                   "type": "FIELD",
                   "name": "right",
                   "content": {
-                    "type": "SYMBOL",
-                    "name": "_expression"
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "PREC_DYNAMIC",
+                        "value": 10,
+                        "content": {
+                          "type": "ALIAS",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "_zsh_flagged_extglob_pattern"
+                          },
+                          "named": true,
+                          "value": "glob_pattern"
+                        }
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "_expression"
+                      }
+                    ]
                   }
                 }
               ]
@@ -6401,6 +6419,27 @@
       "type": "SYMBOL",
       "name": "_zsh_extended_glob_flags"
     },
+    "_zsh_flagged_extglob_pattern": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "flags",
+          "content": {
+            "type": "SYMBOL",
+            "name": "zsh_extended_glob_flags"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "pattern",
+          "content": {
+            "type": "SYMBOL",
+            "name": "extglob_pattern"
+          }
+        }
+      ]
+    },
     "_arithmetic_expression": {
       "type": "PREC",
       "value": 1,
@@ -9071,6 +9110,35 @@
         {
           "type": "CHOICE",
           "members": [
+            {
+              "type": "PREC_RIGHT",
+              "value": 10,
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "FIELD",
+                    "name": "flags",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "expansion_flags"
+                    }
+                  },
+                  {
+                    "type": "FIELD",
+                    "name": "style",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "expansion_style"
+                    }
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "_expansion_body"
+                  }
+                ]
+              }
+            },
             {
               "type": "PREC_RIGHT",
               "value": 10,
@@ -12303,6 +12371,10 @@
         {
           "type": "SYMBOL",
           "name": "raw_string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "ansi_c_string"
         },
         {
           "type": "SYMBOL",

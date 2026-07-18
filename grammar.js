@@ -702,7 +702,10 @@ module.exports = grammar({
         prec(PREC.COMPARE - 1, seq(
           field('left', $._expression),
           field('operator', choice('=', '==', '!=', $.test_operator)),
-          field('right', $._expression),
+          field('right', choice(
+            prec.dynamic(10, alias($._zsh_flagged_extglob_pattern, $.glob_pattern)),
+            $._expression,
+          )),
         )),
       ),
     ),
@@ -1209,6 +1212,11 @@ module.exports = grammar({
     // Zsh extended glob flags: (#i) (#q) (#a2) etc.
     zsh_extended_glob_flags: $ => $._zsh_extended_glob_flags,
 
+    _zsh_flagged_extglob_pattern: $ => seq(
+      field('flags', $.zsh_extended_glob_flags),
+      field('pattern', $.extglob_pattern),
+    ),
+
     _arithmetic_expression: $ => prec(1, choice(
       $._arithmetic_literal,
       alias($._arithmetic_unary_expression, $.unary_expression),
@@ -1531,6 +1539,11 @@ module.exports = grammar({
     expansion: $ => seq(
       prec(2, alias(seq($._bare_dollar, $._brace_start), "${")),
       choice(
+        prec.right(10, seq(
+          field('flags', $.expansion_flags),
+          field('style', $.expansion_style),
+          $._expansion_body,
+        )),
         prec.right(10, seq(field('style', $.expansion_style), 
              field('flags', $.expansion_flags), $._expansion_body)),
         prec.right(10, seq(field('style', $.expansion_style), $._expansion_body)),
@@ -2053,6 +2066,7 @@ module.exports = grammar({
       alias($._expansion_word, $.word),
       $.string, 
       $.raw_string,
+      $.ansi_c_string,
       $.expansion,              // ${nested} - allows ${foo/bar/${baz}}
       $.variable_ref,           // $var - allows ${foo/bar/$repl/}
       $.command_substitution,   // $(cmd) - allows ${foo/bar/$(repl)}
@@ -2131,5 +2145,4 @@ function immediateLiterals(...literals) {
 function tokenLiterals(precedence, ...literals) {
   return choice(...literals.map(l => token(prec(precedence, l))));
 }
-
 

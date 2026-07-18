@@ -2216,6 +2216,10 @@
             "named": true
           },
           {
+            "type": "ansi_c_string",
+            "named": true
+          },
+          {
             "type": "arithmetic_expansion",
             "named": true
           },
@@ -2619,6 +2623,10 @@
         "types": [
           {
             "type": "_expansion_word",
+            "named": true
+          },
+          {
+            "type": "ansi_c_string",
             "named": true
           },
           {
@@ -3378,6 +3386,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "extglob_pattern",
+            "named": true
+          },
           {
             "type": "word",
             "named": true

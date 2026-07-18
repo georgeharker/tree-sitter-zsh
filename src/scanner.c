@@ -780,6 +780,16 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             // backslashes need this to return a concat
             if (lexer->lookahead == '\\') {
                 lexer->mark_end(lexer);
+
+                // In parameter substitutions, an escaped pattern fragment
+                // can immediately follow another literal, as in
+                // `$'\\e'\\[[0-9;]#[a-zA-Z]`. Preserve the backslash for the
+                // regex token while emitting the zero-width concatenation.
+                if (ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE) {
+                    lexer->result_symbol = concat_type;
+                    return true;
+                }
+
                 advance(lexer);
                 if (lexer->lookahead == '"' || lexer->lookahead == '\'' ||
                     lexer->lookahead == '\\') {
@@ -2138,6 +2148,7 @@ extglob_pattern:
         if (lexer->lookahead == '?' || lexer->lookahead == '*' ||
             lexer->lookahead == '+' || lexer->lookahead == '@' ||
             lexer->lookahead == '!' || lexer->lookahead == '-' ||
+            lexer->lookahead == '(' ||
             lexer->lookahead == ')' || lexer->lookahead == '\\' ||
             lexer->lookahead == '.' || lexer->lookahead == '[' ||
             (iswalpha(lexer->lookahead))) {
@@ -2162,6 +2173,7 @@ extglob_pattern:
             }
 
             lexer->mark_end(lexer);
+            bool started_with_open_paren = lexer->lookahead == '(';
             bool was_non_alpha = !iswalpha(lexer->lookahead);
             if (lexer->lookahead != '[') {
                 // no esac
@@ -2253,7 +2265,9 @@ extglob_pattern:
                 uint32_t brace_depth;
             } State;
 
-            State state = {false, was_non_alpha, scanner->last_glob_paren_depth,
+            State state = {false, was_non_alpha,
+                           scanner->last_glob_paren_depth +
+                               (started_with_open_paren ? 1 : 0),
                            0, 0};
             while (!state.done) {
                 switch (lexer->lookahead) {
