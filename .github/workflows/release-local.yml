@@ -36,7 +36,7 @@ jobs:
       REPO_NAME: ${{github.event.repository.name}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up tree-sitter CLI
         uses: tree-sitter/setup-action/cli@v2

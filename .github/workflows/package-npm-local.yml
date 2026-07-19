@@ -47,10 +47,10 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up NodeJS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           cache: npm
           node-version: ${{inputs.node-version}}
@@ -105,10 +105,10 @@ jobs:
           - macos-15-intel
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up NodeJS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           cache: npm
           node-version: ${{inputs.node-version}}
@@ -146,10 +146,10 @@ jobs:
       url: https://www.npmjs.com/package/${{inputs.package-name}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up NodeJS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           cache: npm
           node-version: ${{inputs.node-version}}
