@@ -704,6 +704,20 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     bool was_just_newline = scanner->just_newline;
     scanner->just_newline = false;
 
+    // Empty assignment value (`var=` followed by whitespace/newline/terminator).
+    // Must run BEFORE the BARE_DOLLAR handler below, which skips whitespace+newlines
+    // hunting for a `$` and would otherwise consume the newline after `=`, letting a
+    // word on a later line be grabbed as the value. In zsh, any whitespace after `=`
+    // means the value is empty.
+    if (valid_symbols[EMPTY_VALUE] && !in_error_recovery(valid_symbols) &&
+        (iswspace(lexer->lookahead) || lexer->eof(lexer) ||
+         lexer->lookahead == ';' || lexer->lookahead == '&' ||
+         lexer->lookahead == '}')) {
+        lexer->mark_end(lexer);
+        lexer->result_symbol = EMPTY_VALUE;
+        return true;
+    }
+
     if ((valid_symbols[CONCAT] || valid_symbols[CONCAT_REGEX]) &&
         !in_error_recovery(valid_symbols)) {
         context_type_t ctx = get_current_context(scanner);
@@ -1470,16 +1484,6 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->result_symbol = ARRAY_AT_TOKEN;
             advance(lexer);
             lexer->mark_end(lexer);
-            return true;
-        }
-    }
-
-    if (valid_symbols[EMPTY_VALUE]) {
-        if (iswspace(lexer->lookahead) || lexer->eof(lexer) ||
-            lexer->lookahead == ';' || lexer->lookahead == '&' ||
-            lexer->lookahead == '}') {
-            lexer->mark_end(lexer);
-            lexer->result_symbol = EMPTY_VALUE;
             return true;
         }
     }
