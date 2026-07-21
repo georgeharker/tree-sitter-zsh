@@ -1829,7 +1829,7 @@ module.exports = grammar({
 
     comment: $ => token(prec(-20, /#[^\r\n]*/)),
 
-    _comment_word: _ => token(prec(-8, seq(
+    _comment_word: _ => token.immediate(prec(-8, seq(
       choice(
         noneOf(...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),

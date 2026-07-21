@@ -1791,4 +1791,56 @@ echo ok
       (word))
     argument: (word)))
 
+==================================================
+Empty variable assignment then comment with apostrophe (regression)
+==================================================
+
+x=
+# it's a comment
+
+----------
+
+(program
+  (variable_assignment
+    name: (variable_name))
+  (comment))
+
+==================================================
+Adjacent hash value with apostrophe in trailing comment (regression)
+==================================================
+
+var=#not-comment # legit's comment
+
+----------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (word))
+  (comment))
+
+==================================================
+Empty assignment value does not swallow the next statement (regression)
+==================================================
+
+f() {
+  local x=
+  if true; then
+  fi
+}
+
+----------
+
+(program
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (declaration_command
+        (variable_assignment
+          name: (variable_name)))
+      (if_statement
+        condition: (command
+          name: (command_name
+            (word)))))))
+
 
