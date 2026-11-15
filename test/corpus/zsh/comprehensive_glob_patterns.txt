@@ -467,3 +467,24 @@ esac
       (command
         name: (command_name
           (word))))))
+
+================================================================================
+Zsh glob - flags in the middle of a pattern
+================================================================================
+
+print *(#i)foo *(#i)foo* a*(#i)b*(N)
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags)
+      pattern: (word))
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags))
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags)
+      qualifier: (zsh_glob_qualifier))))

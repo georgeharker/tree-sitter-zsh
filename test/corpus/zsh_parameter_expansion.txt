@@ -1294,3 +1294,43 @@ print ${out//"x"\[a/} ${out//$'\e'[0-9]/}
         pattern: (concatenation
           (ansi_c_string)
           (regex))))))
+
+================================================================================
+Parameter expansion - subscripted parameter in a pattern
+================================================================================
+
+print ${x//$y[1]/} ${x#$y[(i)a]} ${x#$p[abc]} ${x/$y[1]/$z}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (simple_variable_name)
+          index: (number))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (simple_variable_name)
+          flags: (zsh_array_subscript_flags)
+          index: (word))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (simple_variable_name)
+          index: (word))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (simple_variable_name)
+          index: (number))
+        replacement: (variable_ref
+          (simple_variable_name))))))

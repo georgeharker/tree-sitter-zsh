@@ -1681,6 +1681,14 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 lexer->result_symbol = RAW_DOLLAR;
                 return true;
             }
+            // Case pattern ($) / a|$): a '$' with nothing after it is a
+            // literal pattern character.
+            if (lexer->lookahead == ')' && valid_symbols[EXTGLOB_PATTERN] &&
+                was_after_case_opener) {
+                lexer->mark_end(lexer);
+                lexer->result_symbol = EXTGLOB_PATTERN;
+                return true;
+            }
             if (lexer->lookahead != '\"') {
                 lexer->mark_end(lexer);
                 lexer->result_symbol = BARE_DOLLAR;

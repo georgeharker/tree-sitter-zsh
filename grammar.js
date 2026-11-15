@@ -1442,6 +1442,11 @@ module.exports = grammar({
       seq(
         optional(field('flags', $.zsh_extended_glob_flags)),
         field('pattern', $._glob_innards),
+        // Flags may also appear mid-pattern: *(#i)foo, (#b)a(#B)b*
+        repeat(seq(
+          field('flags', $.zsh_extended_glob_flags),
+          field('pattern', choice($._glob_innards, $.word)),
+        )),
         optional(choice(
           prec.right(field('qualifier', $.zsh_glob_qualifier)),
           prec.right(field('modifier', $.zsh_glob_modifier)),
@@ -1638,13 +1643,15 @@ module.exports = grammar({
     )),
 
     // Optional style: ${a:#$~p} / ${pages%$~suf} (glob-subst of $p)
-    dollar_variable: $ => prec(1, seq(
+    dollar_variable: $ => prec.right(1, seq(
       alias($._bare_dollar, "$"),
       optional($.expansion_style),
       choice(
         $._simple_variable_name,
         $._special_variable_name,
       ),
+      // ${x//$y[1]/}: right after a parameter '[' is a subscript, as in zsh
+      optional(seq('[', $._subscript_body, ']')),
     )),
 
     // Variable references within expansion contexts (similar to _variable_ref)
