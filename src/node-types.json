@@ -3299,6 +3299,10 @@
         "required": true,
         "types": [
           {
+            "type": "compound_statement",
+            "named": true
+          },
+          {
             "type": "do_group",
             "named": true
           }
@@ -3319,7 +3323,7 @@
         ]
       },
       "variable": {
-        "multiple": false,
+        "multiple": true,
         "required": true,
         "types": [
           {
@@ -4491,7 +4495,7 @@
         ]
       },
       "variable": {
-        "multiple": false,
+        "multiple": true,
         "required": true,
         "types": [
           {

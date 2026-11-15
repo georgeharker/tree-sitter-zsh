@@ -596,3 +596,151 @@ end
   (command
     name: (command_name
       (word))))
+
+================================================================================
+For loop - several names and digit names
+================================================================================
+
+for k v in a 1 b 2; do print $k=$v; done
+for 1 in a b; do :; done
+for short long in ${(kv)equivs}; do :; done
+
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    variable: (simple_variable_name)
+    variable: (simple_variable_name)
+    value: (word)
+    value: (number)
+    value: (word)
+    value: (number)
+    body: (do_group
+      (command
+        name: (command_name
+          (word))
+        argument: (concatenation
+          (variable_ref
+            (simple_variable_name))
+          (word)
+          (variable_ref
+            (simple_variable_name))))))
+  (for_statement
+    variable: (simple_variable_name)
+    value: (word)
+    value: (word)
+    body: (do_group
+      (command
+        name: (command_name
+          (word)))))
+  (for_statement
+    variable: (simple_variable_name)
+    variable: (simple_variable_name)
+    value: (expansion
+      flags: (expansion_flags)
+      name: (simple_variable_name))
+    body: (do_group
+      (command
+        name: (command_name
+          (word))))))
+
+================================================================================
+For loop - no in list loops over positional parameters
+================================================================================
+
+for a; do print $a; done
+f() { for 1; do echo r$1; done }
+
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    variable: (simple_variable_name)
+    body: (do_group
+      (command
+        name: (command_name
+          (word))
+        argument: (variable_ref
+          (simple_variable_name)))))
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (for_statement
+        variable: (simple_variable_name)
+        body: (do_group
+          (command
+            name: (command_name
+              (word))
+            argument: (concatenation
+              (word)
+              (variable_ref
+                (special_variable_name)))))))))
+
+================================================================================
+For loop - brace body, empty in list, keyword-like words
+================================================================================
+
+for x in a b; { print $x }
+for x in; do :; done
+for i in in; do :; done
+
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    variable: (simple_variable_name)
+    value: (word)
+    value: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))
+        argument: (variable_ref
+          (simple_variable_name)))))
+  (for_statement
+    variable: (simple_variable_name)
+    body: (do_group
+      (command
+        name: (command_name
+          (word)))))
+  (for_statement
+    variable: (simple_variable_name)
+    value: (word)
+    body: (do_group
+      (command
+        name: (command_name
+          (word))))))
+
+================================================================================
+Terse for loop - several names
+================================================================================
+
+for k v (a 1) { print $k$v }
+for x (a b) print $x
+
+--------------------------------------------------------------------------------
+
+(program
+  (terse_for_statement
+    variable: (simple_variable_name)
+    variable: (simple_variable_name)
+    value: (word)
+    value: (number)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))
+        argument: (concatenation
+          (variable_ref
+            (simple_variable_name))
+          (variable_ref
+            (simple_variable_name))))))
+  (terse_for_statement
+    variable: (simple_variable_name)
+    value: (word)
+    value: (word)
+    body: (command
+      name: (command_name
+        (word))
+      argument: (variable_ref
+        (simple_variable_name)))))
