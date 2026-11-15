@@ -216,6 +216,10 @@ module.exports = grammar({
     '"',
     '\'',
     '`',
+    $._subscript_flags,                // SUBSCRIPT_FLAGS: (w) (s:,:) (n:2:)
+    $._subscript_pattern_flags,        // SUBSCRIPT_PATTERN_FLAGS: (i) (Ie) (r)
+    $._subscript_pattern_word,         // SUBSCRIPT_PATTERN_WORD: (i)--  (i)pattern
+    $._subscript_pattern_glob,         // SUBSCRIPT_PATTERN_GLOB: (I)foo_*  (r)[bf]*
     $.__error_recovery,
   ],
 
@@ -790,8 +794,7 @@ module.exports = grammar({
     subscript: $ => prec.left(seq(
       field('name', $.variable_name),
       '[',
-      optional(field('flags', $.zsh_array_subscript_flags)),
-      field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at, $.string)),
+      $._subscript_body_with_string,
       ']',
     )),
 
@@ -865,18 +868,63 @@ module.exports = grammar({
     array_star: $ => $._array_star_token,
     array_at: $ => $._array_at_token,
 
-    // Zsh array subscript flags: (i) (I) (r) (R) etc.
-    // FIXME: delimeter is forced as :, could be any
-    zsh_array_subscript_flags: $ => seq(
-      '(',
-      choice(
-        /[wpfrRiIkKe]+/,
-        /s:[^:]+:/,
-        seq('n:', $._arithmetic_expression,':'),
-        seq('b:', $._arithmetic_expression,':'),
+    // Zsh array subscript flags: (i) (I) (r) (R) (ws:,:) (n:2:i) etc.
+    //
+    // The flags decide how the index is read. The external scanner lexes the
+    // flags (it owns '(') and picks the token, so no backtracking is needed:
+    //  - pattern flags (any of r R i I k K) take a *pattern* index:
+    //    $words[(i)--], ${a[(r)*@*]}, $a[(I)(foo|bar)]
+    //  - other flags (w p f e s n b) keep the arithmetic index:
+    //    ${x[(ws:,:)2]}
+    // Arguments (s n b j) take any delimiter; ( [ { < pair with their closer.
+    _subscript_body: $ => choice(
+      seq(
+        optional(field('flags', alias($._subscript_flags, $.zsh_array_subscript_flags))),
+        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
       ),
-      ')',
+      seq(
+        field('flags', alias($._subscript_pattern_flags, $.zsh_array_subscript_flags)),
+        field('index', $._subscript_pattern),
+      ),
     ),
+
+    _subscript_body_with_string: $ => choice(
+      seq(
+        optional(field('flags', alias($._subscript_flags, $.zsh_array_subscript_flags))),
+        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at, $.string)),
+      ),
+      seq(
+        field('flags', alias($._subscript_pattern_flags, $.zsh_array_subscript_flags)),
+        field('index', $._subscript_pattern),
+      ),
+    ),
+
+    // Pattern index: adjacent pieces, no whitespace between them.
+    _subscript_pattern: $ => choice(
+      $._subscript_pattern_piece,
+      alias($._subscript_pattern_concatenation, $.concatenation),
+    ),
+
+    _subscript_pattern_concatenation: $ => prec.left(seq(
+      $._subscript_pattern_piece,
+      repeat1($._subscript_pattern_piece),
+    )),
+
+    _subscript_pattern_piece: $ => choice(
+      alias($._subscript_pattern_word, $.word),
+      alias($._subscript_pattern_glob, $.glob_pattern),
+      $.variable_ref,
+      $.expansion,
+      $.command_substitution,
+      $.string,
+      $.raw_string,
+    ),
+
+    // _subscript_pattern_word / _subscript_pattern_glob are external: the
+    // scanner reads the piece and calls it a word or a glob_pattern, and it
+    // refuses them during error recovery (as broad grammar tokens they were
+    // lexed there and made recovery much worse).
+
 
     file_redirect: $ => prec.left(seq(
       field('descriptor', optional($.file_descriptor)),
@@ -1380,8 +1428,7 @@ module.exports = grammar({
       ),
       optional(seq(
         '[',
-        optional(field('flags', $.zsh_array_subscript_flags)),
-        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
+        $._subscript_body,
         ']'
       )),
       optional(field('modifier', $.expansion_modifier))
@@ -1405,8 +1452,7 @@ module.exports = grammar({
       ),
       optional(seq(  // Postfix subscript operator (left-associating)
         '[',
-        optional(field('flags', $.zsh_array_subscript_flags)),
-        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
+        $._subscript_body,
         ']'
       ))
     ),
@@ -1641,8 +1687,7 @@ module.exports = grammar({
       ),
       optional(seq(
         '[',
-        optional(field('flags', $.zsh_array_subscript_flags)),
-        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at)),
+        $._subscript_body,
         ']'
       )),
     )),
