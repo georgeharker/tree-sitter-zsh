@@ -312,6 +312,7 @@ module.exports = grammar({
       $.test_command,
       $.negated_command,
       $.for_statement,
+      $.foreach_statement,
       $.terse_for_statement,
       $.c_style_for_statement,
       $.while_statement,
@@ -336,6 +337,7 @@ module.exports = grammar({
       $.test_command,
       $.negated_command,
       $.for_statement,
+      $.foreach_statement,
       $.terse_for_statement,
       $.c_style_for_statement,
       $.while_statement,
@@ -355,6 +357,7 @@ module.exports = grammar({
       $.test_command,
       $.negated_command,
       $.for_statement,
+      $.foreach_statement,
       $.terse_for_statement,
       $.c_style_for_statement,
       $.while_statement,
@@ -397,6 +400,18 @@ module.exports = grammar({
       field('body', $.do_group),
     ),
     
+    // zsh: foreach name ... ( word ... ) list end
+    foreach_statement: $ => seq(
+      'foreach',
+      repeat1(field('variable', $._simple_variable_name)),
+      '(',
+      repeat(field('value', $._literal)),
+      ')',
+      optional($._terminator),
+      field('body', optional($._terminated_statement)),
+      'end',
+    ),
+
     terse_for_statement: $ => prec(2, seq(
       'for',
       field('variable', $._simple_variable_name),

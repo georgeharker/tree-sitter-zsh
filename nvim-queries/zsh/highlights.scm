@@ -82,6 +82,8 @@
 
 [
   "for"
+  "foreach"
+  "end"
   "do"
   "done"
   "select"
