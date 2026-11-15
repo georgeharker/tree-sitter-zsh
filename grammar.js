@@ -1773,7 +1773,8 @@ module.exports = grammar({
             token.immediate('s'), token.immediate('/'), 
             $._pattern_start, 
             field('search', $._param_pattern_no_slash),
-            token.immediate('/'), field('replace', $._param_replacement),
+            // replacement may be empty: ${x:s/next//}
+            token.immediate('/'), optional(field('replace', $._param_replacement)),
             optional(seq(
                 token.immediate('/'), 
                 optional(token.immediate(':G'))
@@ -2336,6 +2337,7 @@ module.exports = grammar({
       alias($._expansion_word, $.word),
       $.string, 
       $.raw_string,
+      $.ansi_c_string,          // ${x//$'\n'/$'\t'}
       $.expansion,              // ${nested} - allows ${foo/bar/${baz}}
       $.variable_ref,           // $var - allows ${foo/bar/$repl/}
       $.command_substitution,   // $(cmd) - allows ${foo/bar/$(repl)}

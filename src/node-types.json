@@ -2164,6 +2164,10 @@
             "named": true
           },
           {
+            "type": "ansi_c_string",
+            "named": true
+          },
+          {
             "type": "arithmetic_expansion",
             "named": true
           },
@@ -2571,6 +2575,10 @@
         "types": [
           {
             "type": "_expansion_word",
+            "named": true
+          },
+          {
+            "type": "ansi_c_string",
             "named": true
           },
           {
