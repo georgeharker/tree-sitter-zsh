@@ -36,15 +36,17 @@ Test commands with regexes
         (simple_variable_name))
       right: (regex)))
   (test_command
-    (binary_expression
-      left: (unary_expression
-        (string
+    (unary_expression
+      (binary_expression
+        left: (string
           (expansion
             name: (simple_variable_name)
-            index: (array_star))))
-      right: (string
-        (variable_ref
-          (simple_variable_name)))))
+            index: (array_star))
+          (string_content))
+        right: (string
+          (variable_ref
+            (simple_variable_name))
+          (string_content)))))
   (negated_command
     (test_command
       (binary_expression
@@ -68,10 +70,11 @@ Test commands with regexes
     (binary_expression
       left: (expansion
         name: (simple_variable_name))
-      right: (extglob_pattern)
-      right: (expansion
-        name: (simple_variable_name))
-      right: (extglob_pattern)))
+      right: (concatenation
+        (glob_pattern)
+        (expansion
+          name: (simple_variable_name))
+        (glob_pattern))))
   (test_command
     (binary_expression
       left: (string
@@ -102,10 +105,11 @@ Test commands with regexes
             argument: (string
               (expansion
                 name: (simple_variable_name)))))
-        right: (extglob_pattern)
-        right: (string
-          (string_content))
-        right: (extglob_pattern))))
+        right: (concatenation
+          (glob_pattern)
+          (string
+            (string_content))
+          (glob_pattern)))))
   (test_command
     (binary_expression
       left: (expansion
@@ -115,47 +119,52 @@ Test commands with regexes
     (binary_expression
       left: (string
         (expansion
-          name: (simple_variable_name)))
-      right: (extglob_pattern)
-      right: (expansion
-        name: (simple_variable_name))
-      right: (extglob_pattern)))
+          name: (simple_variable_name))
+        (string_content))
+      right: (concatenation
+        (glob_pattern)
+        (expansion
+          name: (simple_variable_name))
+        (glob_pattern))))
   (test_command
     (binary_expression
       left: (expansion
         name: (simple_variable_name))
-      right: (extglob_pattern)
-      right: (expansion
-        name: (simple_variable_name))
-      right: (extglob_pattern)))
+      right: (concatenation
+        (glob_pattern)
+        (expansion
+          name: (simple_variable_name))
+        (glob_pattern))))
   (test_command
     (binary_expression
       left: (variable_ref
         (simple_variable_name))
-      right: (extglob_pattern)
-      right: (command_substitution
-        (pipeline
-          (command
-            name: (command_name
-              (word))
-            argument: (word)
-            argument: (word))
-          (command
-            name: (command_name
-              (word))
-            argument: (raw_string))
-          (command
-            name: (command_name
-              (word))
-            argument: (word)
-            argument: (raw_string))))
-      right: (extglob_pattern)))
+      right: (concatenation
+        (glob_pattern)
+        (command_substitution
+          (pipeline
+            (command
+              name: (command_name
+                (word))
+              argument: (word)
+              argument: (word))
+            (command
+              name: (command_name
+                (word))
+              argument: (raw_string))
+            (command
+              name: (command_name
+                (word))
+              argument: (word)
+              argument: (raw_string))))
+        (glob_pattern))))
   (test_command
     (binary_expression
       left: (string
         (expansion
           name: (simple_variable_name)
-          index: (array_star)))
+          index: (array_star))
+        (string_content))
       right: (string
         (string_content))))
   (test_command
@@ -182,7 +191,7 @@ Test commands with regexes - unprotected double minus
     (binary_expression
       left: (variable_ref
         (special_variable_name))
-      right: (extglob_pattern))))
+      right: (word))))
 
 ==================================================
 For loop without in
