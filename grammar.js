@@ -400,6 +400,7 @@ module.exports = grammar({
         field('redirect', choice(
           repeat1(choice(
             $.file_redirect,
+            alias($._named_fd_redirect, $.file_redirect),
             $.heredoc_redirect,
             $.herestring_redirect,  // moved here from standalone
           )),
@@ -1125,6 +1126,19 @@ module.exports = grammar({
       ),
     )),
 
+    // exec {fd}<>"$fifo": a named descriptor. One token with the operator
+    // so a {word} elsewhere (git @{upstream}, print {a}) isn't taken as a
+    // descriptor; the operator is part of the descriptor's text.
+    _named_fd_redirect: $ => prec.left(seq(
+      field('descriptor', alias($._named_fd_with_operator, $.file_descriptor)),
+      optional(field('destination', repeat1($._literal))),
+    )),
+    _named_fd_with_operator: _ => token(seq(
+      /\{[A-Za-z_][A-Za-z0-9_]*\}/,
+      choice('<>', '>>|', '>>!', '>>', '>|', '>!', '<&-', '>&-', '<&', '>&',
+             '<', '>'),
+    )),
+
     heredoc_redirect: $ => seq(
       field('descriptor', optional($.file_descriptor)),
       choice('<<', '<<-'),
@@ -1180,7 +1194,7 @@ module.exports = grammar({
       $._literal,
     )),
 
-    _redirect: $ => choice($.file_redirect, $.herestring_redirect),
+    _redirect: $ => choice($.file_redirect, alias($._named_fd_redirect, $.file_redirect), $.herestring_redirect),
 
     // Expressions
 

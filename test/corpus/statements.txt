@@ -1101,12 +1101,14 @@ Redirection - zsh <> and clobber operators, named fd
 ================================================================================
 
 exec {fd}<>"$p"
+exec {fd}>&-
 print a <> f1
 print b >! f2
 print c >>| f2
 print d >>! f2
 print e &>| f3
 print g &>! f3
+print {a} x@{upstream} 2>/dev/null
 
 --------------------------------------------------------------------------------
 
@@ -1114,22 +1116,18 @@ print g &>! f3
   (redirected_statement
     body: (command
       name: (command_name
-        (word))
-      argument: (concatenation
-        (word)
-        (word)
         (word)))
     redirect: (file_redirect
+      descriptor: (file_descriptor)
       destination: (string
         (variable_ref
           (simple_variable_name)))))
   (redirected_statement
     body: (command
       name: (command_name
-        (word))
-      argument: (word))
+        (word)))
     redirect: (file_redirect
-      destination: (word)))
+      descriptor: (file_descriptor)))
   (redirected_statement
     body: (command
       name: (command_name
@@ -1164,4 +1162,25 @@ print g &>! f3
         (word))
       argument: (word))
     redirect: (file_redirect
+      destination: (word)))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      destination: (word)))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word)
+      argument: (word)
+      argument: (word)
+      argument: (word)
+      argument: (word)
+      argument: (word)
+      argument: (word))
+    redirect: (file_redirect
+      descriptor: (file_descriptor)
       destination: (word))))
