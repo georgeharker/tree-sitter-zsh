@@ -615,12 +615,8 @@
           "value": "for"
         },
         {
-          "type": "FIELD",
-          "name": "variable",
-          "content": {
-            "type": "SYMBOL",
-            "name": "_simple_variable_name"
-          }
+          "type": "SYMBOL",
+          "name": "_for_names"
         },
         {
           "type": "CHOICE",
@@ -633,10 +629,10 @@
                   "value": "in"
                 },
                 {
-                  "type": "FIELD",
-                  "name": "value",
+                  "type": "REPEAT",
                   "content": {
-                    "type": "REPEAT1",
+                    "type": "FIELD",
+                    "name": "value",
                     "content": {
                       "type": "SYMBOL",
                       "name": "_literal"
@@ -658,11 +654,70 @@
           "type": "FIELD",
           "name": "body",
           "content": {
-            "type": "SYMBOL",
-            "name": "do_group"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "do_group"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "compound_statement"
+              }
+            ]
           }
         }
       ]
+    },
+    "_for_names": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "FIELD",
+          "name": "variable",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_simple_variable_name"
+              },
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_for_name"
+                },
+                "named": true,
+                "value": "simple_variable_name"
+              }
+            ]
+          }
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "FIELD",
+            "name": "variable",
+            "content": {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_for_name"
+              },
+              "named": true,
+              "value": "simple_variable_name"
+            }
+          }
+        }
+      ]
+    },
+    "_for_name": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "[A-Za-z_][A-Za-z0-9_]*|[0-9]+"
+      }
     },
     "foreach_statement": {
       "type": "SEQ",
@@ -746,12 +801,8 @@
             "value": "for"
           },
           {
-            "type": "FIELD",
-            "name": "variable",
-            "content": {
-              "type": "SYMBOL",
-              "name": "_simple_variable_name"
-            }
+            "type": "SYMBOL",
+            "name": "_for_names"
           },
           {
             "type": "STRING",

@@ -394,16 +394,34 @@ module.exports = grammar({
       field('redirect', repeat1($._redirect)),
     ))),
 
+    // zsh: for name ... [ in word ... ] term do list done
+    // Several names (for k v in ...), digit names (for 1 in ...), no `in`
+    // (for a; do -- loops over "$@"), and { } or SHORT_LOOPS bodies.
     for_statement: $ => seq(
       'for',
-      field('variable', $._simple_variable_name),
+      $._for_names,
       optional(seq(
         'in',
-        field('value', repeat1($._literal)),
+        repeat(field('value', $._literal)),
       )),
       $._terminator,
-      field('body', $.do_group),
+      field('body', choice(
+        $.do_group,
+        $.compound_statement,
+      )),
     ),
+
+    // First name may be a normal variable name or digits; later names use
+    // _for_name so the scanner can't take the `in` keyword as a name.
+    _for_names: $ => seq(
+      field('variable', choice(
+        $._simple_variable_name,
+        alias($._for_name, $.simple_variable_name),
+      )),
+      repeat(field('variable', alias($._for_name, $.simple_variable_name))),
+    ),
+
+    _for_name: _ => token(/[A-Za-z_][A-Za-z0-9_]*|[0-9]+/),
     
     // zsh: foreach name ... ( word ... ) list end
     foreach_statement: $ => seq(
@@ -419,7 +437,7 @@ module.exports = grammar({
 
     terse_for_statement: $ => prec(2, seq(
       'for',
-      field('variable', $._simple_variable_name),
+      $._for_names,
       '(',
       field('value', repeat1($._literal)),  // Allow multiple values
       ')',
