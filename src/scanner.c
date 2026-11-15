@@ -193,6 +193,7 @@ typedef struct {
 typedef struct {
     uint8_t last_glob_paren_depth;
     uint8_t test_pattern_depth; // open '(' groups in a [[ x = pattern ]]
+    bool after_case_opener; // just emitted a case item's optional '('
     bool ext_was_in_double_quote;
     bool ext_saw_outside_quote;
     Array(context_type_t) context_stack; // Proper context stack
@@ -392,6 +393,7 @@ static inline void reset(Scanner *scanner) {
 #endif
     scanner->last_glob_paren_depth = 0;
     scanner->test_pattern_depth = 0;
+    scanner->after_case_opener = false;
     scanner->ext_was_in_double_quote = false;
     scanner->ext_saw_outside_quote = false;
     scanner->context_stack.size = 0; // Clear context stack
@@ -442,6 +444,7 @@ static unsigned serialize(Scanner *scanner, char *buffer) {
     buffer[size++] = (char)scanner->just_exited_string;
     buffer[size++] = (char)scanner->just_newline;
     buffer[size++] = (char)scanner->test_pattern_depth;
+    buffer[size++] = (char)scanner->after_case_opener;
 
     // Serialize context stack
     for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
@@ -500,6 +503,7 @@ static void deserialize(Scanner *scanner, const char *buffer, unsigned length) {
         scanner->just_exited_string = buffer[size++];
         scanner->just_newline = buffer[size++];
         scanner->test_pattern_depth = (uint8_t)buffer[size++];
+        scanner->after_case_opener = buffer[size++];
 
         // Deserialize context stack
         scanner->context_stack.size = 0;
@@ -862,6 +866,82 @@ static bool scan_bracket_class(TSLexer *lexer) {
     }
 }
 
+// Case item starting with '(': zsh's optional opening paren, or a group at
+// the start of the pattern? (free|net)bsd*) and (a|b):*) are groups,
+// (a) and (a|b) y are openers. Read to the matching ')' and look at the
+// next character: blank / ; / newline / EOF means opener; anything else
+// (pattern text, ')' or '|') means the '(' begins a group and the whole
+// value is one extglob_pattern. With the lexer on '('. Returns true with
+// result_symbol set, or false if it isn't a group (caller emits the
+// opener: the '(' is already marked).
+static bool scan_case_group_pattern(TSLexer *lexer, bool always_group) {
+    advance(lexer); // '('
+    lexer->mark_end(lexer);
+    uint32_t depth = 1;
+    while (depth > 0) {
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer) || c == 0 || c == '\n') {
+            return false;
+        }
+        if (c == '\\') {
+            advance(lexer);
+            if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+                return false;
+            }
+            advance(lexer);
+        } else if (c == '[') {
+            if (!scan_bracket_class(lexer)) {
+                return false;
+            }
+        } else {
+            if (c == '(') {
+                depth++;
+            } else if (c == ')') {
+                depth--;
+            }
+            advance(lexer);
+        }
+    }
+    int32_t n = lexer->lookahead;
+    if (!always_group &&
+        (lexer->eof(lexer) || n == 0 || iswspace(n) || n == ';')) {
+        return false; // "(pattern)" then blank: the opener form
+    }
+    // A group: continue with the rest of the pattern up to the item's ')'
+    // or a '|' separating alternatives (both at depth 0), or a blank.
+    for (;;) {
+        lexer->mark_end(lexer);
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer) || c == 0 || iswspace(c) || c == ';' ||
+            c == '$' || c == '"' || c == '\'' || c == '`') {
+            break;
+        }
+        if (depth == 0 && (c == ')' || c == '|')) {
+            break;
+        }
+        if (c == '\\') {
+            advance(lexer);
+            if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+                break;
+            }
+            advance(lexer);
+        } else if (c == '[') {
+            if (!scan_bracket_class(lexer)) {
+                break;
+            }
+        } else {
+            if (c == '(') {
+                depth++;
+            } else if (c == ')') {
+                depth--;
+            }
+            advance(lexer);
+        }
+    }
+    lexer->result_symbol = EXTGLOB_PATTERN;
+    return true;
+}
+
 // One piece of a pattern subscript index, after pattern flags:
 // $words[(i)--] ${a[(r)*@*]} ${tmp[(i)\[Zend Modules\]]}. Stops before
 // $ " ' ` (those are their own nodes), a newline, or the closing ']'.
@@ -1090,6 +1170,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // FIXME: newline handling and exited string handling should go
     bool was_just_newline = scanner->just_newline;
     scanner->just_newline = false;
+
+    // Only meaningful for the token right after a case item's '('
+    bool was_after_case_opener = scanner->after_case_opener;
+    scanner->after_case_opener = false;
 
     // Only at the start of the operand: both piece kinds are valid there.
     // Operands starting with $ " ' ` fall through to the normal handlers.
@@ -1616,6 +1700,40 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->mark_end(lexer);
             // This is ${...} - increment expansion depth
             enter_context(scanner, CTX_COMPOUND);
+            return true;
+        }
+    }
+
+    // Alternative after a case-item '|' that is a group:
+    // erase|(luks(AddKey|Erase)|isLuks)). saw_pipe_in_case is set by the
+    // extglob handler when it stops a value at a top-level '|'. There the
+    // '(' can't be the optional opener, so it always starts a group.
+    // Same right after the case item's own '(': ((#b)x(*)) has the opener
+    // and then a group.
+    if (valid_symbols[EXTGLOB_PATTERN] &&
+        (scanner->saw_pipe_in_case || was_after_case_opener) &&
+        !valid_symbols[OPENING_PAREN] && !in_error_recovery(valid_symbols) &&
+        lexer->lookahead == '(') {
+        scanner->saw_pipe_in_case = false;
+        if (scan_case_group_pattern(lexer, true)) {
+            return true;
+        }
+        return false; // unclosed: lexer moved, let the internal lexer try
+    }
+
+    // Case item that starts with a group: (free|net)bsd*) (a|b):*)
+    if (valid_symbols[EXTGLOB_PATTERN] && valid_symbols[ESAC] &&
+        valid_symbols[OPENING_PAREN] && !in_error_recovery(valid_symbols)) {
+        skip_wsnl(lexer);
+        if (lexer->lookahead == '(') {
+            if (scan_case_group_pattern(lexer, false)) {
+                return true;
+            }
+            // Opener: same token and context push as the OPENING_PAREN path
+            was_just_bare_dollar = scanner->just_returned_bare_dollar = false;
+            enter_context(scanner, CTX_COMMAND);
+            scanner->after_case_opener = true;
+            lexer->result_symbol = OPENING_PAREN;
             return true;
         }
     }
@@ -2827,6 +2945,10 @@ extglob_pattern:
                         return true;
                     }
                     state.saw_non_alphadot = true;
+                    // Re-examine the character after '|' from the top: a
+                    // ')' there (empty alternative, *(no|)keep*) must still
+                    // close the group.
+                    continue;
                 }
 
                 if (!state.done) {
