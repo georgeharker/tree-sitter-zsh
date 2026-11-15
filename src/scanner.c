@@ -2345,7 +2345,16 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             (lexer->lookahead == '#' && !in_param_expand) ||
             lexer->lookahead == '$' || lexer->lookahead == '_' ||
             iswdigit(lexer->lookahead)) {
+            bool was_hash = lexer->lookahead == '#';
             advance(lexer);
+            // $#name is the length of name ($#f, $#array), not $# followed
+            // by a word: let the grammar's expansion_style '#' take it, as
+            // for $+name. (Returning false after the advance only skips the
+            // handlers below for this position.)
+            if (was_hash && was_just_bare_dollar &&
+                (iswalpha(lexer->lookahead) || lexer->lookahead == '_')) {
+                return false;
+            }
             // Consume additional digits for multi-digit positional params
             // (${10}, ${10:-}, etc.)
             while (iswdigit(lexer->lookahead)) {

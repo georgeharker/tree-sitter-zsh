@@ -1002,3 +1002,53 @@ print ${x#} ${x%%} "${arr[@]:# }"
           name: (simple_variable_name)
           index: (array_at)
           pattern: (word))))))
+
+================================================================================
+Parameter expansion - $#name is the length of name
+================================================================================
+
+print $#f $#array $# $#*
+(( n = $#f ? 1 : -1 ))
+(( $#short_intlevel )) && print yes
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (expansion_style)
+      (simple_variable_name))
+    argument: (variable_ref
+      (expansion_style)
+      (simple_variable_name))
+    argument: (variable_ref
+      (special_variable_name))
+    argument: (concatenation
+      (variable_ref
+        (special_variable_name))
+      (glob_pattern)))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (ternary_expression
+            condition: (variable_ref
+              (expansion_style)
+              (simple_variable_name))
+            consequence: (number)
+            alternative: (unary_expression
+              (number)))))))
+  (list
+    (command
+      name: (command_name
+        (arithmetic_expansion
+          (variable_ref
+            (expansion_style)
+            (simple_variable_name)))))
+    (command
+      name: (command_name
+        (word))
+      argument: (word))))
