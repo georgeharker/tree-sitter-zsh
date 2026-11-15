@@ -351,6 +351,12 @@ module.exports = grammar({
       $.select_statement,
       $.if_statement,
       $.pipeline,
+      // Also allowed before '}' without a terminator:
+      // { a && [[ -f b ]] }, { { a } }, { ( a ) }, { case ... esac }
+      $.list,
+      $.compound_statement,
+      $.subshell,
+      $.case_statement,
     ),
 
     _statement_not_pipeline: $ => prec(1, choice(
