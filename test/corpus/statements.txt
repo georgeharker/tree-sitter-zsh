@@ -753,3 +753,109 @@ for x (a b) print $x
         (word))
       argument: (variable_ref
         (simple_variable_name)))))
+
+================================================================================
+Brace group - && / || list before } without a terminator
+================================================================================
+
+x && { (( 1 )) || [[ -f a ]] }
+{ a && [[ -f b ]] }
+out=$({ a; b && print X } 2>&1)
+x || { a; b && c }; y
+
+--------------------------------------------------------------------------------
+
+(program
+  (list
+    (command
+      name: (command_name
+        (word)))
+    (compound_statement
+      (list
+        (command
+          name: (command_name
+            (arithmetic_expansion
+              (number))))
+        (test_command
+          (unary_expression
+            operator: (test_operator)
+            (word))))))
+  (compound_statement
+    (list
+      (command
+        name: (command_name
+          (word)))
+      (test_command
+        (unary_expression
+          operator: (test_operator)
+          (word)))))
+  (variable_assignment
+    name: (variable_name)
+    value: (command_substitution
+      (redirected_statement
+        body: (compound_statement
+          (command
+            name: (command_name
+              (word)))
+          (list
+            (command
+              name: (command_name
+                (word)))
+            (command
+              name: (command_name
+                (word))
+              argument: (word))))
+        redirect: (file_redirect
+          descriptor: (file_descriptor)
+          destination: (number)))))
+  (list
+    (command
+      name: (command_name
+        (word)))
+    (compound_statement
+      (command
+        name: (command_name
+          (word)))
+      (list
+        (command
+          name: (command_name
+            (word)))
+        (command
+          name: (command_name
+            (word))))))
+  (command
+    name: (command_name
+      (word))))
+
+================================================================================
+Brace group - nested group, subshell and case before }
+================================================================================
+
+{ { print a } }
+{ ( print b ) }
+{ case x in x) print c;; esac }
+
+--------------------------------------------------------------------------------
+
+(program
+  (compound_statement
+    (compound_statement
+      (command
+        name: (command_name
+          (word))
+        argument: (word))))
+  (compound_statement
+    (subshell
+      (command
+        name: (command_name
+          (word))
+        argument: (word))))
+  (compound_statement
+    (case_statement
+      value: (word)
+      (case_item
+        value: (word)
+        (command
+          name: (command_name
+            (word))
+          argument: (word))))))

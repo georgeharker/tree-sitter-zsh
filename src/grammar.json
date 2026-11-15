@@ -419,6 +419,22 @@
         {
           "type": "SYMBOL",
           "name": "pipeline"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "list"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "compound_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "subshell"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "case_statement"
         }
       ]
     },
