@@ -142,7 +142,6 @@ module.exports = grammar({
     [$.redirected_statement, $.command],
     [$.pipeline],
     [$.repeat_statement, $.command],
-    [$._test_command_binary_expression, $.binary_expression],
     [$._expression, $._regex_match_literal], // Resolve regex expression conflict
     [$._regex_match_literal, $._expansion_or_variable], // Additional regex conflicts
   ],
@@ -221,6 +220,8 @@ module.exports = grammar({
     $._subscript_pattern_word,         // SUBSCRIPT_PATTERN_WORD: (i)--  (i)pattern
     $._subscript_pattern_glob,         // SUBSCRIPT_PATTERN_GLOB: (I)foo_*  (r)[bf]*
     $._default_word,                   // DEFAULT_WORD: ${X:-(none)} ${X:-<unset>}
+    $._test_pattern_word,              // TEST_PATTERN_WORD: [[ $x = -- ]]
+    $._test_pattern_glob,              // TEST_PATTERN_GLOB: [[ $x = (a|b)* ]]
     $.__error_recovery,
   ],
 
@@ -258,7 +259,7 @@ module.exports = grammar({
     // Zsh glob qualifiers: (.) (/) (*) etc.
     // FIXME: these qualifiers need extending to deal with
     //
-    zsh_glob_qualifier: $ => seq(
+    zsh_glob_qualifier: _ => seq(
       '(', 
       optional(token.immediate('#q')),
       token.immediate(/[./*@=p%\-^rwxugoaLkamcFNDMsShHbBfFdcaAtImCYoOnPqUGzZ+\d]+/),
@@ -266,7 +267,7 @@ module.exports = grammar({
     ),
 
     // Zsh glob modifiers: (:t) (:h) (:r) (:e) etc.  
-    zsh_glob_modifier: $ => seq(
+    zsh_glob_modifier: _ => seq(
       '(',
       token.immediate(':'),
       token.immediate(/[threuoOnPAlUsSqQxXfFlW]/),
@@ -714,10 +715,7 @@ module.exports = grammar({
         ),
         seq(
           '[[',
-          choice(
-            prec(1, alias($._test_command_binary_expression, $.binary_expression)),
-            $._expression,
-          ),
+          $._test_condition,
           ']]',
         ),
         seq(
@@ -728,21 +726,125 @@ module.exports = grammar({
       )),
     ),
     
-    _test_command_binary_expression: $ => prec(PREC.COMPARE,
-      choice(
-        // Regex matching operator
-        prec(PREC.COMPARE, seq(
-          field('left', $._expression),
-          field('operator', '=~'),
-          field('right', $._regex_match_expression), // Use dedicated regex expression
-        )),
-        // Pattern/string matching operators  
-        prec(PREC.COMPARE - 1, seq(
-          field('left', $._expression),
-          field('operator', choice('=', '==', '!=', $.test_operator)),
-          field('right', $._expression),
-        )),
+    // [[ ... ]] conditions (zshmisc "CONDITIONAL EXPRESSIONS"). Operands
+    // are words, not arithmetic: || binds loosest, then &&, then !, then
+    // ( ) groups, unary tests and comparisons. The right of = == != is a
+    // pattern; =~ takes a regex.
+    _test_condition: $ => choice(
+      alias($._test_or, $.binary_expression),
+      alias($._test_and, $.binary_expression),
+      alias($._test_not, $.unary_expression),
+      alias($._test_group, $.parenthesized_expression),
+      alias($._test_unary, $.unary_expression),
+      alias($._test_command_binary_expression, $.binary_expression),
+      $._literal,
+    ),
+
+    _test_or: $ => prec.left(1, seq(
+      field('left', $._test_condition),
+      field('operator', '||'),
+      field('right', $._test_condition),
+    )),
+
+    _test_and: $ => prec.left(2, seq(
+      field('left', $._test_condition),
+      field('operator', '&&'),
+      field('right', $._test_condition),
+    )),
+
+    _test_not: $ => prec.right(3, seq(
+      field('operator', '!'),
+      $._test_condition,
+    )),
+
+    _test_group: $ => seq('(', $._test_condition, ')'),
+
+    _test_unary: $ => prec(4, seq(
+      field('operator', $.test_operator),
+      $._literal,
+    )),
+
+    _test_command_binary_expression: $ => prec(5, choice(
+      seq(
+        field('left', $._literal),
+        field('operator', '=~'),
+        field('right', $._regex_match_expression),
       ),
+      // When the right starts with pattern text the scanner lexes it as
+      // pattern pieces ([[ $x = (a|b)* ]], [[ $1 = -- ]]); when it starts
+      // with $x, "str" or $(cmd) it's an ordinary literal.
+      seq(
+        field('left', $._literal),
+        field('operator', choice('=', '==', '!=')),
+        field('right', choice($._literal, $._test_pattern)),
+      ),
+      seq(
+        field('left', $._literal),
+        field('operator', choice($.test_operator, '<', '>')),
+        field('right', $._literal),
+      ),
+    )),
+
+    // Right side of [[ x = pattern ]]: starts with a pattern piece, then
+    // any mix of pieces, expansions and strings with no blanks between.
+    _test_pattern: $ => choice(
+      $._test_pattern_piece,
+      alias($._test_pattern_concatenation, $.concatenation),
+      alias($._test_glob_flagged, $.glob_pattern),
+      alias($._test_glob_qualified, $.glob_pattern),
+    ),
+
+    // [[ $n != (#i)*.TMP ]] / [[ $x = (#b)(*) ]]: same shape as an ordinary
+    // glob_pattern with flags (the piece itself stays anonymous).
+    _test_glob_flagged: $ => seq(
+      field('flags', $.zsh_extended_glob_flags),
+      choice(
+        $._test_pattern_word,
+        $._test_pattern_glob,
+        alias($._test_pattern_concatenation, $.concatenation),
+      ),
+      optional(field('qualifier', $.zsh_glob_qualifier)),
+    ),
+
+    // [[ foo.txt == *.txt(#qN) ]]
+    _test_glob_qualified: $ => seq(
+      choice($._test_pattern_word, $._test_pattern_glob),
+      field('qualifier', $.zsh_glob_qualifier),
+    ),
+
+    // Either starts with a pattern piece, or with strings/expansions and
+    // reaches a piece later ([[ $w != ":"(\\|)"!"* ]]). Glob flags may
+    // appear mid-pattern ([[ $x = a(#i)b ]]).
+    _test_pattern_concatenation: $ => prec.left(choice(
+      seq(
+        $._test_pattern_piece,
+        repeat1($._test_pattern_element),
+      ),
+      seq(
+        repeat1($._test_pattern_nonpiece),
+        choice($._test_pattern_piece, $.zsh_extended_glob_flags),
+        repeat($._test_pattern_element),
+      ),
+    )),
+
+    _test_pattern_element: $ => choice(
+      $._test_pattern_piece,
+      $.zsh_extended_glob_flags,
+      $._test_pattern_nonpiece,
+    ),
+
+    _test_pattern_nonpiece: $ => choice(
+      $.variable_ref,
+      $.expansion,
+      $.command_substitution,
+      $.string,
+      $.raw_string,
+      $.ansi_c_string,
+    ),
+
+    _test_pattern_piece: $ => choice(
+      alias($._test_pattern_word, $.word),
+      alias($._test_pattern_glob, $.glob_pattern),
     ),
 
     declaration_command: $ => prec.left(seq(
@@ -1191,7 +1293,7 @@ module.exports = grammar({
 
     // A robust glob pattern must contain at least one glob metacharacter
     // This prevents tilde expansion like ~/foo from being parsed as glob
-    _glob_innards: $ => token(choice(
+    _glob_innards: _ => token(choice(
       // Pattern starting with glob metacharacter
       seq(
         choice(
@@ -1407,7 +1509,11 @@ module.exports = grammar({
       '"',
     ),
 
-    string_content: _ => token(prec(-1, /([^"`$\\\r\n]|\\(.|\r?\n))+/)),
+    // Default lexical precedence: at prec -1 whitespace-skipping beat a
+    // string_content starting with a blank right after an expansion
+    // ("$R " lost the blank and the closing quote bypassed the scanner,
+    // leaking CTX_STRING onto the context stack).
+    string_content: _ => token(/([^"`$\\\r\n]|\\(.|\r?\n))+/),
 
     translated_string: $ => prec(1, seq($._bare_dollar, $.string)),
 
@@ -1606,7 +1712,7 @@ module.exports = grammar({
       field('modifier', $.expansion_modifier)
     ),
 
-    expansion_style: $ => choice(
+    expansion_style: _ => choice(
       token.immediate('#'),  // ${# var} - length
       token.immediate('!'),  // ${! var} - indirect expansion
       token.immediate('+'),  // ${+ var} - exists
@@ -1632,7 +1738,7 @@ module.exports = grammar({
     ),
 
     // Zsh parameter expansion flags: ${(L)var}, ${(j:,:)array}, etc.
-    expansion_flags: $ => token.immediate(/\([^)]+\)/),
+    expansion_flags: _ => token.immediate(/\([^)]+\)/),
 
     _expansion_body: $ => prec(1, choice(
      // HIGHEST PRIORITY: Colon operations (moved to top)
@@ -1773,7 +1879,7 @@ module.exports = grammar({
       }));
     },
 
-    _expansion_operator: $ => seq(
+    _expansion_operator: _ => seq(
       field('operator', token.immediate('@')),
       field('operator', immediateLiterals('U', 'u', 'L', 'Q', 'E', 'P', 'A', 'K', 'a', 'k')),
     ),
@@ -1917,7 +2023,7 @@ module.exports = grammar({
       ),
     ),
 
-    comment: $ => token(prec(-20, /#[^\r\n]*/)),
+    comment: _ => token(prec(-20, /#[^\r\n]*/)),
 
     _comment_word: _ => token(prec(-8, seq(
       choice(
@@ -1935,7 +2041,7 @@ module.exports = grammar({
 
     _special_variable_name: $ => choice($.special_variable_name, $._raw_dollar),
 
-    _word: $ => token(seq(
+    _word: _ => token(seq(
       choice(
         noneOf('#', ':', ...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),

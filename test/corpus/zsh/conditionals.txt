@@ -282,3 +282,437 @@ done
           (word -))
         argument: (simple_expansion -
           (variable_name -))))))
+
+================================================================================
+Test command - pattern alternation groups on the right of = == !=
+================================================================================
+
+[[ $x = (a|b)* ]]
+[[ "$prev" = -(no|)cc ]]
+[[ $s != (|g|z|gz|bz)[ef]grep ]]
+[[ $OSTYPE = (darwin|freebsd)* ]]
+[[ $index = (.|..|)/* ]] || index=~+/$index
+[[ $n = <1-5> ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (string
+        (variable_ref
+          (simple_variable_name)))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern)))
+  (list
+    (test_command
+      (binary_expression
+        left: (variable_ref
+          (simple_variable_name))
+        right: (glob_pattern)))
+    (variable_assignment
+      name: (variable_name)
+      value: (concatenation
+        (word)
+        (variable_ref
+          (simple_variable_name)))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern))))
+
+================================================================================
+Test command - bare dash and double dash patterns
+================================================================================
+
+[[ $x = - ]]
+[[ $1 = -- ]] && shift
+[[ "$1" = -(|-) ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (word)))
+  (list
+    (test_command
+      (binary_expression
+        left: (variable_ref
+          (special_variable_name))
+        right: (word)))
+    (command
+      name: (command_name
+        (word))))
+  (test_command
+    (binary_expression
+      left: (string
+        (variable_ref
+          (special_variable_name)))
+      right: (glob_pattern))))
+
+================================================================================
+Test command - patterns mixing strings, expansions and groups
+================================================================================
+
+[[ $words[1] != ":"(\\|)"!"* ]]
+[[ $x = (a|$y)* ]]
+[[ ${file} == @(*${N}.tar.xz|*.asc|*.sig) ]]
+[[ $h = (#b)(${~R[1,-2]})* ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name)
+        index: (number))
+      right: (concatenation
+        (string
+          (string_content))
+        (glob_pattern)
+        (string
+          (string_content))
+        (glob_pattern))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (concatenation
+        (glob_pattern)
+        (variable_ref
+          (simple_variable_name))
+        (glob_pattern))))
+  (test_command
+    (binary_expression
+      left: (expansion
+        name: (simple_variable_name))
+      right: (concatenation
+        (glob_pattern)
+        (expansion
+          name: (simple_variable_name))
+        (glob_pattern))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern
+        flags: (zsh_extended_glob_flags)
+        (concatenation
+          (glob_pattern)
+          (expansion
+            style: (expansion_style)
+            name: (simple_variable_name)
+            index: (word))
+          (glob_pattern))))))
+
+================================================================================
+Test command - glob flags and qualifiers in patterns
+================================================================================
+
+[[ $name != (#i)*.TMP ]]
+[[ $x = a(#i)b ]]
+[[ foo.txt == *.txt(#qN) ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern
+        flags: (zsh_extended_glob_flags))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (concatenation
+        (word)
+        (zsh_extended_glob_flags)
+        (word))))
+  (test_command
+    (binary_expression
+      left: (word)
+      right: (glob_pattern
+        qualifier: (zsh_glob_qualifier)))))
+
+================================================================================
+Test command - && || ! and groups with pattern operands
+================================================================================
+
+[[ $a = b && $c = d ]]
+[[ $a = b || $c = d ]]
+[[ ! -f x ]]
+[[ ! ( -f x || -d x ) ]]
+[[ ($a = b) && ($c = $d) ]]
+[[ $# -gt 1 || (( -n $a && -z $b ) && $# -gt 0 ) ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (binary_expression
+        left: (variable_ref
+          (simple_variable_name))
+        right: (word))
+      right: (binary_expression
+        left: (variable_ref
+          (simple_variable_name))
+        right: (word))))
+  (test_command
+    (binary_expression
+      left: (binary_expression
+        left: (variable_ref
+          (simple_variable_name))
+        right: (word))
+      right: (binary_expression
+        left: (variable_ref
+          (simple_variable_name))
+        right: (word))))
+  (test_command
+    (unary_expression
+      (unary_expression
+        operator: (test_operator)
+        (word))))
+  (test_command
+    (unary_expression
+      (parenthesized_expression
+        (binary_expression
+          left: (unary_expression
+            operator: (test_operator)
+            (word))
+          right: (unary_expression
+            operator: (test_operator)
+            (word))))))
+  (test_command
+    (binary_expression
+      left: (parenthesized_expression
+        (binary_expression
+          left: (variable_ref
+            (simple_variable_name))
+          right: (word)))
+      right: (parenthesized_expression
+        (binary_expression
+          left: (variable_ref
+            (simple_variable_name))
+          right: (variable_ref
+            (simple_variable_name))))))
+  (test_command
+    (binary_expression
+      left: (binary_expression
+        left: (variable_ref
+          (special_variable_name))
+        operator: (test_operator)
+        right: (number))
+      right: (parenthesized_expression
+        (binary_expression
+          left: (parenthesized_expression
+            (binary_expression
+              left: (unary_expression
+                operator: (test_operator)
+                (variable_ref
+                  (simple_variable_name)))
+              right: (unary_expression
+                operator: (test_operator)
+                (variable_ref
+                  (simple_variable_name)))))
+          right: (binary_expression
+            left: (variable_ref
+              (special_variable_name))
+            operator: (test_operator)
+            right: (number)))))))
+
+================================================================================
+Test command - ordinary operands are unchanged
+================================================================================
+
+[[ $x = $y ]]
+[[ $x = "$y" ]]
+[[ $a -eq 1 ]]
+[[ $a -lt $b+1 ]]
+[[ $x =~ ^a(b|c)$ ]]
+[[ $a < $b ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (variable_ref
+        (simple_variable_name))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (string
+        (variable_ref
+          (simple_variable_name)))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      operator: (test_operator)
+      right: (number)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      operator: (test_operator)
+      right: (concatenation
+        (variable_ref
+          (simple_variable_name))
+        (word))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (regex)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (variable_ref
+        (simple_variable_name)))))
+
+================================================================================
+String - blank after an expansion is string content
+================================================================================
+
+x="$R "
+y="${R} "
+[[ -n " ${R[$p]:-} " ]]
+(( d[$b]++ ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (variable_ref
+        (simple_variable_name))
+      (string_content)))
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        name: (simple_variable_name))
+      (string_content)))
+  (test_command
+    (unary_expression
+      operator: (test_operator)
+      (string
+        (expansion
+          (expansion_default
+            name: (simple_variable_name)
+            index: (variable_ref
+              (simple_variable_name))))
+        (string_content))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (postfix_expression
+          (subscript
+            name: (variable_name)
+            index: (variable_ref
+              (simple_variable_name))))))))
+
+================================================================================
+Test command - POSIX character classes in patterns
+================================================================================
+
+[[ $i == [[:space:]]* ]]
+[[ "$e" != [^[:blank:]\#\*_]*:* ]]
+[[ $c != [[:alnum:]]## ]]
+[[ $f != (0x[[:xdigit:]]##|[[:digit:]]##) ]]
+[[ $p = ((#s)|*:)${CURSOR}:* ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (string
+        (variable_ref
+          (simple_variable_name)))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (concatenation
+        (glob_pattern)
+        (zsh_extended_glob_flags)
+        (glob_pattern)
+        (expansion
+          name: (simple_variable_name))
+        (glob_pattern)))))
+
+================================================================================
+Test command - line continuation before a quoted operand leaves later (( )) intact
+================================================================================
+
+[[ "$a" != x && \
+   "$b" != x ]]
+(( d[$b]++ ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (binary_expression
+        left: (string
+          (variable_ref
+            (simple_variable_name)))
+        right: (word))
+      right: (binary_expression
+        left: (string
+          (variable_ref
+            (simple_variable_name)))
+        right: (word))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (postfix_expression
+          (subscript
+            name: (variable_name)
+            index: (variable_ref
+              (simple_variable_name))))))))

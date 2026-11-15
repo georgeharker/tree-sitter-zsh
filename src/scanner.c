@@ -67,6 +67,8 @@ enum TokenType {
     SUBSCRIPT_PATTERN_WORD,  // plain piece of a pattern index: -- pattern
     SUBSCRIPT_PATTERN_GLOB,  // glob piece of a pattern index: foo_* [bf]*
     DEFAULT_WORD,            // ${X:-(none)} ${X:-<unset>}: literal ( < > ...
+    TEST_PATTERN_WORD,       // [[ $x = -- ]]: plain pattern piece
+    TEST_PATTERN_GLOB,       // [[ $x = (a|b)* ]]: glob pattern piece
     ERROR_RECOVERY,
 };
 
@@ -128,6 +130,8 @@ const char *TokenNames[] = {
     "SUBSCRIPT_PATTERN_WORD",
     "SUBSCRIPT_PATTERN_GLOB",
     "DEFAULT_WORD",
+    "TEST_PATTERN_WORD",
+    "TEST_PATTERN_GLOB",
     "ERROR_RECOVERY",
 };
 #endif
@@ -188,6 +192,7 @@ typedef struct {
 
 typedef struct {
     uint8_t last_glob_paren_depth;
+    uint8_t test_pattern_depth; // open '(' groups in a [[ x = pattern ]]
     bool ext_was_in_double_quote;
     bool ext_saw_outside_quote;
     Array(context_type_t) context_stack; // Proper context stack
@@ -278,6 +283,29 @@ static inline void exit_context(Scanner *scanner,
     }
 }
 
+// Pop contexts down to and including the innermost `ctx`. If `ctx` isn't on
+// the stack, pop just the top (same as exit_context's mismatch handling).
+static inline void exit_context_through(Scanner *scanner,
+                                        context_type_t ctx) {
+    bool present = false;
+    for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
+        if (*array_get(&scanner->context_stack, i) == ctx) {
+            present = true;
+        }
+    }
+    if (!present) {
+        exit_context(scanner, ctx);
+        return;
+    }
+    while (scanner->context_stack.size > 0) {
+        context_type_t top = *array_back(&scanner->context_stack);
+        array_pop(&scanner->context_stack);
+        if (top == ctx) {
+            break;
+        }
+    }
+}
+
 // Helper functions for checking contexts
 static inline bool in_expansion_context(Scanner *scanner) {
     context_type_t ctx = get_current_context(scanner);
@@ -363,6 +391,7 @@ static inline void reset(Scanner *scanner) {
             scanner->heredocs.size, scanner->context_stack.size);
 #endif
     scanner->last_glob_paren_depth = 0;
+    scanner->test_pattern_depth = 0;
     scanner->ext_was_in_double_quote = false;
     scanner->ext_saw_outside_quote = false;
     scanner->context_stack.size = 0; // Clear context stack
@@ -412,6 +441,7 @@ static unsigned serialize(Scanner *scanner, char *buffer) {
     buffer[size++] = (char)scanner->just_returned_bare_dollar;
     buffer[size++] = (char)scanner->just_exited_string;
     buffer[size++] = (char)scanner->just_newline;
+    buffer[size++] = (char)scanner->test_pattern_depth;
 
     // Serialize context stack
     for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
@@ -469,6 +499,7 @@ static void deserialize(Scanner *scanner, const char *buffer, unsigned length) {
         scanner->just_returned_bare_dollar = buffer[size++];
         scanner->just_exited_string = buffer[size++];
         scanner->just_newline = buffer[size++];
+        scanner->test_pattern_depth = (uint8_t)buffer[size++];
 
         // Deserialize context stack
         scanner->context_stack.size = 0;
@@ -773,6 +804,64 @@ static bool scan_subscript_flags(TSLexer *lexer, const bool *valid_symbols) {
     return true;
 }
 
+// Read a bracket class [abc] [^)] []x] [!]x] [[:space:]] [^[:blank:]\#]
+// with the lexer on the opening '['. POSIX classes [:name:], [=c=] and
+// [.c.] inside it don't close it. Returns false (lexer advanced) if it
+// doesn't close on this line; callers then end their token at the last
+// mark_end, before the '['.
+static bool scan_bracket_class(TSLexer *lexer) {
+    advance(lexer); // '['
+    if (lexer->lookahead == '^' || lexer->lookahead == '!') {
+        advance(lexer);
+    }
+    if (lexer->lookahead == ']') {
+        advance(lexer); // leading ']' is literal
+    }
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer) || c == '\n' || c == 0) {
+            return false;
+        }
+        if (c == ']') {
+            advance(lexer);
+            return true;
+        }
+        if (c == '\\') {
+            advance(lexer);
+            if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+                return false;
+            }
+            advance(lexer);
+            continue;
+        }
+        if (c == '[') {
+            advance(lexer);
+            int32_t kind = lexer->lookahead;
+            if (kind == ':' || kind == '=' || kind == '.') {
+                advance(lexer);
+                // up to the matching ":]" / "=]" / ".]"
+                for (;;) {
+                    if (lexer->eof(lexer) || lexer->lookahead == '\n' ||
+                        lexer->lookahead == 0) {
+                        return false;
+                    }
+                    if (lexer->lookahead == kind) {
+                        advance(lexer);
+                        if (lexer->lookahead == ']') {
+                            advance(lexer);
+                            break;
+                        }
+                        continue;
+                    }
+                    advance(lexer);
+                }
+            }
+            continue; // a lone '[' inside a class is literal
+        }
+        advance(lexer);
+    }
+}
+
 // One piece of a pattern subscript index, after pattern flags:
 // $words[(i)--] ${a[(r)*@*]} ${tmp[(i)\[Zend Modules\]]}. Stops before
 // $ " ' ` (those are their own nodes), a newline, or the closing ']'.
@@ -802,28 +891,9 @@ static bool scan_subscript_pattern(TSLexer *lexer, const bool *valid_symbols,
             }
             advance(lexer);
         } else if (c == '[') {
-            // Bracket class: [abc] [^)] []x] [!]x]
-            advance(lexer);
-            if (lexer->lookahead == '^' || lexer->lookahead == '!') {
-                advance(lexer);
-            }
-            if (lexer->lookahead == ']') {
-                advance(lexer);
-            }
-            while (lexer->lookahead != ']' && lexer->lookahead != '\n' &&
-                   !lexer->eof(lexer)) {
-                if (lexer->lookahead == '\\') {
-                    advance(lexer);
-                    if (lexer->eof(lexer) || lexer->lookahead == '\n') {
-                        break;
-                    }
-                }
-                advance(lexer);
-            }
-            if (lexer->lookahead != ']') {
+            if (!scan_bracket_class(lexer)) {
                 break; // unclosed: token ends at the last mark
             }
-            advance(lexer);
             glob = true;
         } else {
             if (!is_subscript_word_char(c)) {
@@ -894,6 +964,108 @@ static bool scan_default_word(TSLexer *lexer) {
     return true;
 }
 
+// One piece of the pattern on the right of = == != inside [[ ]]:
+// [[ $x = (a|b)* ]] [[ $1 = -- ]] [[ $f = *.(c|h) ]] [[ $n = <1-5> ]].
+// Stops at a blank, ']' (end of [[ ]]), ')' with no open '(' in this
+// piece, && / || / ; / &, a newline, or $ " ' ` (their own nodes).
+// Bracket classes are read whole when they close on the line. Plain text
+// is a word, anything with glob characters a glob_pattern.
+static bool scan_test_pattern(Scanner *scanner, TSLexer *lexer,
+                              const bool *valid_symbols, bool *moved,
+                              uint32_t opened, bool allow_close_start) {
+    // opened == 1: the caller already consumed (and marked) a '('.
+    // Groups opened in earlier pieces are carried in test_pattern_depth,
+    // so @(*${x}.tar.xz|*.asc) closes in a later piece.
+    uint32_t depth = scanner->test_pattern_depth + opened;
+    bool any = opened > 0;
+    bool glob = opened > 0;
+    *moved = opened > 0;
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer) || c == 0 || iswspace(c) || c == ']' ||
+            c == '$' || c == '"' || c == '\'' || c == '`' || c == ';') {
+            break;
+        }
+        if (c == ')' && depth == 0) {
+            // After an expansion inside a group, (#b)(${~x})*: the ')'
+            // closes the pattern group when pattern text follows directly.
+            // Followed by a blank ] ) & | it closes a [[ ( ... ) ]] group
+            // instead: return false and let the internal lexer take it.
+            if (!any && allow_close_start) {
+                *moved = true;
+                advance(lexer);
+                int32_t n = lexer->lookahead;
+                if (!lexer->eof(lexer) && n != 0 && !iswspace(n) &&
+                    n != ']' && n != ')' && n != '&' && n != '|' &&
+                    n != ';') {
+                    glob = true;
+                    any = true;
+                    lexer->mark_end(lexer);
+                    continue;
+                }
+            }
+            break;
+        }
+        if (c == '&') {
+            break;
+        }
+        if (c == '|' && depth == 0) {
+            // a|b alternation at top level is fine, but || ends the operand
+            *moved = true;
+            advance(lexer);
+            if (lexer->lookahead == '|') {
+                break; // token ends at the last mark, before the first '|'
+            }
+            glob = true;
+            any = true;
+            lexer->mark_end(lexer);
+            continue;
+        }
+        *moved = true;
+        if (c == '\\') {
+            advance(lexer);
+            if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+                break;
+            }
+            advance(lexer);
+        } else if (c == '[') {
+            if (!scan_bracket_class(lexer)) {
+                break; // unclosed: token ends at the last mark
+            }
+            glob = true;
+        } else if (c == '(') {
+            // "(#" starts glob flags (#i) or a qualifier (#qN): end the
+            // piece before it (last mark) so they get their own nodes.
+            advance(lexer);
+            if (lexer->lookahead == '#') {
+                break;
+            }
+            depth++;
+            glob = true;
+        } else {
+            if (c == ')') {
+                depth--;
+            }
+            if (!is_subscript_word_char(c)) {
+                glob = true;
+            }
+            advance(lexer);
+        }
+        any = true;
+        lexer->mark_end(lexer);
+    }
+    if (!any) {
+        return false;
+    }
+    enum TokenType sym = glob ? TEST_PATTERN_GLOB : TEST_PATTERN_WORD;
+    if (!valid_symbols[sym]) {
+        return false;
+    }
+    scanner->test_pattern_depth = depth > UINT8_MAX ? UINT8_MAX : (uint8_t)depth;
+    lexer->result_symbol = sym;
+    return true;
+}
+
 static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
     fprintf(stderr, "SCANNER: invoked lookahead='%c'\n", lexer->lookahead);
@@ -918,6 +1090,71 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // FIXME: newline handling and exited string handling should go
     bool was_just_newline = scanner->just_newline;
     scanner->just_newline = false;
+
+    // Only at the start of the operand: both piece kinds are valid there.
+    // Operands starting with $ " ' ` fall through to the normal handlers.
+    if (valid_symbols[TEST_PATTERN_WORD] && valid_symbols[TEST_PATTERN_GLOB] &&
+        !in_error_recovery(valid_symbols)) {
+        // A piece directly after a string/expansion has no blank before
+        // it; at the start of the operand there's one after the operator.
+        // A blank after a string/expansion ends the operand ([[ $x = $y ]]),
+        // so only skip blanks when CONCAT (mid-word) isn't expected.
+        bool adjacent = valid_symbols[CONCAT] ||
+                        (lexer->lookahead != ' ' && lexer->lookahead != '\t');
+        if (!adjacent) {
+            scanner->test_pattern_depth = 0; // new operand
+        }
+        if (!valid_symbols[CONCAT]) {
+            while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                skip(lexer);
+            }
+        }
+        int32_t c = lexer->lookahead;
+        // Mid-pattern (adjacent to the previous piece) a piece may start
+        // with ')' or '|': ((#s)|*:)${x}. A following '|' makes it '||',
+        // which scan_test_pattern hands back to the internal lexer.
+        if (c != '$' && c != '"' && c != '\'' && c != '`' && c != ']' &&
+            ((c != ')' && c != '|') || adjacent) && c != '&' &&
+            !iswspace(c) && c != 0) {
+            bool moved = false;
+            uint32_t depth = 0;
+            if (c == '(') {
+                advance(lexer);
+                lexer->mark_end(lexer);
+                if (lexer->lookahead == '#') {
+                    advance(lexer);
+                    if (lexer->lookahead == 'q') {
+                        // (#qN) qualifier: the grammar's '(' '#q' tokens
+                        // handle it; the internal lexer restarts at '('.
+                        return false;
+                    }
+                    // (#i) (#b) (#a2) (#s) ... extended glob flags
+                    bool any_flag = false;
+                    while (iswalnum(lexer->lookahead) ||
+                           lexer->lookahead == '.' || lexer->lookahead == ',') {
+                        advance(lexer);
+                        any_flag = true;
+                    }
+                    if (any_flag && lexer->lookahead == ')' &&
+                        valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) {
+                        advance(lexer);
+                        lexer->mark_end(lexer);
+                        lexer->result_symbol = ZSH_EXTENDED_GLOB_FLAGS;
+                        return true;
+                    }
+                    return false;
+                }
+                depth = 1;
+            }
+            if (scan_test_pattern(scanner, lexer, valid_symbols, &moved,
+                                  depth, adjacent)) {
+                return true;
+            }
+            if (moved) {
+                return false;
+            }
+        }
+    }
 
     if (valid_symbols[DEFAULT_WORD] && !in_error_recovery(valid_symbols) &&
         in_parameter_expansion(scanner)) {
@@ -1437,7 +1674,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                     return true;
                 }
             } else if (lexer->lookahead == '(' &&
-                       valid_symbols[DOUBLE_OPENING_PAREN]) {
+                       valid_symbols[DOUBLE_OPENING_PAREN] &&
+                       // [[ a || (( -n $x ) && b ) ]]: inside [[ ]] "((" is
+                       // two nested groups, not arithmetic
+                       get_current_context(scanner) != CTX_TEST) {
                 advance(lexer);
                 lexer->mark_end(lexer);
                 // This is ((...)) - increment arithmetic depth
@@ -1574,8 +1814,12 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
                 fprintf(stderr, "DEBUG: Detected TEST_COMMAND_END ]]\n");
 #endif
-                // Exit test command context
-                exit_context(scanner, CTX_TEST);
+                // Exit test command context. Pop down to (and including)
+                // the innermost CTX_TEST: anything above it was leaked
+                // inside the [[ ]] (e.g. a string whose opening quote came
+                // after a \-newline and bypassed the scanner), and leaving
+                // CTX_TEST behind confuses later context checks.
+                exit_context_through(scanner, CTX_TEST);
                 return true;
             } else if (valid_symbols[CLOSING_BRACKET]) {
                 // This is single ]
