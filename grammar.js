@@ -776,10 +776,19 @@ module.exports = grammar({
 
     _test_group: $ => seq('(', $._test_condition, ')'),
 
-    _test_unary: $ => prec(4, seq(
-      field('operator', $.test_operator),
-      $._literal,
-    )),
+    _test_unary: $ => choice(
+      prec(4, seq(
+        field('operator', $.test_operator),
+        $._literal,
+      )),
+      // Completion conditions with a count: [[ -prefix 1 (f|ht)tp:// ]]
+      // (zshcompwid "Completion Condition Codes"); the operand is a pattern.
+      prec(4, seq(
+        field('operator', $.test_operator),
+        field('count', $.number),
+        choice($._literal, $._test_pattern),
+      )),
+    ),
 
     _test_command_binary_expression: $ => prec(5, choice(
       seq(
