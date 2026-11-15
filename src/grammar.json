@@ -9992,12 +9992,20 @@
                           }
                         },
                         {
-                          "type": "FIELD",
-                          "name": "replace",
-                          "content": {
-                            "type": "SYMBOL",
-                            "name": "_param_replacement"
-                          }
+                          "type": "CHOICE",
+                          "members": [
+                            {
+                              "type": "FIELD",
+                              "name": "replace",
+                              "content": {
+                                "type": "SYMBOL",
+                                "name": "_param_replacement"
+                              }
+                            },
+                            {
+                              "type": "BLANK"
+                            }
+                          ]
                         },
                         {
                           "type": "CHOICE",
@@ -13450,6 +13458,10 @@
         {
           "type": "SYMBOL",
           "name": "raw_string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "ansi_c_string"
         },
         {
           "type": "SYMBOL",

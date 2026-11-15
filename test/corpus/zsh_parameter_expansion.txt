@@ -1185,3 +1185,112 @@ print ${a:#$~p} ${a#$~p} ${a/$~p/x} ${pages%$~suf} ${(M)^a:#$~p}
         pattern: (dollar_variable
           (expansion_style)
           (simple_variable_name))))))
+
+================================================================================
+Parameter expansion - chained :s modifiers
+================================================================================
+
+print ${x:s/a/b/:s/c/d/}
+amap[f]="${2:s/join/-/:s/close/-/:s/next//}"
+print ${x:s/a//:t}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier
+          search: (regex)
+          replace: (regex)
+          search: (regex)
+          replace: (regex)))))
+  (variable_assignment
+    name: (subscript
+      name: (variable_name)
+      index: (word))
+    value: (string
+      (expansion
+        (expansion_with_modifier
+          name: (special_variable_name)
+          modifier: (expansion_modifier
+            search: (regex)
+            replace: (regex)
+            search: (regex)
+            replace: (regex)
+            search: (regex))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier
+          search: (regex))))))
+
+================================================================================
+Parameter expansion - $'...' in patterns and replacements
+================================================================================
+
+print ${tmp/[ ]##/$'\t'}
+print ${x//$'\n'/$'\t'}
+print "${REPLY_OUT//$'\n'/$'\n      '}"
+x="${out//$'\e'\[[0-9;]#m/}"
+print ${out//"x"\[a/} ${out//$'\e'[0-9]/}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (ansi_c_string))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (ansi_c_string)
+        replacement: (ansi_c_string))))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          pattern: (ansi_c_string)
+          replacement: (ansi_c_string)))))
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          pattern: (concatenation
+            (ansi_c_string)
+            (regex))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (concatenation
+          (string
+            (string_content))
+          (regex))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (concatenation
+          (ansi_c_string)
+          (regex))))))

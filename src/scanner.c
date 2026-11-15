@@ -1332,8 +1332,12 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 get_current_context(scanner) == CTX_COMPOUND)) ||
               // Split subscript out
               (lexer->lookahead == ']' && valid_symbols[CLOSING_BRACKET]) ||
+              // In a pattern ${x//$'\e'[0-9]#m/} a '[' after a string
+              // is a bracket class, not a subscript ($y[1] is still caught
+              // by was_just_variable_name).
               (lexer->lookahead == '[' &&
-               (in_parameter_expansion(scanner) ||
+               ((in_parameter_expansion(scanner) &&
+                 !in_pattern_context(scanner)) ||
                 was_just_variable_name)) || // Suppress CONCAT after $var when [
               (lexer->lookahead == ':' &&
                was_just_variable_name) || // Suppress CONCAT after $var when :
@@ -1393,6 +1397,13 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 }
                 if (lexer->eof(lexer)) {
                     return false;
+                }
+                // In a pattern an escape after a string continues the
+                // pattern: ${out//$'\e'\[[0-9;]#m/}. (Elsewhere this path
+                // still falls through as before.)
+                if (in_pattern_context(scanner)) {
+                    lexer->result_symbol = concat_type;
+                    return true;
                 }
             } else {
                 lexer->mark_end(lexer);
@@ -2058,6 +2069,14 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // Handle PATTERN_START - emitted after pattern operators in parameter
     // expansions
     if (valid_symbols[PATTERN_START] && !in_error_recovery(valid_symbols)) {
+        // Chained substitutions ${x:s/a/b/:s/c/d/}: the first one left us in
+        // the substitute context already; emit again and stay there.
+        if (get_current_context(scanner) == CTX_PARAMETER_PATTERN_SUBSTITUTE &&
+            lexer->lookahead != '}') {
+            lexer->result_symbol = PATTERN_START;
+            lexer->mark_end(lexer);
+            return true;
+        }
         if (get_current_context(scanner) == CTX_PARAMETER &&
             lexer->lookahead !=
                 '}') { // Don't emit if expansion is about to end
