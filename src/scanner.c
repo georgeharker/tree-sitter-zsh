@@ -2114,6 +2114,15 @@ regex:
 #endif
                 return false;
             }
+            if (valid_symbols[REGEX_NO_SLASH] && !state.advanced_once) {
+                // Never emit a zero-width token: the parser makes no
+                // progress and loops forever growing the tree.
+
+#if DEBUG
+                fprintf(stderr, "DEBUG: regex not valid returning false\n");
+#endif
+                return false;
+            }
 
 #if DEBUG
             fprintf(stderr, "DEBUG: regex scan returning regex\n");
