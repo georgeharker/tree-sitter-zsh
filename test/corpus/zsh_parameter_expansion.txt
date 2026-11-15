@@ -894,3 +894,111 @@ print $a[(i+1)]
       (simple_variable_name)
       index: (parenthesized_expression
         (word)))))
+
+================================================================================
+Parameter expansion - default values with literal ( ) < >
+================================================================================
+
+print "${X:-<unset>}" ${X:-(none)} ${x:-a|b}
+print "${x:+ (${y}ms)}" "${x:+(y)}" ${x:-(a $b)}
+local p="${H[$id]:-(none)}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word)))))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (word))))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (word)
+          (word)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word)
+            (concatenation
+              (expansion
+                name: (simple_variable_name))
+              (word))
+            (word)))))
+    argument: (string
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (word)))))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (word)
+          (variable_ref
+            (simple_variable_name))
+          (word)))))
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (string
+        (expansion
+          (expansion_default
+            name: (simple_variable_name)
+            index: (variable_ref
+              (simple_variable_name))
+            default: (expansion_default_list
+              (word))))))))
+
+================================================================================
+Parameter expansion - empty suffix and prefix patterns
+================================================================================
+
+y=( ${x:#} "${(@)x:#}" )
+print ${x#} ${x%%} "${arr[@]:# }"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)))
+      (string
+        (expansion
+          flags: (expansion_flags)
+          (expansion_pattern
+            name: (simple_variable_name))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)))
+    argument: (string
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          index: (array_at)
+          pattern: (word))))))
