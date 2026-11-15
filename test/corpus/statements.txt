@@ -981,3 +981,187 @@ esac
       (command
         name: (command_name
           (word))))))
+
+================================================================================
+If and while - then / do directly after a self-closing condition
+================================================================================
+
+if [[ -n x ]] then print a; fi
+if (( 1 )) then print b; fi
+while [[ -z $d ]] do d=1; done
+if { true } then print c; fi
+if [[ a ]] && [[ b ]] then print d; fi
+if print then; then :; fi
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (test_command
+      (unary_expression
+        operator: (test_operator)
+        (word)))
+    (command
+      name: (command_name
+        (word))
+      argument: (word)))
+  (if_statement
+    condition: (command
+      name: (command_name
+        (arithmetic_expansion
+          (number))))
+    (command
+      name: (command_name
+        (word))
+      argument: (word)))
+  (while_statement
+    condition: (test_command
+      (unary_expression
+        operator: (test_operator)
+        (variable_ref
+          (simple_variable_name))))
+    body: (do_group
+      (variable_assignment
+        name: (variable_name)
+        value: (number))))
+  (if_statement
+    condition: (compound_statement
+      (command
+        name: (command_name
+          (word))))
+    (command
+      name: (command_name
+        (word))
+      argument: (word)))
+  (if_statement
+    condition: (list
+      (test_command
+        (word))
+      (test_command
+        (word)))
+    (command
+      name: (command_name
+        (word))
+      argument: (word)))
+  (if_statement
+    condition: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    (command
+      name: (command_name
+        (word)))))
+
+================================================================================
+Function definition - name built from an expansion
+================================================================================
+
+function $w-by-keymap { :; }
+function ${w}x { :; }
+function $w { :; }
+function f() { :; }
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_definition
+    name: (concatenation
+      (variable_ref
+        (simple_variable_name))
+      (word))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (function_definition
+    name: (concatenation
+      (expansion
+        name: (simple_variable_name))
+      (word))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (function_definition
+    name: (variable_ref
+      (simple_variable_name))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))))))
+
+================================================================================
+Redirection - zsh <> and clobber operators, named fd
+================================================================================
+
+exec {fd}<>"$p"
+print a <> f1
+print b >! f2
+print c >>| f2
+print d >>! f2
+print e &>| f3
+print g &>! f3
+
+--------------------------------------------------------------------------------
+
+(program
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (concatenation
+        (word)
+        (word)
+        (word)))
+    redirect: (file_redirect
+      destination: (string
+        (variable_ref
+          (simple_variable_name)))))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      destination: (word)))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      destination: (word)))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      destination: (word)))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      destination: (word)))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      destination: (word)))
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))
+    redirect: (file_redirect
+      destination: (word))))

@@ -528,7 +528,7 @@ module.exports = grammar({
 
     while_statement: $ => seq(
       choice('while', 'until'),
-      field('condition', $._terminated_statement),
+      field('condition', $._condition),
       field('body', $.do_group),
     ),
 
@@ -558,9 +558,32 @@ module.exports = grammar({
       'done',
     ),
 
+    // zsh lets then / do follow a condition that closes itself without a
+    // ';': if [[ -n $x ]] then, while (( i )) do, if { true } then,
+    // if [[ a ]] && [[ b ]] then.
+    _condition: $ => choice(
+      $._terminated_statement,
+      seq(
+        optional($._terminated_statement),
+        choice(
+          $.test_command,
+          $.compound_statement,
+          $.list,
+          // if (( 1 )) then: (( )) as a statement is a command whose name is
+          // the arithmetic expansion. Only that form; a plain command would
+          // swallow `then` as an argument (if print then; then ...).
+          alias($._arithmetic_only_command, $.command),
+        ),
+      ),
+    ),
+
+    _arithmetic_only_command: $ => field('name',
+      alias($._arithmetic_command_name, $.command_name)),
+    _arithmetic_command_name: $ => $.arithmetic_expansion,
+
     if_statement: $ => seq(
       'if',
-      field('condition', $._terminated_statement),
+      field('condition', $._condition),
       'then',
       optional($._terminated_statement),
       repeat($.elif_clause),
@@ -570,7 +593,7 @@ module.exports = grammar({
 
     elif_clause: $ => seq(
       'elif',
-      $._terminated_statement,
+      $._condition,
       'then',
       optional($._terminated_statement),
     ),
@@ -634,7 +657,13 @@ module.exports = grammar({
       choice(
         seq(
           'function',
-          repeat1(field('name', $._word_or_word_with_colon)),
+          // Names may be built from expansions: function $w-by-keymap { }
+          repeat1(field('name', choice(
+            $._word_or_word_with_colon,
+            $.variable_ref,
+            $.expansion,
+            alias($._function_expansion_name, $.concatenation),
+          ))),
           optional(seq(
              '(', ')')),
         ),
@@ -654,6 +683,13 @@ module.exports = grammar({
       ),
       field('redirect', optional($._redirect)),
     ))),
+
+    // function $w-by-keymap { }: a name that starts with an expansion.
+    // Narrower than concatenation so `function f() { }` still sees its ().
+    _function_expansion_name: $ => seq(
+      choice($.variable_ref, $.expansion),
+      repeat1(seq($._concat, choice($.word, $.variable_ref, $.expansion))),
+    ),
 
     compound_statement_no_always: $ => prec(2, seq(
       alias($._brace_start, '{'),
@@ -1077,7 +1113,9 @@ module.exports = grammar({
       field('descriptor', optional($.file_descriptor)),
       choice(
         seq(
-          choice('<', '>', '>>', '&>', '&>>', '<&', '>&', '>|'),
+          // zsh adds <> (read/write) and the clobber forms >! >>| >>! &>| &>!
+          choice('<', '>', '>>', '&>', '&>>', '<&', '>&', '>|',
+                 '<>', '>!', '>>|', '>>!', '&>|', '&>!', '&>>|', '&>>!'),
           field('destination', repeat1($._literal)),
         ),
         seq(
@@ -1585,8 +1623,10 @@ module.exports = grammar({
       optional(field('modifier', $.expansion_modifier))
     )),
 
+    // Optional style: ${a:#$~p} / ${pages%$~suf} (glob-subst of $p)
     dollar_variable: $ => prec(1, seq(
       alias($._bare_dollar, "$"),
+      optional($.expansion_style),
       choice(
         $._simple_variable_name,
         $._special_variable_name,
@@ -1758,13 +1798,20 @@ module.exports = grammar({
              field('flags', $.expansion_flags), $._expansion_body)),
         prec.right(10, seq(field('style', $.expansion_style), $._expansion_body)),
         prec.left(10, seq(field('flags', $.expansion_flags), $._expansion_body)),
+        // Style after the flags, as zsh also accepts: ${(s: :)^x}, ${(j:,:)=x}
+        prec.right(11, seq(field('flags', $.expansion_flags),
+             field('style', $.expansion_style), $._expansion_body)),
+        // ${(q)} ${(l:11:: :)}: flags with no parameter (an empty value)
+        prec.left(9, field('flags', $.expansion_flags)),
         prec.left($._expansion_body),
       ),
       '}',
     ),
 
     // Zsh parameter expansion flags: ${(L)var}, ${(j:,:)array}, etc.
-    expansion_flags: _ => token.immediate(/\([^)]+\)/),
+    // Flag arguments may contain one level of parentheses:
+    // ${(r.(c==1) ? 28 : 32.):-x}
+    expansion_flags: _ => token.immediate(/\(([^()]|\([^()]*\))+\)/),
 
     _expansion_body: $ => prec(1, choice(
      // HIGHEST PRIORITY: Colon operations (moved to top)

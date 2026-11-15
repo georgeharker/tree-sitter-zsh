@@ -2339,6 +2339,23 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                                 "SPECIAL_VARIABLE_NAME\n");
         }
 #endif
+        // ${#} is the argument count and ${##} the length of $#: inside
+        // ${...} a '#' directly before '}' is the special parameter. Any
+        // other '#' there is the length operator (${#x}, first # of ${##}),
+        // left to the grammar's expansion_style.
+        if (lexer->lookahead == '#' && in_param_expand) {
+            advance(lexer);
+            if (lexer->lookahead == '}') {
+                lexer->mark_end(lexer);
+                was_just_bare_dollar = scanner->just_returned_bare_dollar =
+                    false;
+                was_just_variable_name = scanner->just_returned_variable_name =
+                    true;
+                lexer->result_symbol = SPECIAL_VARIABLE_NAME;
+                return true;
+            }
+            return false; // lexer moved: only skips handlers for this spot
+        }
         if (lexer->lookahead == '*' || lexer->lookahead == '@' ||
             lexer->lookahead == '?' || lexer->lookahead == '-' ||
             (lexer->lookahead == '!' && !in_param_expand) ||
