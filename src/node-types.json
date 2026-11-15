@@ -132,6 +132,10 @@
         "named": true
       },
       {
+        "type": "foreach_statement",
+        "named": true
+      },
+      {
         "type": "function_definition",
         "named": true
       },
@@ -227,6 +231,10 @@
       },
       {
         "type": "for_statement",
+        "named": true
+      },
+      {
+        "type": "foreach_statement",
         "named": true
       },
       {
@@ -3299,6 +3307,62 @@
     }
   },
   {
+    "type": "foreach_statement",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
+          {
+            "type": ";",
+            "named": false
+          },
+          {
+            "type": "_statement",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": true,
+        "required": false,
+        "types": [
+          {
+            "type": "_primary_expression",
+            "named": true
+          },
+          {
+            "type": "concatenation",
+            "named": true
+          }
+        ]
+      },
+      "variable": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": "simple_variable_name",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "function_definition",
     "named": true,
     "fields": {
@@ -5271,6 +5335,10 @@
     "named": false
   },
   {
+    "type": "end",
+    "named": false
+  },
+  {
     "type": "esac",
     "named": false
   },
@@ -5300,6 +5368,10 @@
   },
   {
     "type": "for",
+    "named": false
+  },
+  {
+    "type": "foreach",
     "named": false
   },
   {

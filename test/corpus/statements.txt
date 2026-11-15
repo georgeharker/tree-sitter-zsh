@@ -481,3 +481,118 @@ esac
         name: (command_name
           (word))
         argument: (word)))))
+
+================================================================================
+Foreach loop
+================================================================================
+
+foreach x (a b c)
+  print $x
+end
+
+--------------------------------------------------------------------------------
+
+(program
+  (foreach_statement
+    variable: (simple_variable_name)
+    value: (word)
+    value: (word)
+    value: (word)
+    body: (command
+      name: (command_name
+        (word))
+      argument: (variable_ref
+        (simple_variable_name)))))
+
+================================================================================
+Foreach loop - single line, multiple variables, empty list
+================================================================================
+
+foreach x (a b) print $x; end
+foreach k v (1 2 3 4); print $k=$v; end
+foreach x (); print never; end
+
+--------------------------------------------------------------------------------
+
+(program
+  (foreach_statement
+    variable: (simple_variable_name)
+    value: (word)
+    value: (word)
+    body: (command
+      name: (command_name
+        (word))
+      argument: (variable_ref
+        (simple_variable_name))))
+  (foreach_statement
+    variable: (simple_variable_name)
+    variable: (simple_variable_name)
+    value: (number)
+    value: (number)
+    value: (number)
+    value: (number)
+    body: (command
+      name: (command_name
+        (word))
+      argument: (concatenation
+        (variable_ref
+          (simple_variable_name))
+        (word)
+        (variable_ref
+          (simple_variable_name)))))
+  (foreach_statement
+    variable: (simple_variable_name)
+    body: (command
+      name: (command_name
+        (word))
+      argument: (word))))
+
+================================================================================
+Foreach loop - nested, globs and subscripts
+================================================================================
+
+foreach x ($files[@] *.zsh(.N)); foreach y (${=excludes[$x]}); print $x$y; end; end
+
+--------------------------------------------------------------------------------
+
+(program
+  (foreach_statement
+    variable: (simple_variable_name)
+    value: (variable_ref
+      (simple_variable_name)
+      index: (array_at))
+    value: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    body: (foreach_statement
+      variable: (simple_variable_name)
+      value: (expansion
+        style: (expansion_style)
+        name: (simple_variable_name)
+        index: (variable_ref
+          (simple_variable_name)))
+      body: (command
+        name: (command_name
+          (word))
+        argument: (concatenation
+          (variable_ref
+            (simple_variable_name))
+          (variable_ref
+            (simple_variable_name)))))))
+
+================================================================================
+End outside foreach is a plain word
+================================================================================
+
+print end
+end
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (word))
+  (command
+    name: (command_name
+      (word))))
