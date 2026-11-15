@@ -859,3 +859,125 @@ Brace group - nested group, subshell and case before }
           name: (command_name
             (word))
           argument: (word))))))
+
+================================================================================
+Case item - pattern starting with a group
+================================================================================
+
+case $x in
+  (free|net)bsd*) a ;;
+  (a|b):*) b ;;
+  (plain|luks)Open) c ;;
+  (gnu:*|gpl2:freebsd*)) d ;;
+  (|a)) e ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))
+
+================================================================================
+Case item - opener then a group, group after |, empty alternative
+================================================================================
+
+case $x in
+  ((#b)[[:blank:]]#([[:IDENT:]]##)=(*)) a ;;
+  ((a|b)c) b ;;
+  erase|(luks(AddKey|Erase)|isLuks)) c ;;
+  *(#i)(no|)keep*) d ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))
+
+================================================================================
+Case item - opener forms unchanged
+================================================================================
+
+case $x in
+  (a) a ;;
+  (a|b) b ;;
+  (-*) c ;;
+  (*) d ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))
