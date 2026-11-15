@@ -220,6 +220,7 @@ module.exports = grammar({
     $._subscript_pattern_flags,        // SUBSCRIPT_PATTERN_FLAGS: (i) (Ie) (r)
     $._subscript_pattern_word,         // SUBSCRIPT_PATTERN_WORD: (i)--  (i)pattern
     $._subscript_pattern_glob,         // SUBSCRIPT_PATTERN_GLOB: (I)foo_*  (r)[bf]*
+    $._default_word,                   // DEFAULT_WORD: ${X:-(none)} ${X:-<unset>}
     $.__error_recovery,
   ],
 
@@ -1462,7 +1463,15 @@ module.exports = grammar({
     // Visible rule for parameter expansion substring operations
     expansion_substring: $ => $._expansion_max_length,
     
-    expansion_default_list: $ => repeat1($._literal),
+    // Inside ${x:-...} the value is one word up to the matching '}':
+    // ( ) < > | ; & are literal there, not shell syntax. _default_word
+    // (external) covers text starting with one of those, e.g.
+    // ${X:-(none)} "${X:-<unset>}" "${x:+ (${y}ms)}"; everything else
+    // keeps the normal literal rules.
+    expansion_default_list: $ => repeat1(choice(
+      $._literal,
+      alias($._default_word, $.word),
+    )),
 
     _expansion_default_value: $ => choice(
       $.expansion_default_list,
@@ -1491,17 +1500,20 @@ module.exports = grammar({
     )),
 
     // Visible rule for parameter expansion patterns 
+    // Suffix/prefix patterns may be empty: ${(@)x:#} drops empty
+    // elements, ${x#} is just $x. The scanner won't emit
+    // PATTERN_SUFFIX_START before '}', so the start+pattern pair is optional.
     expansion_pattern: $ => seq(
       field('name', $._expansion_variable_ref),
       choice(
-        seq($._hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
-        seq($._double_hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
-        seq(token.immediate('%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
-        seq(token.immediate('%%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
-        seq(token.immediate(':'), $._hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
-        seq(token.immediate(':'), $._double_hash_pattern, $._pattern_suffix_start, field('pattern', $._param_pattern)),
-        seq(token.immediate(':'), token.immediate('%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
-        seq(token.immediate(':'), token.immediate('%%'), $._pattern_suffix_start, field('pattern', $._param_pattern)),
+        seq($._hash_pattern, optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
+        seq($._double_hash_pattern, optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
+        seq(token.immediate('%'), optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
+        seq(token.immediate('%%'), optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
+        seq(token.immediate(':'), $._hash_pattern, optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
+        seq(token.immediate(':'), $._double_hash_pattern, optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
+        seq(token.immediate(':'), token.immediate('%'), optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
+        seq(token.immediate(':'), token.immediate('%%'), optional(seq($._pattern_suffix_start, field('pattern', $._param_pattern)))),
         seq(token.immediate('//'), 
             $._pattern_start, 
             field('pattern', $._param_pattern_no_slash),

@@ -66,6 +66,7 @@ enum TokenType {
     SUBSCRIPT_PATTERN_FLAGS, // (i) (Ie) (r) ... - pattern index follows
     SUBSCRIPT_PATTERN_WORD,  // plain piece of a pattern index: -- pattern
     SUBSCRIPT_PATTERN_GLOB,  // glob piece of a pattern index: foo_* [bf]*
+    DEFAULT_WORD,            // ${X:-(none)} ${X:-<unset>}: literal ( < > ...
     ERROR_RECOVERY,
 };
 
@@ -126,6 +127,7 @@ const char *TokenNames[] = {
     "SUBSCRIPT_PATTERN_FLAGS",
     "SUBSCRIPT_PATTERN_WORD",
     "SUBSCRIPT_PATTERN_GLOB",
+    "DEFAULT_WORD",
     "ERROR_RECOVERY",
 };
 #endif
@@ -849,6 +851,49 @@ static bool scan_subscript_pattern(TSLexer *lexer, const bool *valid_symbols,
     return true;
 }
 
+// Text in a ${x:-...} / ${x:+...} / ${x:=...} / ${x:?...} value that
+// starts with a character which outside ${} would be shell syntax:
+// ( ) < > | ; &. In the value they're literal, as in ${X:-(none)} and
+// "${X:-<unset>}". Reads up to $ " ' ` whitespace or an unmatched '}'.
+// Only starts on one of those characters, so ordinary words keep their
+// usual tokens.
+static inline bool is_default_word_start(int32_t c) {
+    return c == '(' || c == ')' || c == '<' || c == '>' || c == '|' ||
+           c == ';' || c == '&';
+}
+
+static bool scan_default_word(TSLexer *lexer) {
+    if (!is_default_word_start(lexer->lookahead)) {
+        return false;
+    }
+    uint32_t depth = 0;
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer) || c == 0 || c == '$' || c == '"' ||
+            c == '\'' || c == '`' || iswspace(c)) {
+            break;
+        }
+        if (c == '{') {
+            depth++;
+        } else if (c == '}') {
+            if (depth == 0) {
+                break;
+            }
+            depth--;
+        }
+        if (c == '\\') {
+            advance(lexer);
+            if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+                break;
+            }
+        }
+        advance(lexer);
+        lexer->mark_end(lexer);
+    }
+    lexer->result_symbol = DEFAULT_WORD;
+    return true;
+}
+
 static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
     fprintf(stderr, "SCANNER: invoked lookahead='%c'\n", lexer->lookahead);
@@ -873,6 +918,21 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // FIXME: newline handling and exited string handling should go
     bool was_just_newline = scanner->just_newline;
     scanner->just_newline = false;
+
+    if (valid_symbols[DEFAULT_WORD] && !in_error_recovery(valid_symbols) &&
+        in_parameter_expansion(scanner)) {
+        // "${x:+ (${y}ms)}": the value may start with blanks. Only skip
+        // them when CONCAT isn't wanted, so adjacency checks still see
+        // the real next character; other handlers skip blanks themselves.
+        if (!valid_symbols[CONCAT] && !valid_symbols[CONCAT_REGEX]) {
+            while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                skip(lexer);
+            }
+        }
+        if (is_default_word_start(lexer->lookahead)) {
+            return scan_default_word(lexer);
+        }
+    }
 
     if ((valid_symbols[SUBSCRIPT_PATTERN_WORD] ||
          valid_symbols[SUBSCRIPT_PATTERN_GLOB]) &&
@@ -1133,7 +1193,15 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
     // Dedicated context-aware brace handler - handles closing braces for
     // different contexts
-    if (valid_symbols[CLOSING_BRACE] && !in_error_recovery(valid_symbols)) {
+    // ${arr[@]:# } has a whitespace pattern. Patterns may also be empty
+    // (${x:#}), so '}' is valid here too; don't let this handler skip the
+    // blank and close the expansion before the pattern handler sees it.
+    bool pattern_may_start =
+        (valid_symbols[PATTERN_SUFFIX_START] || valid_symbols[PATTERN_START]) &&
+        get_current_context(scanner) == CTX_PARAMETER &&
+        (lexer->lookahead == ' ' || lexer->lookahead == '\t');
+    if (valid_symbols[CLOSING_BRACE] && !in_error_recovery(valid_symbols) &&
+        !pattern_may_start) {
         context_type_t active = get_current_context(scanner);
 
         skip_wsnl(lexer);
