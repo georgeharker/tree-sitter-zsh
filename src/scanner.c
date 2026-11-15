@@ -1971,6 +1971,13 @@ regex:
 
             lexer->mark_end(lexer);
 
+            // Inside ${var/pat/repl}, ${var#pat} and ${var%pat} zsh ends the
+            // pattern only at an unescaped '/' (substitution) or an
+            // unbalanced '}'. A bare ')' or ']' at depth 0 is a literal, as
+            // in ${x//[^)]} or ${x//]/_}, so it must not end the token there.
+            // Elsewhere (e.g. [[ x =~ (re) ]]) they still terminate.
+            bool literal_close = in_pattern_context(scanner);
+
             State state = {false, false, false, false, false, 0, 0, 0};
             while (!state.done) {
                 switch (lexer->lookahead) {
@@ -1994,17 +2001,19 @@ regex:
                     state.last_was_escape = false;
                     break;
                 case ')':
-                    if (state.paren_depth == 0) {
+                    if (state.paren_depth > 0) {
+                        state.paren_depth--;
+                    } else if (!literal_close) {
                         state.done = true;
                     }
-                    state.paren_depth--;
                     state.last_was_escape = false;
                     break;
                 case ']':
-                    if (state.bracket_depth == 0) {
+                    if (state.bracket_depth > 0) {
+                        state.bracket_depth--;
+                    } else if (!literal_close) {
                         state.done = true;
                     }
-                    state.bracket_depth--;
                     state.last_was_escape = false;
                     break;
                 case '}':
