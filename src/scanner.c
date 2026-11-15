@@ -874,6 +874,8 @@ static bool scan_bracket_class(TSLexer *lexer) {
 // value is one extglob_pattern. With the lexer on '('. Returns true with
 // result_symbol set, or false if it isn't a group (caller emits the
 // opener: the '(' is already marked).
+static bool scan_case_pattern_rest(TSLexer *lexer, uint32_t depth);
+
 static bool scan_case_group_pattern(TSLexer *lexer, bool always_group) {
     advance(lexer); // '('
     lexer->mark_end(lexer);
@@ -907,8 +909,14 @@ static bool scan_case_group_pattern(TSLexer *lexer, bool always_group) {
         (lexer->eof(lexer) || n == 0 || iswspace(n) || n == ';')) {
         return false; // "(pattern)" then blank: the opener form
     }
-    // A group: continue with the rest of the pattern up to the item's ')'
-    // or a '|' separating alternatives (both at depth 0), or a blank.
+    return scan_case_pattern_rest(lexer, depth);
+}
+
+// Rest of a case pattern from the lexer's position, at group depth `depth`:
+// up to the item's ')' or a '|' separating alternatives (both at depth 0),
+// a blank, or $ " ' `. Bracket classes are read whole (quotes and $ inside
+// them are literal: [" "$TAB]). Emits EXTGLOB_PATTERN.
+static bool scan_case_pattern_rest(TSLexer *lexer, uint32_t depth) {
     for (;;) {
         lexer->mark_end(lexer);
         int32_t c = lexer->lookahead;
@@ -1063,8 +1071,26 @@ static bool scan_test_pattern(Scanner *scanner, TSLexer *lexer,
     for (;;) {
         int32_t c = lexer->lookahead;
         if (lexer->eof(lexer) || c == 0 || iswspace(c) || c == ']' ||
-            c == '$' || c == '"' || c == '\'' || c == '`' || c == ';') {
+            c == '"' || c == '\'' || c == '`' || c == ';') {
             break;
+        }
+        if (c == '$') {
+            // $x ${x} $(x) $'x' $"x" start their own nodes: end the piece
+            // before the '$' (last mark). A '$' that can't start one, as
+            // in (#b)[^$]#($)*, is a literal pattern character.
+            *moved = true;
+            advance(lexer);
+            int32_t n = lexer->lookahead;
+            if (iswalnum(n) || n == '_' || n == '{' || n == '(' ||
+                n == '\'' || n == '"' || n == '#' || n == '*' || n == '@' ||
+                n == '?' || n == '$' || n == '!' || n == '-' || n == '+' ||
+                n == '~' || n == '^' || n == '=') {
+                break;
+            }
+            glob = true;
+            any = true;
+            lexer->mark_end(lexer);
+            continue;
         }
         if (c == ')' && depth == 0) {
             // After an expansion inside a group, (#b)(${~x})*: the ')'
@@ -1155,6 +1181,9 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
 #endif
+
+    // Was the scanner entered on a blank (before any handler skipped it)?
+    bool scan_started_on_blank = iswspace(lexer->lookahead);
 
     // Clear flag at start and capture its previous value
     bool was_just_variable_name = scanner->just_returned_variable_name;
@@ -1710,6 +1739,19 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // '(' can't be the optional opener, so it always starts a group.
     // Same right after the case item's own '(': ((#b)x(*)) has the opener
     // and then a group.
+    // A value starting with a bracket class there is read whole as well:
+    // ([[:alnum:]]#[" "$TAB]#(\?|)=*) has quotes and $ inside the class.
+    if (valid_symbols[EXTGLOB_PATTERN] &&
+        (scanner->saw_pipe_in_case || was_after_case_opener) &&
+        !valid_symbols[OPENING_PAREN] && !in_error_recovery(valid_symbols) &&
+        lexer->lookahead == '[') {
+        scanner->saw_pipe_in_case = false;
+        lexer->mark_end(lexer);
+        if (!scan_bracket_class(lexer)) {
+            return false; // unclosed: lexer moved, let the internal lexer try
+        }
+        return scan_case_pattern_rest(lexer, 0);
+    }
     if (valid_symbols[EXTGLOB_PATTERN] &&
         (scanner->saw_pipe_in_case || was_after_case_opener) &&
         !valid_symbols[OPENING_PAREN] && !in_error_recovery(valid_symbols) &&
@@ -1742,6 +1784,11 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     if ((valid_symbols[OPENING_PAREN] || valid_symbols[DOUBLE_OPENING_PAREN] ||
          valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) &&
         !in_error_recovery(valid_symbols)) {
+        // Blank before the '(' means it starts a word ((#q)foo: flags);
+        // directly after pattern text it can be a qualifier (*(#qN)).
+        // Earlier handlers may already have skipped the blank, so use the
+        // lookahead captured on entry to scan().
+        bool paren_after_blank = scan_started_on_blank;
         skip_ws(lexer);
         // If a regex is allowed, only proceed with analysis if a bare_dollar
         // preceedes
@@ -1809,6 +1856,17 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 if (lexer->lookahead == '#' &&
                     valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) {
                     advance(lexer);
+                    // *(#qN): a glob qualifier, not glob flags. The token is
+                    // the '(' already marked; zsh_glob_qualifier takes the
+                    // rest ('#q' body ')').
+                    if (lexer->lookahead == 'q' && !paren_after_blank &&
+                        valid_symbols[OPENING_PAREN]) {
+                        was_just_bare_dollar =
+                            scanner->just_returned_bare_dollar = false;
+                        enter_context(scanner, CTX_COMMAND);
+                        lexer->result_symbol = OPENING_PAREN;
+                        return true;
+                    }
 
                     // Check for valid flag characters
                     bool found_flags = false;

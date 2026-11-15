@@ -297,3 +297,173 @@ echo ${files[@]:#*.tmp}
         name: (simple_variable_name)
         index: (array_at)
         pattern: (regex)))))
+
+================================================================================
+Zsh glob - qualifiers with modifiers, subscripts and arguments
+================================================================================
+
+print *(N/:t) *.load(N:r:t) /etc/*(#q.N:t) *(=:t) *(.:t)
+print *(om[1]) *(om[1,3]) *(N[1]) *([1])
+print *(D:t:s/\,v//) RCS/*,v(D:t:s/\,v//)
+print *(+myfn) *(u:root:) *(f:gu+w:) *(P:-f:) *(.,@)
+print *(e:"[[ -d \$REPLY ]]":) *(e'[[ -d $REPLY ]]')
+sysctlvars=( /proc/sys/**/*(.e*'REPLY=${REPLY#/proc/sys/}'*) )
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier)))
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (glob_pattern
+        qualifier: (zsh_glob_qualifier)))))
+
+================================================================================
+Zsh glob - (#q) qualifier after pattern text, (#q) flags at word start
+================================================================================
+
+print *(#qN) *.txt(#q.om)
+echo (#q)test*(N)
+print *(:h) *(:t:r)
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags)
+      qualifier: (zsh_glob_qualifier)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      modifier: (zsh_glob_modifier))
+    argument: (glob_pattern
+      modifier: (zsh_glob_modifier))))
+
+================================================================================
+Test command - literal dollar in a pattern
+================================================================================
+
+[[ $rest == (#b)[^$]#($)* ]]
+[[ $x = a$ ]]
+[[ $x = *$y* ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern
+        flags: (zsh_extended_glob_flags))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (glob_pattern)))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (concatenation
+        (glob_pattern)
+        (variable_ref
+          (simple_variable_name))
+        (glob_pattern)))))
+
+================================================================================
+Case item - bracket class with quotes and dollar after the opener
+================================================================================
+
+case "$input " in
+  ([[:alnum:]][[:alnum:]_]#[" "$TAB]#(\?|)=*) v=1 ;;
+  ([[:alpha:]]) a ;;
+  a|[bc]d) b ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (string
+      (variable_ref
+        (simple_variable_name))
+      (string_content))
+    (case_item
+      value: (extglob_pattern)
+      (variable_assignment
+        name: (variable_name)
+        value: (number)))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))
