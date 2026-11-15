@@ -1286,7 +1286,104 @@
   {
     "type": "dollar_variable",
     "named": true,
-    "fields": {},
+    "fields": {
+      "flags": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "zsh_array_subscript_flags",
+            "named": true
+          }
+        ]
+      },
+      "index": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
+            "type": "array_at",
+            "named": true
+          },
+          {
+            "type": "array_star",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "brace_expression",
+            "named": true
+          },
+          {
+            "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
+            "named": true
+          },
+          {
+            "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "glob_pattern",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "parenthesized_expression",
+            "named": true
+          },
+          {
+            "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "process_substitution",
+            "named": true
+          },
+          {
+            "type": "raw_string",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          },
+          {
+            "type": "variable_name",
+            "named": true
+          },
+          {
+            "type": "variable_ref",
+            "named": true
+          },
+          {
+            "type": "word",
+            "named": true
+          }
+        ]
+      }
+    },
     "children": {
       "multiple": true,
       "required": false,
@@ -3395,7 +3492,7 @@
     "named": true,
     "fields": {
       "flags": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -3415,7 +3512,7 @@
         ]
       },
       "pattern": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {

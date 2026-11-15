@@ -1184,3 +1184,37 @@ print {a} x@{upstream} 2>/dev/null
     redirect: (file_redirect
       descriptor: (file_descriptor)
       destination: (word))))
+
+================================================================================
+Case item - literal dollar and bracket class containing )
+================================================================================
+
+case $x in
+  ($) a ;;
+  ($x|b) b ;;
+  ([)]) c ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (variable_ref
+        (simple_variable_name))
+      value: (word)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))
