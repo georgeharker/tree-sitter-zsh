@@ -4442,6 +4442,16 @@
     "type": "unary_expression",
     "named": true,
     "fields": {
+      "count": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "number",
+            "named": true
+          }
+        ]
+      },
       "operator": {
         "multiple": false,
         "required": true,

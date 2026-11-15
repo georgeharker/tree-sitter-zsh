@@ -716,3 +716,38 @@ Test command - line continuation before a quoted operand leaves later (( )) inta
             name: (variable_name)
             index: (variable_ref
               (simple_variable_name))))))))
+
+================================================================================
+Test command - completion conditions with a count
+================================================================================
+
+[[ -prefix 1 (f|ht)tp(|s):// ]]
+[[ -prefix 1 *@ ]]
+[[ -prefix - ]] && return
+[[ -suffix x* ]]
+
+--------------------------------------------------------------------------------
+
+(program
+  (test_command
+    (unary_expression
+      operator: (test_operator)
+      count: (number)
+      (glob_pattern)))
+  (test_command
+    (unary_expression
+      operator: (test_operator)
+      count: (number)
+      (glob_pattern)))
+  (list
+    (test_command
+      (unary_expression
+        operator: (test_operator)
+        (word)))
+    (command
+      name: (command_name
+        (word))))
+  (test_command
+    (unary_expression
+      operator: (test_operator)
+      (glob_pattern))))

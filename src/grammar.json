@@ -3109,25 +3109,68 @@
       ]
     },
     "_test_unary": {
-      "type": "PREC",
-      "value": 4,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "FIELD",
-            "name": "operator",
-            "content": {
-              "type": "SYMBOL",
-              "name": "test_operator"
-            }
-          },
-          {
-            "type": "SYMBOL",
-            "name": "_literal"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "PREC",
+          "value": 4,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "FIELD",
+                "name": "operator",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "test_operator"
+                }
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_literal"
+              }
+            ]
           }
-        ]
-      }
+        },
+        {
+          "type": "PREC",
+          "value": 4,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "FIELD",
+                "name": "operator",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "test_operator"
+                }
+              },
+              {
+                "type": "FIELD",
+                "name": "count",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "number"
+                }
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_literal"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "_test_pattern"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
     },
     "_test_command_binary_expression": {
       "type": "PREC",

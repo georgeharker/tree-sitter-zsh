@@ -1184,6 +1184,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
     // Was the scanner entered on a blank (before any handler skipped it)?
     bool scan_started_on_blank = iswspace(lexer->lookahead);
+    // Set when a handler skipped blanks and fell through without a token.
+    bool skipped_blank_before = false;
 
     // Clear flag at start and capture its previous value
     bool was_just_variable_name = scanner->just_returned_variable_name;
@@ -1212,15 +1214,19 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         // it; at the start of the operand there's one after the operator.
         // A blank after a string/expansion ends the operand ([[ $x = $y ]]),
         // so only skip blanks when CONCAT (mid-word) isn't expected.
-        bool adjacent = valid_symbols[CONCAT] ||
-                        (lexer->lookahead != ' ' && lexer->lookahead != '\t');
+        // A blank always separates operands (a concatenation can't
+        // contain one), even where CONCAT is valid, e.g. after the count
+        // in [[ -prefix 1 (f|ht)tp:// ]].
+        bool adjacent =
+            lexer->lookahead != ' ' && lexer->lookahead != '\t';
         if (!adjacent) {
             scanner->test_pattern_depth = 0; // new operand
-        }
-        if (!valid_symbols[CONCAT]) {
             while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
                 skip(lexer);
             }
+            // Handlers below must still know there was a blank here:
+            // CONCAT in particular may not join across it ([[ $x = $y ]]).
+            skipped_blank_before = true;
         }
         int32_t c = lexer->lookahead;
         // Mid-pattern (adjacent to the previous piece) a piece may start
@@ -1297,7 +1303,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     }
 
     if ((valid_symbols[CONCAT] || valid_symbols[CONCAT_REGEX]) &&
-        !in_error_recovery(valid_symbols)) {
+        !in_error_recovery(valid_symbols) && !skipped_blank_before) {
         context_type_t ctx = get_current_context(scanner);
 #if DEBUG
         fprintf(stderr,
