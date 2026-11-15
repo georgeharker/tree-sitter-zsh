@@ -703,3 +703,194 @@ Test regex - close paren still terminates outside parameter patterns
       (command_name
         (word))
       (word))))
+
+================================================================================
+Subscript flags - pattern index with symbols and globs
+================================================================================
+
+print $words[(i)--] $words[(I)*foo*] ${words[(r)*@*]:-x}
+(( i = words[(i)--] - 1 ))
+if (( CURRENT <= $words[(i)--] )); then :; fi
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (glob_pattern))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        flags: (zsh_array_subscript_flags)
+        index: (glob_pattern)
+        default: (expansion_default_list
+          (word)))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (subscript
+              name: (variable_name)
+              flags: (zsh_array_subscript_flags)
+              index: (word))
+            right: (number))))))
+  (if_statement
+    condition: (command
+      name: (command_name
+        (arithmetic_expansion
+          (binary_expression
+            left: (word)
+            right: (variable_ref
+              (simple_variable_name)
+              flags: (zsh_array_subscript_flags)
+              index: (word))))))
+    (command
+      name: (command_name
+        (word)))))
+
+================================================================================
+Subscript flags - combined flags and delimited arguments
+================================================================================
+
+print ${x[(ws:,:)2]} ${x[(s.,.w)2]} ${x[(s<,>w)2]}
+print $a[(n:2:i)x] $a[(b:3:i)x]
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (number))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (number))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (number)))
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (word))))
+
+================================================================================
+Subscript flags - pattern index pieces
+================================================================================
+
+print $a[(i)(foo|bar)] $a[(r)[bf]*] $a[(i)b\]c] $a[(i)"x y"]
+print $a[(i)${b}x*] ${windows[(I)(#i)$browser(|[.-]bin)]}
+print ${tmp[(i)\[Zend Modules\]]} ${a[(I)calendar -s*]}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (glob_pattern))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (glob_pattern))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (string
+        (string_content))))
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (concatenation
+        (expansion
+          name: (simple_variable_name))
+        (glob_pattern)))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (concatenation
+        (glob_pattern)
+        (variable_ref
+          (simple_variable_name))
+        (glob_pattern))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (glob_pattern))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (glob_pattern))))
+
+================================================================================
+Subscript flags - arithmetic index still parses as before
+================================================================================
+
+print $a[1] $a[-1] $a[2,-1] $x[(w)2] ${a[(i)pattern]}
+print $a[(i+1)]
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      index: (number))
+    argument: (variable_ref
+      (simple_variable_name)
+      index: (unary_expression
+        (number)))
+    argument: (variable_ref
+      (simple_variable_name)
+      index: (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (number))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (word)))
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      index: (parenthesized_expression
+        (word)))))

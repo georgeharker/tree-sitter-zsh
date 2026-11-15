@@ -62,6 +62,10 @@ enum TokenType {
     DOUBLE_QUOTE,
     SINGLE_QUOTE,
     BACKTICK,
+    SUBSCRIPT_FLAGS,         // (w) (s:,:) (n:2:) - arithmetic index follows
+    SUBSCRIPT_PATTERN_FLAGS, // (i) (Ie) (r) ... - pattern index follows
+    SUBSCRIPT_PATTERN_WORD,  // plain piece of a pattern index: -- pattern
+    SUBSCRIPT_PATTERN_GLOB,  // glob piece of a pattern index: foo_* [bf]*
     ERROR_RECOVERY,
 };
 
@@ -118,6 +122,10 @@ const char *TokenNames[] = {
     "DOUBLE_QUOTE",
     "SINGLE_QUOTE",
     "BACKTICK",
+    "SUBSCRIPT_FLAGS",
+    "SUBSCRIPT_PATTERN_FLAGS",
+    "SUBSCRIPT_PATTERN_WORD",
+    "SUBSCRIPT_PATTERN_GLOB",
     "ERROR_RECOVERY",
 };
 #endif
@@ -700,6 +708,147 @@ static bool scan_heredoc_content(Scanner *scanner, TSLexer *lexer,
     }
 }
 
+// Subscript flags: $a[(i)pat] ${x[(ws:,:)2]} $a[(n:2:i)pat]
+// zshparam(1) "Subscript Flags". Called with the '(' already consumed and
+// marked, lookahead on the first flag char. Pattern flags (r R i I k K) mean
+// the index is a pattern, so they get their own token. On failure the caller
+// still has the plain '(' marked, so nothing needs to backtrack.
+static inline bool is_subscript_flag_start(int32_t c) {
+    return c && strchr("wpferRiIkKsnbj", (int)c) != NULL;
+}
+
+static bool scan_subscript_flags(TSLexer *lexer, const bool *valid_symbols) {
+    bool is_pattern = false;
+    int count = 0;
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (c == ')') {
+            if (count == 0) {
+                return false;
+            }
+            break;
+        }
+        if (c == 'w' || c == 'p' || c == 'f' || c == 'e') {
+            advance(lexer);
+        } else if (c == 'r' || c == 'R' || c == 'i' || c == 'I' || c == 'k' ||
+                   c == 'K') {
+            is_pattern = true;
+            advance(lexer);
+        } else if (c == 's' || c == 'n' || c == 'b' || c == 'j') {
+            // Argument with any delimiter; ( [ { < pair with their closers.
+            advance(lexer);
+            int32_t open = lexer->lookahead;
+            int32_t close = open == '('   ? ')'
+                            : open == '[' ? ']'
+                            : open == '{' ? '}'
+                            : open == '<' ? '>'
+                                          : open;
+            if (open == 0 || open == ')' || iswspace(open) ||
+                lexer->eof(lexer)) {
+                return false;
+            }
+            advance(lexer);
+            while (lexer->lookahead != close && !lexer->eof(lexer) &&
+                   lexer->lookahead != '\n') {
+                advance(lexer);
+            }
+            if (lexer->lookahead != close) {
+                return false;
+            }
+            advance(lexer);
+        } else {
+            return false;
+        }
+        count++;
+    }
+    enum TokenType sym = is_pattern ? SUBSCRIPT_PATTERN_FLAGS : SUBSCRIPT_FLAGS;
+    if (!valid_symbols[sym]) {
+        return false;
+    }
+    advance(lexer); // ')'
+    lexer->mark_end(lexer);
+    lexer->result_symbol = sym;
+    return true;
+}
+
+// One piece of a pattern subscript index, after pattern flags:
+// $words[(i)--] ${a[(r)*@*]} ${tmp[(i)\[Zend Modules\]]}. Stops before
+// $ " ' ` (those are their own nodes), a newline, or the closing ']'.
+// A '[' starts a bracket class only if it closes on the same line;
+// otherwise the piece ends before it (mark_end, so no backtracking).
+// Plain text is a word, anything with glob characters a glob_pattern.
+static inline bool is_subscript_word_char(int32_t c) {
+    return iswalnum(c) || (c && strchr("_.,:+=@%/-", (int)c) != NULL);
+}
+
+static bool scan_subscript_pattern(TSLexer *lexer, const bool *valid_symbols,
+                                   bool *moved) {
+    bool any = false;
+    *moved = false;
+    bool glob = false;
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer) || c == 0 || c == '\n' || c == ']' ||
+            c == '$' || c == '"' || c == '\'' || c == '`') {
+            break;
+        }
+        *moved = true;
+        if (c == '\\') {
+            advance(lexer);
+            if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+                break;
+            }
+            advance(lexer);
+        } else if (c == '[') {
+            // Bracket class: [abc] [^)] []x] [!]x]
+            advance(lexer);
+            if (lexer->lookahead == '^' || lexer->lookahead == '!') {
+                advance(lexer);
+            }
+            if (lexer->lookahead == ']') {
+                advance(lexer);
+            }
+            while (lexer->lookahead != ']' && lexer->lookahead != '\n' &&
+                   !lexer->eof(lexer)) {
+                if (lexer->lookahead == '\\') {
+                    advance(lexer);
+                    if (lexer->eof(lexer) || lexer->lookahead == '\n') {
+                        break;
+                    }
+                }
+                advance(lexer);
+            }
+            if (lexer->lookahead != ']') {
+                break; // unclosed: token ends at the last mark
+            }
+            advance(lexer);
+            glob = true;
+        } else {
+            if (!is_subscript_word_char(c)) {
+                glob = true;
+            }
+            advance(lexer);
+        }
+        any = true;
+        lexer->mark_end(lexer);
+    }
+    if (!any) {
+        return false;
+    }
+    enum TokenType sym =
+        glob ? SUBSCRIPT_PATTERN_GLOB : SUBSCRIPT_PATTERN_WORD;
+    if (!valid_symbols[sym]) {
+        // Only one kind is ever valid alone in practice; prefer what fits.
+        sym = valid_symbols[SUBSCRIPT_PATTERN_GLOB] ? SUBSCRIPT_PATTERN_GLOB
+                                                    : SUBSCRIPT_PATTERN_WORD;
+        if (!valid_symbols[sym]) {
+            return false;
+        }
+    }
+    lexer->result_symbol = sym;
+    return true;
+}
+
 static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
     fprintf(stderr, "SCANNER: invoked lookahead='%c'\n", lexer->lookahead);
@@ -724,6 +873,18 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // FIXME: newline handling and exited string handling should go
     bool was_just_newline = scanner->just_newline;
     scanner->just_newline = false;
+
+    if ((valid_symbols[SUBSCRIPT_PATTERN_WORD] ||
+         valid_symbols[SUBSCRIPT_PATTERN_GLOB]) &&
+        !in_error_recovery(valid_symbols)) {
+        bool moved = false;
+        if (scan_subscript_pattern(lexer, valid_symbols, &moved)) {
+            return true;
+        }
+        if (moved) {
+            return false; // lexer advanced; can't hand off to other handlers
+        }
+    }
 
     if ((valid_symbols[CONCAT] || valid_symbols[CONCAT_REGEX]) &&
         !in_error_recovery(valid_symbols)) {
@@ -1166,6 +1327,23 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
              (was_just_bare_dollar || !valid_symbols[REGEX_NO_SPACE]))) {
             advance(lexer);
             lexer->mark_end(lexer);
+
+            // $a[(i)pat]: try subscript flags. If they don't match, the
+            // marked token is still the single '(' and the OPENING_PAREN
+            // handling below applies unchanged.
+            if (!was_just_bare_dollar &&
+                (valid_symbols[SUBSCRIPT_FLAGS] ||
+                 valid_symbols[SUBSCRIPT_PATTERN_FLAGS]) &&
+                is_subscript_flag_start(lexer->lookahead)) {
+                if (scan_subscript_flags(lexer, valid_symbols)) {
+                    return true;
+                }
+                was_just_bare_dollar = scanner->just_returned_bare_dollar =
+                    false;
+                enter_context(scanner, CTX_COMMAND);
+                lexer->result_symbol = OPENING_PAREN;
+                return true;
+            }
 
             if (was_just_bare_dollar) {
 #if DEBUG
