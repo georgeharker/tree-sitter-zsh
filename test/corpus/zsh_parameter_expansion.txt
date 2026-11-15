@@ -1052,3 +1052,136 @@ print $#f $#array $# $#*
       name: (command_name
         (word))
       argument: (word))))
+
+================================================================================
+Parameter expansion - ${#} and ${##}
+================================================================================
+
+print ${#} ${##} "${#}" ${#x} ${#@}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (special_variable_name))
+    argument: (expansion
+      style: (expansion_style)
+      name: (special_variable_name))
+    argument: (string
+      (expansion
+        name: (special_variable_name)))
+    argument: (expansion
+      style: (expansion_style)
+      name: (simple_variable_name))
+    argument: (expansion
+      style: (expansion_style)
+      name: (special_variable_name))))
+
+================================================================================
+Parameter expansion - flags without a name, nested parens in flags, style after flags
+================================================================================
+
+print ${(q)} ${(l:11:: :)} ${(l:$pad:: :)}
+print ${(r.(c==1) ? 28 : 32.):-x}
+print ${(s: :)^x} ${(j:,:)=x} ${(f)~x}
+local t=${(j::):-${(l:11:: :)}${(s: :)^${(l:20:: :)}}}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      flags: (expansion_flags))
+    argument: (expansion
+      flags: (expansion_flags))
+    argument: (expansion
+      flags: (expansion_flags)))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      flags: (expansion_flags)
+      (expansion_default
+        default: (expansion_default_list
+          (word)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      flags: (expansion_flags)
+      style: (expansion_style)
+      name: (simple_variable_name))
+    argument: (expansion
+      flags: (expansion_flags)
+      style: (expansion_style)
+      name: (simple_variable_name))
+    argument: (expansion
+      flags: (expansion_flags)
+      style: (expansion_style)
+      name: (simple_variable_name)))
+  (declaration_command
+    (variable_assignment
+      name: (variable_name)
+      value: (expansion
+        flags: (expansion_flags)
+        (expansion_default
+          default: (expansion_default_list
+            (concatenation
+              (expansion
+                flags: (expansion_flags))
+              (expansion
+                flags: (expansion_flags)
+                style: (expansion_style)
+                name: (expansion
+                  flags: (expansion_flags))))))))))
+
+================================================================================
+Parameter expansion - styled $~var in patterns
+================================================================================
+
+print ${a:#$~p} ${a#$~p} ${a/$~p/x} ${pages%$~suf} ${(M)^a:#$~p}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (expansion_style)
+          (simple_variable_name))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (expansion_style)
+          (simple_variable_name))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (expansion_style)
+          (simple_variable_name))
+        replacement: (regex)))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (expansion_style)
+          (simple_variable_name))))
+    argument: (expansion
+      flags: (expansion_flags)
+      style: (expansion_style)
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (dollar_variable
+          (expansion_style)
+          (simple_variable_name))))))
