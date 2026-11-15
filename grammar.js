@@ -22,6 +22,13 @@ const SPECIAL_CHARACTERS = [
   //' ', '\t', '\n'
 ];
 
+// Glob qualifier body, see zsh_glob_qualifier. Kept deliberately simple
+// (an exact per-qualifier regex made `generate` run for over 30 minutes):
+// anything but blanks, ( ) | ; &, with quoted sections and [..] read whole.
+// The first character isn't ':' so that (:h) (:t:r) stay zsh_glob_modifier.
+const GLOB_QUALIFIER_BODY =
+  /([^()\s|;&'"\[\]:]|'[^']*'|"[^"]*"|\[[^\]\n]*\])([^()\s|;&'"\[\]]|'[^']*'|"[^"]*"|\[[^\]\n]*\])*/;
+
 const PREC = {
   UPDATE: 0,
   ASSIGN: 1,
@@ -259,10 +266,14 @@ module.exports = grammar({
     // Zsh glob qualifiers: (.) (/) (*) etc.
     // FIXME: these qualifiers need extending to deal with
     //
+    // zshexpn(1) "Glob Qualifiers": letters (with ^ / - toggles),
+    // delimited arguments for e P u g f (any delimiter, paired ( [ { <,
+    // or quotes), numeric u/g/f, +cmd, [n] / [n,m] subscripts, ','
+    // alternatives, and trailing :modifiers (:t :r :s/x/y/ ...).
     zsh_glob_qualifier: _ => seq(
-      '(', 
+      '(',
       optional(token.immediate('#q')),
-      token.immediate(/[./*@=p%\-^rwxugoaLkamcFNDMsShHbBfFdcaAtImCYoOnPqUGzZ+\d]+/),
+      token.immediate(GLOB_QUALIFIER_BODY),
       ')',
     ),
 
