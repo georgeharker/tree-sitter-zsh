@@ -1,0 +1,101 @@
+================================================================================
+Pending: arithmetic comma operator
+:skip
+================================================================================
+
+(( a++, b++ ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (postfix_expression
+            (word))
+          right: (postfix_expression
+            (word)))))))
+
+================================================================================
+Pending: arithmetic operators between identifiers without blanks
+:skip
+================================================================================
+
+print $(( a-b ))
+(( i++ ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (word)
+        right: (word))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (postfix_expression
+          (word))))))
+
+================================================================================
+Pending: arithmetic output base
+:skip
+================================================================================
+
+print $(( [##8] 10 ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (arithmetic_base)
+      (number))))
+
+================================================================================
+Pending: arithmetic with a flagged pattern expansion
+:skip
+================================================================================
+
+(( ${(M)#line:#[^-]*} > 1 ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (expansion
+            flags: (expansion_flags)
+            style: (expansion_style)
+            (expansion_pattern
+              name: (simple_variable_name)
+              pattern: (regex)))
+          right: (number))))))
+
+================================================================================
+Pending: :s modifier with a delimiter other than /
+:skip
+================================================================================
+
+print ${x:s:a:b:}
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier
+          search: (regex)
+          replace: (regex))))))
