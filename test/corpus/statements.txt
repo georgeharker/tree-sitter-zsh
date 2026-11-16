@@ -2334,3 +2334,23 @@ x ${(l.((${COLUMNS}-1)).)}
       (word))
     argument: (expansion
       flags: (expansion_flags))))
+
+================================================================================
+Assignment - single-quoted subscript key
+================================================================================
+
+pc['\(']=x
+pc['a b']+=y
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (subscript
+      name: (variable_name)
+      index: (raw_string))
+    value: (word))
+  (variable_assignment
+    name: (subscript
+      name: (variable_name)
+      index: (raw_string))
+    value: (word)))

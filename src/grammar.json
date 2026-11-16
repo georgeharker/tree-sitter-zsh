@@ -5084,6 +5084,10 @@
                   {
                     "type": "SYMBOL",
                     "name": "string"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "raw_string"
                   }
                 ]
               }
