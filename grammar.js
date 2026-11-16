@@ -640,11 +640,15 @@ module.exports = grammar({
       ),
       optional($._case_item_statements),
       prec(1, choice(
-        field('termination', ';;'),
+        // `b &;;`: a background command ending the item (the & is folded
+        // into the termination token, longer than the `&;` terminator)
+        field('termination', choice(';;', alias(/&[|!]?[ \t]*;;/, ';;'))),
         field('fallthrough', choice(
           alias(';&', $.case_fallthrough),
           alias(';;&', $.case_test_next),
           alias(';|', $.case_test_next),
+          alias(/&[|!]?[ \t]*;&/, $.case_fallthrough),
+          alias(/&[|!]?[ \t]*;\|/, $.case_test_next),
         )),
       )),
     ),
@@ -656,11 +660,15 @@ module.exports = grammar({
       ')',
       optional($._case_item_statements),
       optional(prec(1, choice(
-        field('termination', ';;'),
+        // `b &;;`: a background command ending the item (the & is folded
+        // into the termination token, longer than the `&;` terminator)
+        field('termination', choice(';;', alias(/&[|!]?[ \t]*;;/, ';;'))),
         field('fallthrough', choice(
           alias(';&', $.case_fallthrough),
           alias(';;&', $.case_test_next),
           alias(';|', $.case_test_next),
+          alias(/&[|!]?[ \t]*;&/, $.case_fallthrough),
+          alias(/&[|!]?[ \t]*;\|/, $.case_test_next),
         )),
       ))),
     ),
@@ -2320,12 +2328,12 @@ module.exports = grammar({
       $.word,
       alias($._word_with_colon, $.word)),
 
-    _terminator: _ => choice(';', /\n/, '&', '&!', '&|'),
+    _terminator: _ => choice(';', /\n/, /&([ \t]*;)?/, /&!([ \t]*;)?/, /&\|([ \t]*;)?/),
 
     // Terminator for use inside case item bodies (between statements).
     // Does NOT include ;; ;& ;| so they are not consumed as inter-statement
     // separators and remain available as the explicit case item termination field.
-    _case_body_terminator: _ => choice(';', /\n/, '&', '&!', '&|'),
+    _case_body_terminator: _ => choice(';', /\n/, /&([ \t]*;)?/, /&!([ \t]*;)?/, /&\|([ \t]*;)?/),
 
     // Like _statements but uses _case_body_terminator between statements so
     // that ;; ;& ;| on a new line end the body rather than being consumed.

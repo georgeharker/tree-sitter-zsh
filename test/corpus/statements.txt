@@ -2640,3 +2640,61 @@ x $a:foo ${x:#p}
       (expansion_pattern
         name: (simple_variable_name)
         pattern: (regex)))))
+
+================================================================================
+A ; after a background terminator, and &;; in case items
+================================================================================
+
+{ a &|; }
+a &; b
+function c() { cat x | w &>/dev/null &|; }
+case x in
+  a) b &;;
+  c) d &|;&
+  e) f ;;
+esac
+--------------------------------------------------------------------------------
+
+(program
+  (compound_statement
+    (command
+      name: (command_name
+        (word))))
+  (command
+    name: (command_name
+      (word)))
+  (command
+    name: (command_name
+      (word)))
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (redirected_statement
+        body: (pipeline
+          (command
+            name: (command_name
+              (word))
+            argument: (word))
+          (command
+            name: (command_name
+              (word))))
+        redirect: (file_redirect
+          destination: (word)))))
+  (case_statement
+    value: (word)
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word)))
+      fallthrough: (case_fallthrough))
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))))))
