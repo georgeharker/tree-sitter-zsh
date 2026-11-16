@@ -75,6 +75,8 @@ enum TokenType {
     SUBST_END,               // zero-width end of $x:s/a/b with no closing '/'
     FUNCTION_NAME,           // zinit::setup() :helper(): a name read whole before ()
     MODIFIER_OTHER,          // :fs#a#b# :F:2:s/a/b/ :s#a#b#: a modifier read whole
+    BRACE_ELSE,              // `} else` of a short if, one token
+    BRACE_ELIF,              // `} elif` of a short if, one token
     ERROR_RECOVERY,
 };
 
@@ -144,6 +146,8 @@ const char *TokenNames[] = {
     "SUBST_END",
     "FUNCTION_NAME",
     "MODIFIER_OTHER",
+    "BRACE_ELSE",
+    "BRACE_ELIF",
     "ERROR_RECOVERY",
 };
 #endif
@@ -2036,6 +2040,43 @@ after_concat:
                 lexer->result_symbol = CLOSING_BRACE;
                 advance(lexer);
                 lexer->mark_end(lexer);
+                // A short if going on: `} else` / `} elif` on the same line
+                // are one token each (the next '{' opens its own block).
+                // On a later line an `else` belongs to an enclosing
+                // if ... then ... else.
+                if (valid_symbols[BRACE_ELSE] || valid_symbols[BRACE_ELIF]) {
+                    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                        advance(lexer);
+                    }
+                    if (lexer->lookahead == 'e') {
+                        advance(lexer);
+                        if (lexer->lookahead == 'l') {
+                            advance(lexer);
+                            bool is_else = false, is_elif = false;
+                            if (lexer->lookahead == 's') {
+                                advance(lexer);
+                                if (lexer->lookahead == 'e') {
+                                    advance(lexer);
+                                    is_else = valid_symbols[BRACE_ELSE];
+                                }
+                            } else if (lexer->lookahead == 'i') {
+                                advance(lexer);
+                                if (lexer->lookahead == 'f') {
+                                    advance(lexer);
+                                    is_elif = valid_symbols[BRACE_ELIF];
+                                }
+                            }
+                            int32_t c = lexer->lookahead;
+                            bool word_end = lexer->eof(lexer) || iswspace(c) ||
+                                            c == '{' || c == '[' || c == '(';
+                            if ((is_else || is_elif) && word_end) {
+                                lexer->mark_end(lexer);
+                                lexer->result_symbol =
+                                    is_else ? BRACE_ELSE : BRACE_ELIF;
+                            }
+                        }
+                    }
+                }
                 return true;
             }
 

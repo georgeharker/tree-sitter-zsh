@@ -2698,3 +2698,86 @@ esac
       (command
         name: (command_name
           (word))))))
+
+================================================================================
+Short if: if cond { } elif cond { } else { }
+================================================================================
+
+if [[ -n $a ]] {
+  echo yes
+} elif (( b )) {
+  echo b
+} else {
+  echo no
+}
+if (( a )) { echo }
+if { a } { b } else { c }
+if x; then
+  f() { a }
+else
+  b
+fi
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (test_command
+      (unary_expression
+        operator: (test_operator)
+        (variable_ref
+          (simple_variable_name))))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))
+        argument: (word))
+      (elif_clause
+        condition: (command
+          name: (command_name
+            (arithmetic_expansion
+              (word))))
+        (command
+          name: (command_name
+            (word))
+          argument: (word))
+        (else_clause
+          (command
+            name: (command_name
+              (word))
+            argument: (word))))))
+  (if_statement
+    condition: (command
+      name: (command_name
+        (arithmetic_expansion
+          (word))))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (if_statement
+    condition: (compound_statement
+      (command
+        name: (command_name
+          (word))))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))
+      (else_clause
+        (command
+          name: (command_name
+            (word))))))
+  (if_statement
+    condition: (command
+      name: (command_name
+        (word)))
+    (function_definition
+      name: (word)
+      body: (compound_statement
+        (command
+          name: (command_name
+            (word)))))
+    (else_clause
+      (command
+        name: (command_name
+          (word))))))
