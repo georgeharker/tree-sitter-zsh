@@ -1981,7 +1981,13 @@ after_concat:
     }
 
     // Case item that starts with a group: (free|net)bsd*) (a|b):*)
-    if (valid_symbols[EXTGLOB_PATTERN] && valid_symbols[ESAC] &&
+    // An item start is recognised by ESAC being valid, or by the scan
+    // starting on a blank (an item always follows `in ` or a newline). ESAC
+    // alone isn't enough: after a reused case_item (incremental parsing) the
+    // same position is lexed in a state where ESAC isn't valid, and the
+    // token must not depend on that.
+    if (valid_symbols[EXTGLOB_PATTERN] &&
+        (valid_symbols[ESAC] || scan_started_on_blank) &&
         valid_symbols[OPENING_PAREN] && !in_error_recovery(valid_symbols)) {
         skip_wsnl(lexer);
         if (lexer->lookahead == '(') {
