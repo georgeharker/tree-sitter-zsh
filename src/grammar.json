@@ -2630,8 +2630,22 @@
                         "type": "CHOICE",
                         "members": [
                           {
-                            "type": "SYMBOL",
-                            "name": "_word_or_word_with_colon"
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "_word_or_word_with_colon"
+                              },
+                              {
+                                "type": "ALIAS",
+                                "content": {
+                                  "type": "SYMBOL",
+                                  "name": "_function_name"
+                                },
+                                "named": true,
+                                "value": "word"
+                              }
+                            ]
                           },
                           {
                             "type": "BLANK"
@@ -14404,6 +14418,10 @@
     {
       "type": "SYMBOL",
       "name": "_subst_end"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_function_name"
     },
     {
       "type": "SYMBOL",
