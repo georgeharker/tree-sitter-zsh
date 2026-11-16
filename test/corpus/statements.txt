@@ -2354,3 +2354,33 @@ pc['a b']+=y
       name: (variable_name)
       index: (raw_string))
     value: (word)))
+
+================================================================================
+Arithmetic - lone # and the comma operator in parentheses
+================================================================================
+
+(( # > 0 ))
+(( H != h && (H=h, C=c) ))
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (number)))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (binary_expression
+            left: (word)
+            right: (word))
+          right: (parenthesized_expression
+            (binary_expression
+              left: (word)
+              right: (word))
+            (binary_expression
+              left: (word)
+              right: (word))))))))

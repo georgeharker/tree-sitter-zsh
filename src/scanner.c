@@ -1360,6 +1360,12 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 lexer->result_symbol = ARITHMETIC_CHAR_CODE;
                 return true;
             }
+            // A lone '#' is $#, the argument count: (( # > 0 ))
+            if (valid_symbols[ARITHMETIC_WORD]) {
+                lexer->mark_end(lexer);
+                lexer->result_symbol = ARITHMETIC_WORD;
+                return true;
+            }
             return false; // lexer moved: only skips the handlers below here
         }
     }

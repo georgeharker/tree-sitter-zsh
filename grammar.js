@@ -1592,9 +1592,10 @@ module.exports = grammar({
       field('operator', choice('++', '--')),
     )),
 
+    // (( (H=h, C=c) )): the comma operator inside parentheses
     _arithmetic_parenthesized_expression: $ => seq(
       '(',
-      $._arithmetic_expression,
+      commaSep1($._arithmetic_expression),
       ')',
     ),
 
