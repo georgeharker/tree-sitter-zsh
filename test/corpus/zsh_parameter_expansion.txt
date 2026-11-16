@@ -1383,3 +1383,42 @@ orig="${orig[1,(in:i:)/][1,-2]}"
             qualifier: (zsh_glob_qualifier))
           (word))
         index: (word)))))
+
+================================================================================
+Parameter expansion - nested subscript inside a subscript
+================================================================================
+
+end="${(q)suf[suf[(i)-S]+1]}"
+print ${excl[optype[nest]]} "${suf[a[1]+1]}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        flags: (expansion_flags)
+        name: (simple_variable_name)
+        index: (binary_expression
+          left: (subscript
+            name: (variable_name)
+            flags: (zsh_array_subscript_flags)
+            index: (word))
+          right: (number)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      index: (subscript
+        name: (variable_name)
+        index: (word)))
+    argument: (string
+      (expansion
+        name: (simple_variable_name)
+        index: (binary_expression
+          left: (subscript
+            name: (variable_name)
+            index: (number))
+          right: (number))))))

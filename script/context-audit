@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Audit the external scanner's context stack over zsh files.
+#
+#   script/context-audit FILE...          one line per file
+#   script/context-audit --summary FILE...  totals only
+#
+# Builds src/ with -DZSH_SCANNER_AUDIT (normal builds are unaffected).
+# Needs the tree-sitter C library (e.g. brew install tree-sitter).
+# A complete file should end with depth=0; anything left on the stack is a
+# leaked context that later scanner decisions may silently depend on.
+set -euo pipefail
+root=$(cd "$(dirname "$0")/.." && pwd)
+prefix=$(brew --prefix tree-sitter 2>/dev/null || echo /usr/local)
+bin=$(mktemp -d)/context-audit
+cc -O2 -DZSH_SCANNER_AUDIT -I"$prefix/include" -I"$root/src" -o "$bin" \
+  "$root/script/context-audit.c" "$root/src/parser.c" "$root/src/scanner.c" \
+  "$prefix/lib/libtree-sitter.a"
+summary=0
+if [ "${1:-}" = --summary ]; then summary=1; shift; fi
+out=$("$bin" "$@" 2>&1 | sed -E 's/ AUDIT / /')
+if [ $summary = 1 ]; then
+  printf '%s\n' "$out" | awk -F'\t' '{
+      split($2, f, " "); e = f[1]; sub("errors=", "", e); d = f[2]; sub("depth=", "", d)
+      files++; errs += e; if (e == 0) clean++; if (d > 0) { leaky++; open += d }
+    } END { printf "files=%d clean=%d errors=%d leaky=%d open-contexts=%d\n", files, clean, errs, leaky, open }'
+else
+  printf '%s\n' "$out"
+fi

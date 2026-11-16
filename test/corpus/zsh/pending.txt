@@ -122,3 +122,18 @@ print "(dev)nodev[don't interpret devices]"
       (word))
     argument: (string
       (string_content))))
+
+================================================================================
+Pending: argument that is a glob group (not a qualifier on the command name)
+:skip
+================================================================================
+
+print (*~a)
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern)))

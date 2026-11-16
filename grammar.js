@@ -702,7 +702,10 @@ module.exports = grammar({
         $._maybe_terminated_statement,
         // $._terminated_statement,
       ),
-      token(prec(-1, '}')),
+      // External '}' (CLOSING_BRACE): the scanner pops CTX_COMPOUND here.
+      // An internal token never reached the scanner, so every { } group
+      // used to leave CTX_COMPOUND on the context stack.
+      '}',
     )),
 
     compound_statement: $ => seq(
@@ -711,7 +714,10 @@ module.exports = grammar({
         $._maybe_terminated_statement,
         // $._terminated_statement,
       ),
-      token(prec(-1, '}')),
+      // External '}' (CLOSING_BRACE): the scanner pops CTX_COMPOUND here.
+      // An internal token never reached the scanner, so every { } group
+      // used to leave CTX_COMPOUND on the context stack.
+      '}',
       optional($.always_clause),
     ),
 
@@ -1004,13 +1010,21 @@ module.exports = grammar({
 
     _param_arithmetic_literal: $ => prec(1, choice(
       $.number,
-      // Note: no $.subscript to avoid recursion
+      // Nested subscript inside a subscript: ${suf[a[1]+1]}
+      alias($._param_subscript, $.subscript),
       $.variable_ref,
       $.expansion,
       $.variable_name,
       $.string,
       $.glob_pattern,             // Allow glob patterns as subscript indices: var[(I)foo_*]
       $._word_or_word_with_colon  // Allow bare identifiers in parameter arithmetic context
+    )),
+
+    _param_subscript: $ => prec.left(seq(
+      field('name', $.variable_name),
+      '[',
+      $._subscript_body,
+      ']',
     )),
 
     _param_arithmetic_binary_expression: $ => createBinaryExpression(
@@ -1349,6 +1363,19 @@ module.exports = grammar({
       $.variable_ref,   // Fall back to $var patterns
     ),
 
+    _dollar_arithmetic_expansion: $ => prec(4, choice(
+      seq(
+        alias(seq($._bare_dollar, '(('), "$(("),
+        optional($.arithmetic_base),
+        commaSep1($._arithmetic_expression),
+        '))'
+      ),
+      seq(
+        alias(seq($._bare_dollar, '['), "$["),
+        $._arithmetic_expression,
+        ']'),
+    )),
+
     arithmetic_expansion: $ => prec(4, choice(
       seq(
         choice(
@@ -1630,7 +1657,8 @@ module.exports = grammar({
           $.expansion,
           $.variable_ref,
           $.command_substitution,
-          $.arithmetic_expansion,
+          // Only $(( )) / $[ ] expand in a string; a bare (( is text.
+          alias($._dollar_arithmetic_expansion, $.arithmetic_expansion),
         ),
         optional($._concat),
       )),
