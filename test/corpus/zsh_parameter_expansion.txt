@@ -1025,10 +1025,9 @@ print $#f $#array $# $#*
       (simple_variable_name))
     argument: (variable_ref
       (special_variable_name))
-    argument: (concatenation
-      (variable_ref
-        (special_variable_name))
-      (glob_pattern)))
+    argument: (variable_ref
+      (expansion_style)
+      (special_variable_name)))
   (command
     name: (command_name
       (arithmetic_expansion

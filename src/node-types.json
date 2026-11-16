@@ -346,11 +346,23 @@
             "named": true
           },
           {
+            "type": "arithmetic_char_code",
+            "named": true
+          },
+          {
+            "type": "arithmetic_expansion",
+            "named": true
+          },
+          {
             "type": "binary_expression",
             "named": true
           },
           {
             "type": "command_substitution",
+            "named": true
+          },
+          {
+            "type": "concatenation",
             "named": true
           },
           {
@@ -428,11 +440,23 @@
           "named": true
         },
         {
+          "type": "arithmetic_char_code",
+          "named": true
+        },
+        {
+          "type": "arithmetic_expansion",
+          "named": true
+        },
+        {
           "type": "binary_expression",
           "named": true
         },
         {
           "type": "command_substitution",
+          "named": true
+        },
+        {
+          "type": "concatenation",
           "named": true
         },
         {
@@ -525,6 +549,10 @@
           },
           {
             "type": "arithmetic_call",
+            "named": true
+          },
+          {
+            "type": "arithmetic_char_code",
             "named": true
           },
           {
@@ -693,6 +721,10 @@
           },
           {
             "type": "arithmetic_call",
+            "named": true
+          },
+          {
+            "type": "arithmetic_char_code",
             "named": true
           },
           {
@@ -1185,6 +1217,10 @@
       "types": [
         {
           "type": "_primary_expression",
+          "named": true
+        },
+        {
+          "type": "arithmetic_char_code",
           "named": true
         },
         {
@@ -3822,6 +3858,10 @@
           "named": true
         },
         {
+          "type": "arithmetic_char_code",
+          "named": true
+        },
+        {
           "type": "subscript",
           "named": true
         },
@@ -3880,6 +3920,10 @@
         },
         {
           "type": "arithmetic_call",
+          "named": true
+        },
+        {
+          "type": "arithmetic_char_code",
           "named": true
         },
         {
@@ -4306,6 +4350,10 @@
             "named": true
           },
           {
+            "type": "arithmetic_char_code",
+            "named": true
+          },
+          {
             "type": "arithmetic_expansion",
             "named": true
           },
@@ -4364,6 +4412,10 @@
             "named": true
           },
           {
+            "type": "arithmetic_char_code",
+            "named": true
+          },
+          {
             "type": "arithmetic_expansion",
             "named": true
           },
@@ -4419,6 +4471,10 @@
           },
           {
             "type": "arithmetic_call",
+            "named": true
+          },
+          {
+            "type": "arithmetic_char_code",
             "named": true
           },
           {
@@ -4622,6 +4678,10 @@
         },
         {
           "type": "arithmetic_call",
+          "named": true
+        },
+        {
+          "type": "arithmetic_char_code",
           "named": true
         },
         {
@@ -5289,6 +5349,10 @@
   },
   {
     "type": "arithmetic_base",
+    "named": true
+  },
+  {
+    "type": "arithmetic_char_code",
     "named": true
   },
   {

@@ -1218,3 +1218,79 @@ esac
       (command
         name: (command_name
           (word))))))
+
+================================================================================
+Case item - group directly after an expansion in the pattern
+================================================================================
+
+case $l in
+  ((#bi)${~d}((19|20)[0-9][0-9])[-/](<1-12>)[-/](<1-31>)*) a ;;
+  ((#bi)${~d}((19|20)[0-9][0-9])[-/]${~m}[-/](<1-31>)*) b ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (extglob_pattern)
+      value: (expansion
+        style: (expansion_style)
+        name: (simple_variable_name))
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      value: (expansion
+        style: (expansion_style)
+        name: (simple_variable_name))
+      value: (extglob_pattern)
+      value: (expansion
+        style: (expansion_style)
+        name: (simple_variable_name))
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))
+
+================================================================================
+String - [ after a blank is string content
+================================================================================
+
+print "Usage: $0 [ -q ] [ -a | [ session ... ] ]" >&2
+print "$a [x]" "${a[1]} [x]" "$a[1]"
+
+--------------------------------------------------------------------------------
+
+(program
+  (redirected_statement
+    body: (command
+      name: (command_name
+        (word))
+      argument: (string
+        (string_content)
+        (variable_ref
+          (special_variable_name))
+        (string_content)))
+    redirect: (file_redirect
+      destination: (number)))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (variable_ref
+        (simple_variable_name))
+      (string_content))
+    argument: (string
+      (expansion
+        name: (simple_variable_name)
+        index: (number))
+      (string_content))
+    argument: (string
+      (variable_ref
+        (simple_variable_name)
+        index: (number)))))
