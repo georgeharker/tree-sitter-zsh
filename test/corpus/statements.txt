@@ -2313,3 +2313,24 @@ m="${m//$'\n'[[:space:]]##$'\n'/$nl}"
             (regex))
           replacement: (variable_ref
             (simple_variable_name)))))))
+
+================================================================================
+Parameter expansion - arithmetic inside a flag argument
+================================================================================
+
+b="+${(pl:$((w-8))::-:)}"
+x ${(l.((${COLUMNS}-1)).)}
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (string_content)
+      (expansion
+        flags: (expansion_flags))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      flags: (expansion_flags))))

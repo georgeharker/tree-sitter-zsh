@@ -1940,7 +1940,8 @@ module.exports = grammar({
     // Zsh parameter expansion flags: ${(L)var}, ${(j:,:)array}, etc.
     // Flag arguments may contain one level of parentheses:
     // ${(r.(c==1) ? 28 : 32.):-x}
-    expansion_flags: _ => token.immediate(/\(([^()]|\([^()]*\))+\)/),
+    // ... and two levels for arithmetic in an argument: ${(pl:$((w-8))::-:)}
+    expansion_flags: _ => token.immediate(/\(([^()]|\(([^()]|\([^()]*\))*\))+\)/),
 
     _expansion_body: $ => prec(1, choice(
      // HIGHEST PRIORITY: Colon operations (moved to top)
