@@ -1248,6 +1248,9 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     bool skipped_blank_before = false;
 
     // Clear flag at start and capture its previous value
+    // Set after a name token, to keep $x[1] / $x:h / ${x#p} apart. Only
+    // set for names inside an expansion: an assignment name (id=x:$h) is
+    // always followed by '=' from the internal lexer, which can't clear it.
     bool was_just_variable_name = scanner->just_returned_variable_name;
     scanner->just_returned_variable_name = false;
 
@@ -1854,9 +1857,8 @@ after_concat:
             }
         }
         if (!valid_symbols[CONCAT] && !valid_symbols[CONCAT_REGEX] &&
-            get_current_context(scanner) == CTX_TEST &&
-            !valid_symbols[REGEX] && !valid_symbols[REGEX_NO_SLASH] &&
-            !valid_symbols[REGEX_NO_SPACE] &&
+            get_current_context(scanner) == CTX_TEST && !valid_symbols[REGEX] &&
+            !valid_symbols[REGEX_NO_SLASH] && !valid_symbols[REGEX_NO_SPACE] &&
             !valid_symbols[TEST_PATTERN_WORD] &&
             !valid_symbols[TEST_PATTERN_GLOB]) {
             // Also step over line continuations ([[ $a || \<newline>
@@ -2745,7 +2747,8 @@ after_concat:
                     fprintf(stderr, "SCANNER: VARIABLE_NAME after \\\n");
 #endif
                     lexer->result_symbol = VARIABLE_NAME;
-                    scanner->just_returned_variable_name = true;
+                    scanner->just_returned_variable_name =
+                        in_parameter_expansion(scanner);
                     return true;
                 }
 
@@ -2786,7 +2789,8 @@ after_concat:
                 lexer->result_symbol = VARIABLE_NAME;
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false;
-                scanner->just_returned_variable_name = true;
+                scanner->just_returned_variable_name =
+                    in_parameter_expansion(scanner);
                 return true;
             }
             // Digit not followed by = or [ — fall through to let the normal
@@ -2916,7 +2920,8 @@ after_concat:
                     lexer->result_symbol = VARIABLE_NAME;
                     was_just_bare_dollar = scanner->just_returned_bare_dollar =
                         false;
-                    scanner->just_returned_variable_name = true;
+                    scanner->just_returned_variable_name =
+                        in_parameter_expansion(scanner);
                     return true;
                 }
                 return false;
@@ -2939,7 +2944,8 @@ after_concat:
                 lexer->result_symbol = VARIABLE_NAME;
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false;
-                scanner->just_returned_variable_name = true;
+                scanner->just_returned_variable_name =
+                    in_parameter_expansion(scanner);
                 return true;
             }
 
@@ -2952,7 +2958,8 @@ after_concat:
 #if DEBUG
                 fprintf(stderr, "SCANNER: VARIABLE_NAME after ?\n");
 #endif
-                scanner->just_returned_variable_name = true;
+                scanner->just_returned_variable_name =
+                    in_parameter_expansion(scanner);
                 return iswalpha(lexer->lookahead);
             }
         }

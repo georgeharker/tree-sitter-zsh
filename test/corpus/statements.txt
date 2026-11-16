@@ -1918,3 +1918,39 @@ fi
       left: (variable_ref
         (simple_variable_name))
       right: (regex))))
+
+================================================================================
+Assignment value - word with colon before an expansion
+================================================================================
+
+PATH=/sbin:$PATH
+id=x:${H}
+x $x:h $x[1]
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (concatenation
+      (word)
+      (word)
+      (variable_ref
+        (simple_variable_name))))
+  (variable_assignment
+    name: (variable_name)
+    value: (concatenation
+      (word)
+      (word)
+      (expansion
+        name: (simple_variable_name))))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name)
+        modifier: (expansion_modifier))
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      index: (number))))
