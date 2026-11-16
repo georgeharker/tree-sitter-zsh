@@ -1106,7 +1106,8 @@ module.exports = grammar({
     _subscript_body_with_string: $ => choice(
       seq(
         optional(field('flags', alias($._subscript_flags, $.zsh_array_subscript_flags))),
-        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at, $.string)),
+        // pc['key']=value: a quoted key ('...' as well as "...")
+        field('index', choice($._param_arithmetic_expression, $.array_star, $.array_at, $.string, $.raw_string)),
       ),
       seq(
         field('flags', alias($._subscript_pattern_flags, $.zsh_array_subscript_flags)),
