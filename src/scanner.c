@@ -1463,7 +1463,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               // prevent concat over newline after string ends
               (was_just_exited_string && lexer->lookahead == '\n') ||
               (lexer->lookahead == '"' && ctx == CTX_STRING) ||
-              (was_just_newline) ||
+              // (No "just after a NEWLINE" check: CONCAT can't be valid at
+              // a statement start, and the flag goes stale when the
+              // internal lexer produces the next tokens, as in
+              // `# c<newline>h t:$x`, where it blocked the concat.)
               // Prevent recursion on / pattern
               (lexer->lookahead == '/' &&
                ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE) ||

@@ -1174,13 +1174,15 @@ print {a} x@{upstream} 2>/dev/null
     body: (command
       name: (command_name
         (word))
+      argument: (concatenation
+        (word)
+        (word)
+        (word))
       argument: (word)
-      argument: (word)
-      argument: (word)
-      argument: (word)
-      argument: (word)
-      argument: (word)
-      argument: (word))
+      argument: (concatenation
+        (word)
+        (word)
+        (word)))
     redirect: (file_redirect
       descriptor: (file_descriptor)
       destination: (word))))
@@ -1720,8 +1722,9 @@ x 'a'\
   (command
     name: (command_name
       (word))
-    argument: (word)
-    argument: (word))
+    argument: (concatenation
+      (word)
+      (word)))
   (command
     name: (command_name
       (word))
@@ -1781,3 +1784,37 @@ esac
       (command
         name: (command_name
           (word))))))
+
+================================================================================
+Concatenation after a word on the line after a comment or command
+================================================================================
+
+# a comment
+h --provides tool:$T p
+x
+h t:$T
+--------------------------------------------------------------------------------
+
+(program
+  (comment)
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (concatenation
+      (word)
+      (word)
+      (variable_ref
+        (simple_variable_name)))
+    argument: (word))
+  (command
+    name: (command_name
+      (word)))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (word)
+      (word)
+      (variable_ref
+        (simple_variable_name)))))
