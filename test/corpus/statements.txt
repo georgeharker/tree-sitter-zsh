@@ -1510,3 +1510,84 @@ print "$/" "a $\\ b [$/]" "$" "${x}$"
     argument: (string
       (expansion
         name: (simple_variable_name)))))
+
+================================================================================
+Multiple assignments end at a newline
+================================================================================
+
+a=x b=y
+x
+a=() b=()
+print }
+if true; then
+  a=1 b=2
+elif false; then
+  c=3 d=4
+fi
+a=x b=y cmd
+a=x b=y \
+  cmd
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignments
+    (variable_assignment
+      name: (variable_name)
+      value: (word))
+    (variable_assignment
+      name: (variable_name)
+      value: (word)))
+  (command
+    name: (command_name
+      (word)))
+  (variable_assignments
+    (variable_assignment
+      name: (variable_name)
+      value: (array))
+    (variable_assignment
+      name: (variable_name)
+      value: (array)))
+  (command
+    name: (command_name
+      (word))
+    argument: (word))
+  (if_statement
+    condition: (command
+      name: (command_name
+        (word)))
+    (variable_assignments
+      (variable_assignment
+        name: (variable_name)
+        value: (number))
+      (variable_assignment
+        name: (variable_name)
+        value: (number)))
+    (elif_clause
+      (command
+        name: (command_name
+          (word)))
+      (variable_assignments
+        (variable_assignment
+          name: (variable_name)
+          value: (number))
+        (variable_assignment
+          name: (variable_name)
+          value: (number)))))
+  (command
+    (variable_assignment
+      name: (variable_name)
+      value: (word))
+    (variable_assignment
+      name: (variable_name)
+      value: (word))
+    name: (command_name
+      (word)))
+  (command
+    (variable_assignment
+      name: (variable_name)
+      value: (word))
+    (variable_assignment
+      name: (variable_name)
+      value: (word))
+    name: (command_name
+      (word))))

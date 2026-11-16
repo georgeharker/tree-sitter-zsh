@@ -984,7 +984,14 @@ module.exports = grammar({
       )),
     ),
 
-    variable_assignments: $ => seq($.variable_assignment, repeat1($.variable_assignment)),
+    // `a=x b=y` is ambiguous with the assignment prefixes of a command
+    // (conflict [command, variable_assignments]). If the next line starts a
+    // command, the command branch can skip the newline as whitespace (extras)
+    // and take that line's first word as its name; both branches then parse
+    // without errors. Prefer the assignments: a newline always ends them,
+    // while on one line (or after a \-continuation) the assignments branch
+    // fails and the command branch still wins.
+    variable_assignments: $ => prec.dynamic(1, seq($.variable_assignment, repeat1($.variable_assignment))),
 
     subscript: $ => prec.left(seq(
       field('name', $.variable_name),
