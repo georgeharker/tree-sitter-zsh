@@ -2205,6 +2205,34 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     if ((valid_symbols[CLOSING_PAREN] || valid_symbols[CLOSING_DOUBLE_PAREN]) &&
         !in_error_recovery(valid_symbols)) {
         skip_ws_maybe_nl(lexer, valid_symbols);
+        // A line continuation before the ')' (a=( x \<newline> )): step
+        // over it, or the internal lexer skips it as an extra and produces
+        // the ')' itself, leaving the context pushed at '(' open. Having
+        // consumed the '\', finish any escaped paren here too (as the
+        // NEWLINE handler does); any other escape is a word character for
+        // the internal lexer, so decline.
+        while (lexer->lookahead == '\\') {
+            skip(lexer);
+            if (lexer->lookahead == '\r') {
+                skip(lexer);
+            }
+            if (lexer->lookahead == '\n') {
+                skip(lexer);
+                skip_ws_maybe_nl(lexer, valid_symbols);
+                continue;
+            }
+            if ((lexer->lookahead == '(' && valid_symbols[ESCAPED_OPEN_PAREN]) ||
+                (lexer->lookahead == ')' &&
+                 valid_symbols[ESCAPED_CLOSE_PAREN])) {
+                bool is_open = lexer->lookahead == '(';
+                advance(lexer);
+                lexer->mark_end(lexer);
+                lexer->result_symbol =
+                    is_open ? ESCAPED_OPEN_PAREN : ESCAPED_CLOSE_PAREN;
+                return true;
+            }
+            return false;
+        }
         if (lexer->lookahead == ')') {
             advance(lexer);
 
