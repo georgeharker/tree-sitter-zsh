@@ -14122,6 +14122,18 @@
         {
           "type": "ALIAS",
           "content": {
+            "type": "IMMEDIATE_TOKEN",
+            "content": {
+              "type": "PATTERN",
+              "value": "\\s+"
+            }
+          },
+          "named": true,
+          "value": "word"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
             "type": "SYMBOL",
             "name": "_default_word"
           },

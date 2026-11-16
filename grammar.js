@@ -2493,6 +2493,7 @@ module.exports = grammar({
     )),
 
     _param_replacement: $ => choice(
+      alias(token.immediate(/\s+/), $.word),   // ${u:gs/+/ /}: a blank replacement
       alias($._default_word, $.word),   // ${a//x/(* }: text starting with ( ) < > | ; &
       alias($._literal_dollar, $.word),   // ${x//a/$}: a literal '$'
       alias(prec(-2, repeat1($._special_character)), $.word),
