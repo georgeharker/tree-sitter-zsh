@@ -1334,3 +1334,53 @@ print ${x//$y[1]/} ${x#$y[(i)a]} ${x#$p[abc]} ${x/$y[1]/$z}
           index: (number))
         replacement: (variable_ref
           (simple_variable_name))))))
+
+================================================================================
+Parameter expansion - chained subscripts inside braces
+================================================================================
+
+x="${a[b][2,-1]}"
+x=${a[1][2,-2]}
+tmp+=( "${(@s.,.)help_tags[${i}${j}][2,-1]}" )
+orig="${orig[1,(in:i:)/][1,-2]}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        name: (simple_variable_name)
+        index: (word)
+        index: (word))))
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      name: (simple_variable_name)
+      index: (number)
+      index: (word)))
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (string
+        (expansion
+          flags: (expansion_flags)
+          name: (simple_variable_name)
+          index: (concatenation
+            (expansion
+              name: (simple_variable_name))
+            (expansion
+              name: (simple_variable_name)))
+          index: (word)))))
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        name: (simple_variable_name)
+        index: (concatenation
+          (glob_pattern
+            pattern: (word)
+            qualifier: (zsh_glob_qualifier))
+          (word))
+        index: (word)))))
