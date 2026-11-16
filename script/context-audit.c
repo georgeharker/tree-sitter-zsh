@@ -30,14 +30,16 @@ int main(int argc, char **argv) {
         fread(src, 1, n, f);
         src[n] = 0;
         fclose(f);
+        // The scanner is created and destroyed within the parse call, so
+        // its "AUDIT depth=... stack=... mismatch=..." report is printed
+        // during parsing: name the file first, add the error count after.
+        fprintf(stderr, "%s\t", argv[a]);
         TSParser *p = ts_parser_new();
         ts_parser_set_language(p, tree_sitter_zsh());
         TSTree *t = ts_parser_parse_string(p, NULL, src, (uint32_t)n);
-        fprintf(stderr, "%s\terrors=%u ", argv[a],
-                count_errors(ts_tree_root_node(t)));
+        fprintf(stderr, "errors=%u\n", count_errors(ts_tree_root_node(t)));
         ts_tree_delete(t);
-        ts_parser_delete(
-            p); // scanner prints "AUDIT depth=... stack=... mismatch=..."
+        ts_parser_delete(p);
         free(src);
     }
     return 0;
