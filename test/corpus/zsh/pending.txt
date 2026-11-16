@@ -74,7 +74,7 @@ pc['x']=1
     value: (number)))
 
 ================================================================================
-Pending: glob group in the middle of a word is a group, not a qualifier
+Pending: glob group in the middle of a word is a group, not a qualifier (retried after the context-stack work: still worsens totals 769 -> 779 via recovery in _mount)
 :skip
 ================================================================================
 

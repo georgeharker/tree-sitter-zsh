@@ -253,7 +253,8 @@ module.exports = grammar({
   word: $ => $._word,
 
   rules: {
-    program: $ => optional($._statements),
+    // A file of only blank lines / terminators is a valid (empty) program.
+    program: $ => optional(choice($._statements, repeat1($._terminator))),
 
     _statements: $ => prec(1, seq(
       repeat($._terminator), // Allow leading terminators/newlines
