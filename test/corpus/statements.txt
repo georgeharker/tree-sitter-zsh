@@ -1949,11 +1949,9 @@ x $x:h $x[1]
   (command
     name: (command_name
       (word))
-    argument: (concatenation
-      (variable_ref
-        (simple_variable_name)
-        modifier: (expansion_modifier))
-      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier))
     argument: (variable_ref
       (simple_variable_name)
       index: (number))))
@@ -1985,11 +1983,9 @@ x $h a[1]
   (command
     name: (command_name
       (word))
-    argument: (concatenation
-      (variable_ref
-        (simple_variable_name)
-        modifier: (expansion_modifier))
-      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier))
     argument: (variable_ref
       (simple_variable_name)
       index: (number))
@@ -1997,7 +1993,6 @@ x $h a[1]
       (variable_ref
         (simple_variable_name)
         modifier: (expansion_modifier))
-      (word)
       (word)
       (word))
     argument: (expansion
@@ -2090,3 +2085,83 @@ function f { echo }
       (command
         name: (command_name
           (word))))))
+
+================================================================================
+Modifiers - substitutions outside braces, and a literal colon after a variable
+================================================================================
+
+x $f:s/a/b/ $f:s/a/b $f:gs/a/b/:G $f:s/a/b/:t
+x ${f:s/a b/c d} "${(@)m:s/\\:/:/}"
+$0::$cmd $a:$b $a:foo "$P:$PATH"
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier
+        search: (regex)
+        replace: (regex)))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier
+        search: (regex)
+        replace: (regex)))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier
+        search: (regex)
+        replace: (regex)))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name)
+        modifier: (expansion_modifier
+          search: (regex)
+          replace: (regex)))
+      (word)
+      (word)))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier
+          search: (regex)
+          replace: (regex))))
+    argument: (string
+      (expansion
+        flags: (expansion_flags)
+        (expansion_with_modifier
+          name: (simple_variable_name)
+          modifier: (expansion_modifier
+            search: (regex)
+            replace: (word))))))
+  (command
+    name: (command_name
+      (concatenation
+        (variable_ref
+          (special_variable_name))
+        (word)
+        (word)
+        (variable_ref
+          (simple_variable_name))))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name))
+      (word)
+      (variable_ref
+        (simple_variable_name)))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name))
+      (word)
+      (word))
+    argument: (string
+      (variable_ref
+        (simple_variable_name))
+      (string_content)
+      (variable_ref
+        (simple_variable_name)))))

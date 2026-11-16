@@ -234,6 +234,7 @@ module.exports = grammar({
     $._arithmetic_word,                // ARITHMETIC_WORD: identifier inside (( ))
     $.arithmetic_char_code,            // ARITHMETIC_CHAR_CODE: ##a #name in (( ))
     $._literal_dollar,                 // LITERAL_DOLLAR: a '$' that starts no expansion: "%B$%b" echo $;
+    $._subst_end,                      // SUBST_END: zero-width end of a :s/a/b/ modifier
     $.__error_recovery,
   ],
 
@@ -1873,31 +1874,30 @@ module.exports = grammar({
       )
     ),
 
-    expansion_modifier: $ => prec.right(4, repeat1(seq(
-      token.immediate(':'),
-      choice(
-        token(/[aAce]/),
-        token(/h[0-9]*/),
-        token(/[lpPqQr]/),
-        optional(seq(
-            optional(token.immediate('g')), 
-            token.immediate('s'), token.immediate('/'), 
-            $._pattern_start, 
-            field('search', $._param_pattern_no_slash),
-            // replacement may be empty: ${x:s/next//}
-            token.immediate('/'), optional(field('replace', $._param_replacement)),
-            optional(seq(
-                token.immediate('/'), 
-                optional(token.immediate(':G'))
-            )
-          )
-        )
+    // Each modifier is lexed together with its ':' (:h, :t2, :P, :s/,
+    // :gs/), so a ':' not followed by a modifier is just a ':' ("$A:$B").
+    expansion_modifier: $ => prec.right(4, repeat1(choice(
+      token.immediate(/:[aAce]/),
+      token.immediate(/:h[0-9]*/),
+      token.immediate(/:[lpPqQr]/),
+      // :s/pat/rep/ and :gs/pat/rep/ (the closing '/' may be left off).
+      // It always ends with the scanner's zero-width _subst_end, so
+      // whatever follows $x:s/a/b in the surrounding context can't reach
+      // inside it: otherwise every context gets its own copy of the
+      // pattern/replacement states, which was about a third of the parse
+      // table.
+      seq(
+        token.immediate(/:g?s\//),
+        $._pattern_start,
+        field('search', $._param_pattern_no_slash),
+        token.immediate('/'), optional(field('replace', $._param_replacement)),
+        optional(seq(token.immediate('/'), optional(token.immediate(':G')))),
+        $._subst_end,
       ),
-      token(/[&ux]/),
-      token(/t[0-9]*/)
-      )
+      token.immediate(/:[&ux]/),
+      token.immediate(/:t[0-9]*/),
     ))),
-    
+
     // Maintain same order as zsh docs
     expansion_with_modifier: $ => seq(
       optional(field('name', $._expansion_variable_ref)),
@@ -2461,7 +2461,7 @@ module.exports = grammar({
 
     _param_replacement: $ => choice(
       alias($._literal_dollar, $.word),   // ${x//a/$}: a literal '$'
-      alias(prec(-2, repeat1($._special_character)), $._expansion_word),
+      alias(prec(-2, repeat1($._special_character)), $.word),
       alias($._regex_no_slash, $.regex),
       alias($._expansion_word, $.word),
       $.string, 
