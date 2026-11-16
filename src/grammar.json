@@ -2552,7 +2552,7 @@
                       "value": "function"
                     },
                     {
-                      "type": "REPEAT1",
+                      "type": "REPEAT",
                       "content": {
                         "type": "FIELD",
                         "name": "name",

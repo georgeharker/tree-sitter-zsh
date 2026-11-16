@@ -664,8 +664,9 @@ module.exports = grammar({
       choice(
         seq(
           'function',
-          // Names may be built from expansions: function $w-by-keymap { }
-          repeat1(field('name', choice(
+          // Names may be built from expansions: function $w-by-keymap { }.
+          // No name: an anonymous function, run where it's defined.
+          repeat(field('name', choice(
             $._word_or_word_with_colon,
             $.variable_ref,
             $.expansion,
