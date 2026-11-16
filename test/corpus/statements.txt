@@ -1591,3 +1591,48 @@ a=x b=y \
       value: (word))
     name: (command_name
       (word))))
+
+================================================================================
+Array - line continuation before the closing paren
+================================================================================
+
+a=( x \
+)
+b=( x \
+  y \
+)
+c=( \( x \) )
+d=( x \\ )
+print $(echo x \
+)
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (word)))
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (word)
+      (word)))
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (word)
+      (word)
+      (word)))
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (word)
+      (word)))
+  (command
+    name: (command_name
+      (word))
+    argument: (command_substitution
+      (command
+        name: (command_name
+          (word))
+        argument: (word)))))
