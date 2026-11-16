@@ -1429,6 +1429,7 @@ module.exports = grammar({
 
     // A robust glob pattern must contain at least one glob metacharacter
     // This prevents tilde expansion like ~/foo from being parsed as glob
+    // Groups may have empty alternatives: *.info(|.gz|.bz2), x(|.*)
     _glob_innards: _ => token(choice(
       // Pattern starting with glob metacharacter
       seq(
@@ -1439,7 +1440,7 @@ module.exports = grammar({
           /\[[!^]?[^\]]*\]/,                        // [...]
           /<[0-9]*-[0-9]*>/,                        // <1-10> <-> <20-> <-5>
           /\{[^}]*,[^}]*\}/,                        // {a,b}
-          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+          /\([^)|]*(\|[^)|]*)+\)/                   // (a|b|c)
         ),
         repeat(choice(
           /[^\s'"*?\[{()}<=\];]/,                 // regular chars excluding delimiters and backslash (allow ) for filenames)
@@ -1451,7 +1452,7 @@ module.exports = grammar({
           /<[0-9]*-[0-9]*>/,                        // <1-10> <-> <20-> <-5>
           /\{[^}]+,[^}]*\}/,                        // {a,b}
           /~/,                                      // ~ (allowed after initial char)
-          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+          /\([^)|]*(\|[^)|]*)+\)/                   // (a|b|c)
         ))
       ),
       // Pattern with regular chars containing at least one glob metacharacter
@@ -1467,7 +1468,7 @@ module.exports = grammar({
           /\[[!^]?[^\]]*\]/,                        // [...]
           /<[0-9]*-[0-9]*>/,                        // <1-10> <-> <20-> <-5>
           /\{[^}]*,[^}]*\}/,                        // {a,b}
-          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+          /\([^)|]*(\|[^)|]*)+\)/                   // (a|b|c)
         ),
         repeat(choice(
           /[^\s'"*?\[{()}<=\];]/,                 // regular chars excluding delimiters and backslash (allow ) for filenames)
@@ -1479,7 +1480,7 @@ module.exports = grammar({
           /<[0-9]*-[0-9]*>/,                        // <1-10> <-> <20-> <-5>
           /\{[^}]+,[^}]*\}/,                        // {a,b}
           /~/,                                      // ~ (allowed after initial char)
-          /\([^)|]+(\|[^)|]*)+\)/                   // (a|b|c)
+          /\([^)|]*(\|[^)|]*)+\)/                   // (a|b|c)
         ))
       )
     )),
