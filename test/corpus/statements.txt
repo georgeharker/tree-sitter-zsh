@@ -1294,3 +1294,134 @@ print "$a [x]" "${a[1]} [x]" "$a[1]"
       (variable_ref
         (simple_variable_name)
         index: (number)))))
+
+================================================================================
+Multi-line array - quotes and ) at the start of lines
+================================================================================
+
+a=(
+  'x'
+  'y'
+  "w"
+  `echo`
+)
+print "(dev)nodev[don't interpret devices]"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (raw_string)
+      (raw_string)
+      (string
+        (string_content))
+      (command_substitution
+        (command
+          name: (command_name
+            (word))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (string_content))))
+
+================================================================================
+Quote after a line continuation, then later strings
+================================================================================
+
+_arguments '(-u)-f[freeze]' \
+           '(-f)-u[unfreeze]'
+print "a" 'b'
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (raw_string)
+    argument: (raw_string))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (string_content))
+    argument: (raw_string)))
+
+================================================================================
+String - bare (( is text, only $(( )) and $[ ] expand
+================================================================================
+
+print "((${b})$n|)" "((${b}))" "(($b))" "$((1+2))" "$[1+2]"
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (string_content)
+      (expansion
+        name: (simple_variable_name))
+      (string_content)
+      (variable_ref
+        (simple_variable_name))
+      (string_content))
+    argument: (string
+      (string_content)
+      (expansion
+        name: (simple_variable_name))
+      (string_content))
+    argument: (string
+      (string_content)
+      (variable_ref
+        (simple_variable_name))
+      (string_content))
+    argument: (string
+      (arithmetic_expansion
+        (binary_expression
+          left: (number)
+          right: (number))))
+    argument: (string
+      (arithmetic_expansion
+        (binary_expression
+          left: (number)
+          right: (number))))))
+
+================================================================================
+Brace group closes its context; nested braces
+================================================================================
+
+f() { a; }
+{ { b; } }
+x && { c || d }
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (compound_statement
+    (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (list
+    (command
+      name: (command_name
+        (word)))
+    (compound_statement
+      (list
+        (command
+          name: (command_name
+            (word)))
+        (command
+          name: (command_name
+            (word)))))))

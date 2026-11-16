@@ -261,8 +261,22 @@ static inline void enter_context(Scanner *scanner, context_type_t context) {
     array_push(&scanner->context_stack, context);
 }
 
+#ifdef ZSH_SCANNER_AUDIT
+// Audit build only (-DZSH_SCANNER_AUDIT): counts context-stack mismatches
+// and reports them, plus the contexts left open, when the scanner is
+// destroyed. Used to find leaks; never compiled into normal builds.
+#define AUDIT_NCTX 16
+static unsigned audit_mismatch[AUDIT_NCTX][AUDIT_NCTX]; // [found][wanted]
+static unsigned audit_underflow[AUDIT_NCTX];            // exit on empty stack
+#endif
+
 static inline void exit_context(Scanner *scanner,
                                 context_type_t expected_context) {
+#ifdef ZSH_SCANNER_AUDIT
+    if (scanner->context_stack.size == 0 && expected_context < AUDIT_NCTX) {
+        audit_underflow[expected_context]++;
+    }
+#endif
     if (scanner->context_stack.size > 0) {
         context_type_t current = *array_back(&scanner->context_stack);
         // Verify we're exiting the expected context (for debugging)
@@ -279,6 +293,11 @@ static inline void exit_context(Scanner *scanner,
                     ContextNames[current], ContextNames[expected_context]);
 #endif
             // Gracefully handle mismatched contexts by popping anyway
+#ifdef ZSH_SCANNER_AUDIT
+            if (current < AUDIT_NCTX && expected_context < AUDIT_NCTX) {
+                audit_mismatch[current][expected_context]++;
+            }
+#endif
             array_pop(&scanner->context_stack);
         }
 #if DEBUG
@@ -310,6 +329,11 @@ static inline void exit_context_through(Scanner *scanner,
         if (top == ctx) {
             break;
         }
+#ifdef ZSH_SCANNER_AUDIT
+        if (top < AUDIT_NCTX && ctx < AUDIT_NCTX) {
+            audit_mismatch[top][ctx]++;
+        }
+#endif
     }
 }
 
@@ -318,6 +342,23 @@ static inline bool in_expansion_context(Scanner *scanner) {
     context_type_t ctx = get_current_context(scanner);
     return ctx == CTX_PARAMETER || ctx == CTX_ARITHMETIC ||
            ctx == CTX_SUBSCRIPT || ctx == CTX_COMMAND;
+}
+
+// Skip blanks, and newlines too where a newline is just whitespace (inside an
+// array or other list where NEWLINE isn't valid). Openers/closers that start
+// a line, as in a multi-line array, otherwise reach only the internal lexer
+// (the newline is an extra) and their context push/pop is lost.
+static inline void skip_ws_maybe_nl(TSLexer *lexer, const bool *valid_symbols) {
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (c == ' ' || c == '\t' || c == '\r') {
+            lexer->advance(lexer, true);
+        } else if (c == '\n' && !valid_symbols[NEWLINE]) {
+            lexer->advance(lexer, true);
+        } else {
+            break;
+        }
+    }
 }
 
 static inline bool in_pattern_context(Scanner *scanner) {
@@ -1506,31 +1547,33 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     }
 
     // Handle string context tracking
+    // Quotes. Whether a quote closes is read from the valid symbols, not the
+    // context stack: inside "..." a single quote is literal (SINGLE_QUOTE is
+    // never valid there), inside '...' DOUBLE_QUOTE is never valid, while at
+    // an opening position both are, except directly after '$' ($'...',
+    // $"..."). An opening quote the scanner never saw (after a \-newline,
+    // lexed by the internal lexer) then simply has no context to pop, which
+    // keeps the stack balanced instead of inverting every later string.
     if (valid_symbols[DOUBLE_QUOTE]) {
-        if (get_current_context(scanner) != CTX_STRING) {
-            skip_ws(lexer);
-
-            if (lexer->lookahead == '"') {
-                // Entering a string context
+        bool closing = !valid_symbols[SINGLE_QUOTE] && !was_just_bare_dollar;
+        if (!closing) {
+            skip_ws_maybe_nl(lexer, valid_symbols);
+        }
+        if (lexer->lookahead == '"') {
+            if (closing) {
+                if (get_current_context(scanner) == CTX_STRING) {
+                    exit_context(scanner, CTX_STRING);
+                }
+                was_just_exited_string = scanner->just_exited_string = true;
+#if DEBUG
+                fprintf(stderr, "SCANNER: Exiting string context\n");
+#endif
+            } else {
                 enter_context(scanner, CTX_STRING);
 #if DEBUG
                 fprintf(stderr, "SCANNER: Entering string context\n");
 #endif
-                advance(lexer);
-                lexer->mark_end(lexer);
-                lexer->result_symbol = DOUBLE_QUOTE;
-                return true;
             }
-        } else if (lexer->lookahead == '"') {
-            // Exiting a string context
-            exit_context(scanner, CTX_STRING);
-            // Set the flag to indicate we just exited a string
-            was_just_exited_string = scanner->just_exited_string = true;
-
-#if DEBUG
-            fprintf(stderr, "SCANNER: Exiting string context\n");
-#endif
-
             advance(lexer);
             lexer->mark_end(lexer);
             lexer->result_symbol = DOUBLE_QUOTE;
@@ -1539,30 +1582,25 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     }
 
     if (valid_symbols[SINGLE_QUOTE]) {
-        if (get_current_context(scanner) != CTX_RAW_STRING) {
-            skip_ws(lexer);
-
-            if (lexer->lookahead == '\'') {
-                // Entering a string context
+        bool closing = !valid_symbols[DOUBLE_QUOTE] && !was_just_bare_dollar;
+        if (!closing) {
+            skip_ws_maybe_nl(lexer, valid_symbols);
+        }
+        if (lexer->lookahead == '\'') {
+            if (closing) {
+                if (get_current_context(scanner) == CTX_RAW_STRING) {
+                    exit_context(scanner, CTX_RAW_STRING);
+                }
+                was_just_exited_string = scanner->just_exited_string = true;
+#if DEBUG
+                fprintf(stderr, "SCANNER: Exiting raw string context\n");
+#endif
+            } else {
                 enter_context(scanner, CTX_RAW_STRING);
 #if DEBUG
                 fprintf(stderr, "SCANNER: Entering raw string context\n");
 #endif
-                advance(lexer);
-                lexer->mark_end(lexer);
-                lexer->result_symbol = SINGLE_QUOTE;
-                return true;
             }
-        } else if (lexer->lookahead == '\'') {
-            // Exiting a string context
-            exit_context(scanner, CTX_RAW_STRING);
-            // Set the flag to indicate we just exited a string
-            was_just_exited_string = scanner->just_exited_string = true;
-
-#if DEBUG
-            fprintf(stderr, "SCANNER: Exiting raw string context\n");
-#endif
-
             advance(lexer);
             lexer->mark_end(lexer);
             lexer->result_symbol = SINGLE_QUOTE;
@@ -1573,7 +1611,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // Handle string context tracking
     if (valid_symbols[BACKTICK]) {
         if (get_current_context(scanner) != CTX_BACKTICK) {
-            skip_ws(lexer);
+            skip_ws_maybe_nl(lexer, valid_symbols);
 
             if (lexer->lookahead == '`') {
                 // Entering a string context
@@ -1904,9 +1942,12 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     }
 
     // Handle OPENING_PAREN after BARE_DOLLAR
+    // Inside "..." a '(' is only syntax right after '$' ($( $(( ); otherwise
+    // it's string content: "((${x})|)" must not become an arithmetic "((".
     if ((valid_symbols[OPENING_PAREN] || valid_symbols[DOUBLE_OPENING_PAREN] ||
          valid_symbols[ZSH_EXTENDED_GLOB_FLAGS]) &&
-        !in_error_recovery(valid_symbols)) {
+        !in_error_recovery(valid_symbols) &&
+        (was_just_bare_dollar || get_current_context(scanner) != CTX_STRING)) {
         // Blank before the '(' means it starts a word ((#q)foo: flags);
         // directly after pattern text it can be a qualifier (*(#qN)).
         // Earlier handlers may already have skipped the blank, so use the
@@ -2160,7 +2201,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 
     if ((valid_symbols[CLOSING_PAREN] || valid_symbols[CLOSING_DOUBLE_PAREN]) &&
         !in_error_recovery(valid_symbols)) {
-        skip_ws(lexer);
+        skip_ws_maybe_nl(lexer, valid_symbols);
         if (lexer->lookahead == ')') {
             advance(lexer);
 
@@ -3514,6 +3555,31 @@ void tree_sitter_zsh_external_scanner_deserialize(void *payload,
 
 void tree_sitter_zsh_external_scanner_destroy(void *payload) {
     Scanner *scanner = (Scanner *)payload;
+#ifdef ZSH_SCANNER_AUDIT
+    fprintf(stderr, "AUDIT depth=%u stack=", scanner->context_stack.size);
+    for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
+        fprintf(stderr, "%s%s", i ? "," : "",
+                ContextNames[*array_get(&scanner->context_stack, i)] + 4);
+    }
+    fprintf(stderr, " mismatch=");
+    for (int f = 0; f < AUDIT_NCTX; f++) {
+        for (int w = 0; w < AUDIT_NCTX; w++) {
+            if (audit_mismatch[f][w]) {
+                fprintf(stderr, "%s>%s:%u,", ContextNames[f] + 4,
+                        ContextNames[w] + 4, audit_mismatch[f][w]);
+                audit_mismatch[f][w] = 0;
+            }
+        }
+    }
+    fprintf(stderr, " underflow=");
+    for (int w = 0; w < AUDIT_NCTX; w++) {
+        if (audit_underflow[w]) {
+            fprintf(stderr, "%s:%u,", ContextNames[w] + 4, audit_underflow[w]);
+            audit_underflow[w] = 0;
+        }
+    }
+    fprintf(stderr, "\n");
+#endif
     for (size_t i = 0; i < scanner->heredocs.size; i++) {
         Heredoc *heredoc = array_get(&scanner->heredocs, i);
         array_delete(&heredoc->current_leading_word);

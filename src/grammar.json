@@ -2746,15 +2746,8 @@
             ]
           },
           {
-            "type": "TOKEN",
-            "content": {
-              "type": "PREC",
-              "value": -1,
-              "content": {
-                "type": "STRING",
-                "value": "}"
-              }
-            }
+            "type": "STRING",
+            "value": "}"
           }
         ]
       }
@@ -2784,15 +2777,8 @@
           ]
         },
         {
-          "type": "TOKEN",
-          "content": {
-            "type": "PREC",
-            "value": -1,
-            "content": {
-              "type": "STRING",
-              "value": "}"
-            }
-          }
+          "type": "STRING",
+          "value": "}"
         },
         {
           "type": "CHOICE",
@@ -4113,6 +4099,15 @@
             "name": "number"
           },
           {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_param_subscript"
+            },
+            "named": true,
+            "value": "subscript"
+          },
+          {
             "type": "SYMBOL",
             "name": "variable_ref"
           },
@@ -4135,6 +4130,35 @@
           {
             "type": "SYMBOL",
             "name": "_word_or_word_with_colon"
+          }
+        ]
+      }
+    },
+    "_param_subscript": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "name",
+            "content": {
+              "type": "SYMBOL",
+              "name": "variable_name"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "["
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_subscript_body"
+          },
+          {
+            "type": "STRING",
+            "value": "]"
           }
         ]
       }
@@ -6890,6 +6914,110 @@
         }
       ]
     },
+    "_dollar_arithmetic_expansion": {
+      "type": "PREC",
+      "value": 4,
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_bare_dollar"
+                    },
+                    {
+                      "type": "STRING",
+                      "value": "(("
+                    }
+                  ]
+                },
+                "named": false,
+                "value": "$(("
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "arithmetic_base"
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              },
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_arithmetic_expression"
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "STRING",
+                          "value": ","
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "_arithmetic_expression"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "STRING",
+                "value": "))"
+              }
+            ]
+          },
+          {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SEQ",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_bare_dollar"
+                    },
+                    {
+                      "type": "STRING",
+                      "value": "["
+                    }
+                  ]
+                },
+                "named": false,
+                "value": "$["
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_arithmetic_expression"
+              },
+              {
+                "type": "STRING",
+                "value": "]"
+              }
+            ]
+          }
+        ]
+      }
+    },
     "arithmetic_expansion": {
       "type": "PREC",
       "value": 4,
@@ -8842,8 +8970,13 @@
                     "name": "command_substitution"
                   },
                   {
-                    "type": "SYMBOL",
-                    "name": "arithmetic_expansion"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_dollar_arithmetic_expansion"
+                    },
+                    "named": true,
+                    "value": "arithmetic_expansion"
                   }
                 ]
               },
