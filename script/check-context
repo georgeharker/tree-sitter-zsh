@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Fail if any corpus test input (that parses without errors) leaves scanner
+# contexts open at the end. See script/context-audit.
+set -euo pipefail
+root=$(cd "$(dirname "$0")/.." && pwd)
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+python3 - "$root/test/corpus" "$work" <<'PY'
+import os, re, sys
+corpus, out = sys.argv[1], sys.argv[2]
+hdr = re.compile(r'^(={3,})\n(.+?)\n((?::\S+\n)*)\1\n', re.M)
+n = 0
+for dirpath, _, files in os.walk(corpus):
+    for name in sorted(files):
+        if not name.endswith('.txt'):
+            continue
+        text = open(os.path.join(dirpath, name), encoding='utf-8').read()
+        for m in hdr.finditer(text):
+            if ':skip' in m.group(3):
+                continue
+            body = text[m.end():]
+            sep = re.search(r'^-{3,}\n', body, re.M)
+            if not sep:
+                continue
+            n += 1
+            title = re.sub(r'[^A-Za-z0-9_.-]+', '_', m.group(2))[:60]
+            with open(os.path.join(out, f'{n:04d}-{title}.zsh'), 'w') as f:
+                f.write(body[:sep.start()].strip('\n') + '\n')
+PY
+out=$("$root/script/context-audit" "$work"/*.zsh)
+bad=$(printf '%s\n' "$out" | awk '{ e = $0; sub(/.*errors=/, "", e); d = $0; sub(/.*depth=/, "", d); sub(/ .*/, "", d); if (e == 0 && d > 0) print }')
+total=$(ls "$work" | wc -l | tr -d ' ')
+if [ -n "$bad" ]; then
+  printf 'Corpus inputs leaving scanner contexts open:\n%s\n' "$bad" | sed "s|$work/||"
+  exit 1
+fi
+echo "context check: $total corpus inputs, none leave scanner contexts open"

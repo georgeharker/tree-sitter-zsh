@@ -3581,7 +3581,7 @@ void tree_sitter_zsh_external_scanner_destroy(void *payload) {
             audit_underflow[w] = 0;
         }
     }
-    fprintf(stderr, "\n");
+    fprintf(stderr, " ");
 #endif
     for (size_t i = 0; i < scanner->heredocs.size; i++) {
         Heredoc *heredoc = array_get(&scanner->heredocs, i);
