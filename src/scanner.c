@@ -199,7 +199,7 @@ typedef struct {
 typedef struct {
     uint8_t last_glob_paren_depth;
     uint8_t test_pattern_depth; // open '(' groups in a [[ x = pattern ]]
-    bool after_case_opener; // just emitted a case item's optional '('
+    bool after_case_opener;     // just emitted a case item's optional '('
     bool ext_was_in_double_quote;
     bool ext_saw_outside_quote;
     Array(context_type_t) context_stack; // Proper context stack
@@ -311,8 +311,7 @@ static inline void exit_context(Scanner *scanner,
 
 // Pop contexts down to and including the innermost `ctx`. If `ctx` isn't on
 // the stack, pop just the top (same as exit_context's mismatch handling).
-static inline void exit_context_through(Scanner *scanner,
-                                        context_type_t ctx) {
+static inline void exit_context_through(Scanner *scanner, context_type_t ctx) {
     bool present = false;
     for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
         if (*array_get(&scanner->context_stack, i) == ctx) {
@@ -449,6 +448,7 @@ static inline void reset(Scanner *scanner) {
     scanner->just_returned_bare_dollar = false;
     scanner->just_exited_string = false;
     scanner->just_newline = false;
+    scanner->saw_pipe_in_case = false;
     for (uint32_t i = 0; i < scanner->heredocs.size; i++) {
         reset_heredoc(array_get(&scanner->heredocs, i));
     }
@@ -493,6 +493,7 @@ static unsigned serialize(Scanner *scanner, char *buffer) {
     buffer[size++] = (char)scanner->just_newline;
     buffer[size++] = (char)scanner->test_pattern_depth;
     buffer[size++] = (char)scanner->after_case_opener;
+    buffer[size++] = (char)scanner->saw_pipe_in_case;
 
     // Serialize context stack
     for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
@@ -552,6 +553,7 @@ static void deserialize(Scanner *scanner, const char *buffer, unsigned length) {
         scanner->just_newline = buffer[size++];
         scanner->test_pattern_depth = (uint8_t)buffer[size++];
         scanner->after_case_opener = buffer[size++];
+        scanner->saw_pipe_in_case = buffer[size++];
 
         // Deserialize context stack
         scanner->context_stack.size = 0;
@@ -585,6 +587,17 @@ static void deserialize(Scanner *scanner, const char *buffer, unsigned length) {
                        heredoc->delimiter.size);
                 size += heredoc->delimiter.size;
             }
+        }
+        // Drop heredocs beyond the serialized count. They come from a
+        // later point in the text (another branch, or the previous parse
+        // when re-parsing incrementally) and aren't part of this state.
+        for (uint32_t i = heredoc_count; i < scanner->heredocs.size; i++) {
+            Heredoc *heredoc = array_get(&scanner->heredocs, i);
+            array_delete(&heredoc->current_leading_word);
+            array_delete(&heredoc->delimiter);
+        }
+        if (scanner->heredocs.size > heredoc_count) {
+            scanner->heredocs.size = heredoc_count;
         }
         assert(size == length);
     }
@@ -1015,8 +1028,8 @@ static bool scan_subscript_pattern(TSLexer *lexer, const bool *valid_symbols,
     bool glob = false;
     for (;;) {
         int32_t c = lexer->lookahead;
-        if (lexer->eof(lexer) || c == 0 || c == '\n' || c == ']' ||
-            c == '$' || c == '"' || c == '\'' || c == '`') {
+        if (lexer->eof(lexer) || c == 0 || c == '\n' || c == ']' || c == '$' ||
+            c == '"' || c == '\'' || c == '`') {
             break;
         }
         *moved = true;
@@ -1043,8 +1056,7 @@ static bool scan_subscript_pattern(TSLexer *lexer, const bool *valid_symbols,
     if (!any) {
         return false;
     }
-    enum TokenType sym =
-        glob ? SUBSCRIPT_PATTERN_GLOB : SUBSCRIPT_PATTERN_WORD;
+    enum TokenType sym = glob ? SUBSCRIPT_PATTERN_GLOB : SUBSCRIPT_PATTERN_WORD;
     if (!valid_symbols[sym]) {
         // Only one kind is ever valid alone in practice; prefer what fits.
         sym = valid_symbols[SUBSCRIPT_PATTERN_GLOB] ? SUBSCRIPT_PATTERN_GLOB
@@ -1075,8 +1087,8 @@ static bool scan_default_word(TSLexer *lexer) {
     uint32_t depth = 0;
     for (;;) {
         int32_t c = lexer->lookahead;
-        if (lexer->eof(lexer) || c == 0 || c == '$' || c == '"' ||
-            c == '\'' || c == '`' || iswspace(c)) {
+        if (lexer->eof(lexer) || c == 0 || c == '$' || c == '"' || c == '\'' ||
+            c == '`' || iswspace(c)) {
             break;
         }
         if (c == '{') {
@@ -1129,10 +1141,10 @@ static bool scan_test_pattern(Scanner *scanner, TSLexer *lexer,
             *moved = true;
             advance(lexer);
             int32_t n = lexer->lookahead;
-            if (iswalnum(n) || n == '_' || n == '{' || n == '(' ||
-                n == '\'' || n == '"' || n == '#' || n == '*' || n == '@' ||
-                n == '?' || n == '$' || n == '!' || n == '-' || n == '+' ||
-                n == '~' || n == '^' || n == '=') {
+            if (iswalnum(n) || n == '_' || n == '{' || n == '(' || n == '\'' ||
+                n == '"' || n == '#' || n == '*' || n == '@' || n == '?' ||
+                n == '$' || n == '!' || n == '-' || n == '+' || n == '~' ||
+                n == '^' || n == '=') {
                 break;
             }
             glob = true;
@@ -1149,9 +1161,8 @@ static bool scan_test_pattern(Scanner *scanner, TSLexer *lexer,
                 *moved = true;
                 advance(lexer);
                 int32_t n = lexer->lookahead;
-                if (!lexer->eof(lexer) && n != 0 && !iswspace(n) &&
-                    n != ']' && n != ')' && n != '&' && n != '|' &&
-                    n != ';') {
+                if (!lexer->eof(lexer) && n != 0 && !iswspace(n) && n != ']' &&
+                    n != ')' && n != '&' && n != '|' && n != ';') {
                     glob = true;
                     any = true;
                     lexer->mark_end(lexer);
@@ -1215,7 +1226,8 @@ static bool scan_test_pattern(Scanner *scanner, TSLexer *lexer,
     if (!valid_symbols[sym]) {
         return false;
     }
-    scanner->test_pattern_depth = depth > UINT8_MAX ? UINT8_MAX : (uint8_t)depth;
+    scanner->test_pattern_depth =
+        depth > UINT8_MAX ? UINT8_MAX : (uint8_t)depth;
     lexer->result_symbol = sym;
     return true;
 }
@@ -1337,8 +1349,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         // A blank always separates operands (a concatenation can't
         // contain one), even where CONCAT is valid, e.g. after the count
         // in [[ -prefix 1 (f|ht)tp:// ]].
-        bool adjacent =
-            lexer->lookahead != ' ' && lexer->lookahead != '\t';
+        bool adjacent = lexer->lookahead != ' ' && lexer->lookahead != '\t';
         if (!adjacent) {
             scanner->test_pattern_depth = 0; // new operand
             while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
@@ -1353,8 +1364,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         // with ')' or '|': ((#s)|*:)${x}. A following '|' makes it '||',
         // which scan_test_pattern hands back to the internal lexer.
         if (c != '$' && c != '"' && c != '\'' && c != '`' && c != ']' &&
-            ((c != ')' && c != '|') || adjacent) && c != '&' &&
-            !iswspace(c) && c != 0) {
+            ((c != ')' && c != '|') || adjacent) && c != '&' && !iswspace(c) &&
+            c != 0) {
             bool moved = false;
             uint32_t depth = 0;
             if (c == '(') {
@@ -1385,8 +1396,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 }
                 depth = 1;
             }
-            if (scan_test_pattern(scanner, lexer, valid_symbols, &moved,
-                                  depth, adjacent)) {
+            if (scan_test_pattern(scanner, lexer, valid_symbols, &moved, depth,
+                                  adjacent)) {
                 return true;
             }
             if (moved) {
@@ -1527,6 +1538,47 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 if (lexer->eof(lexer)) {
                     return false;
                 }
+                // A line continuation right after a word: zsh drops the
+                // \<newline>, so if the next line starts with more of a
+                // word ('a'\<newline>'b' is the word 'a''b') this is a
+                // concatenation. Otherwise (blank, operator,
+                // closer) it only separates: decline, so the continuation
+                // is skipped as whitespace instead of falling through to
+                // the NEWLINE handler, which would end the command.
+                // Declining can't be done by returning false: the internal
+                // lexer would skip the continuation but can't produce the
+                // scanner-only tokens ('$' ...) that may follow. Instead
+                // step over it here and carry on as after any blank.
+                if (lexer->lookahead == '\r') {
+                    advance(lexer);
+                }
+                if (lexer->lookahead == '\n') {
+                    int32_t c;
+                    advance(lexer);
+                    c = lexer->lookahead;
+                    if (!lexer->eof(lexer) && !iswspace(c) && c != ';' &&
+                        c != '&' && c != '|' && c != '<' && c != '>' &&
+                        c != '(' && c != ')' && c != '}' && c != ']' &&
+                        c != '\\') {
+                        // The concat covers the continuation, so the next
+                        // scan starts at the word's next piece (a '$' there
+                        // is a scanner-only token the internal lexer can't
+                        // produce after skipping the continuation itself).
+                        lexer->mark_end(lexer);
+                        lexer->result_symbol = concat_type;
+                        return true;
+                    }
+                    // Skipping the blanks moves the token start past the
+                    // '\', the newline and themselves.
+                    while (lexer->lookahead == ' ' ||
+                           lexer->lookahead == '\t') {
+                        skip(lexer);
+                    }
+                    lexer->mark_end(lexer);
+                    skipped_blank_before = true;
+                    scan_started_on_blank = true;
+                    goto after_concat;
+                }
                 // In a pattern an escape after a string continues the
                 // pattern: ${out//$'\e'\[[0-9;]#m/}. (Elsewhere this path
                 // still falls through as before.)
@@ -1545,6 +1597,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #endif
         }
     }
+after_concat:
 
     // Handle string context tracking
     // Quotes. Whether a quote closes is read from the valid symbols, not the
@@ -2221,7 +2274,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 skip_ws_maybe_nl(lexer, valid_symbols);
                 continue;
             }
-            if ((lexer->lookahead == '(' && valid_symbols[ESCAPED_OPEN_PAREN]) ||
+            if ((lexer->lookahead == '(' &&
+                 valid_symbols[ESCAPED_OPEN_PAREN]) ||
                 (lexer->lookahead == ')' &&
                  valid_symbols[ESCAPED_CLOSE_PAREN])) {
                 bool is_open = lexer->lookahead == '(';
@@ -2527,7 +2581,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             int consumed = 0;
             while (iswalnum(lexer->lookahead) || lexer->lookahead == '_' ||
                    (lexer->lookahead == ':' &&
-             (cur_ctx == CTX_ARITHMETIC || cur_ctx == CTX_SUBSCRIPT))) {
+                    (cur_ctx == CTX_ARITHMETIC || cur_ctx == CTX_SUBSCRIPT))) {
                 advance(lexer);
                 consumed++;
             }
@@ -2690,7 +2744,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             advance(lexer);
             if (lexer->lookahead == '=' || lexer->lookahead == '[' ||
                 (lexer->lookahead == ':' &&
-             (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT)) ||
+                 (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT)) ||
                 lexer->lookahead == '-' || lexer->lookahead == '%' ||
                 lexer->lookahead == '/') {
                 return false;
@@ -2750,7 +2804,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             advance(lexer);
         } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
                    (lexer->lookahead == ':' &&
-             (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT))) {
+                    (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT))) {
             is_number = false;
             advance(lexer);
         } else {
@@ -2771,7 +2825,7 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 advance(lexer);
             } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
                        (lexer->lookahead == ':' &&
-             (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT))) {
+                        (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT))) {
                 is_number = false;
                 advance(lexer);
             } else {

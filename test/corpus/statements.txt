@@ -1684,3 +1684,70 @@ $y
       (variable_ref
         (simple_variable_name))
       (string_content))))
+
+================================================================================
+Line continuation right after a word joins it to the next line
+================================================================================
+
+x 'a'\
+'b'
+x 'a'\
+  'b'
+x a\
+b
+x 'a'\
+$b
+x $((a))\
+$((b))
+x $((a))\
+  $((b))
+x 'a'\
+; y
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (raw_string)
+      (raw_string)))
+  (command
+    name: (command_name
+      (word))
+    argument: (raw_string)
+    argument: (raw_string))
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (word))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (raw_string)
+      (variable_ref
+        (simple_variable_name))))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (arithmetic_expansion
+        (word))
+      (arithmetic_expansion
+        (word))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (word))
+    argument: (arithmetic_expansion
+      (word)))
+  (command
+    name: (command_name
+      (word))
+    argument: (raw_string))
+  (command
+    name: (command_name
+      (word))))
