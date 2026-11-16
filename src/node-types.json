@@ -4157,6 +4157,10 @@
             "named": true
           },
           {
+            "type": "variable_ref",
+            "named": true
+          },
+          {
             "type": "word",
             "named": true
           }
@@ -4976,6 +4980,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "compound_statement",
+            "named": true
+          },
           {
             "type": "do_group",
             "named": true

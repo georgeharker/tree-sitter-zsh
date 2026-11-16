@@ -1837,8 +1837,17 @@
           "type": "FIELD",
           "name": "body",
           "content": {
-            "type": "SYMBOL",
-            "name": "do_group"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "do_group"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "compound_statement"
+              }
+            ]
           }
         }
       ]
@@ -1870,6 +1879,10 @@
                 {
                   "type": "SYMBOL",
                   "name": "_simple_variable_name"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "variable_ref"
                 },
                 {
                   "type": "SYMBOL",
@@ -14011,6 +14024,9 @@
     }
   ],
   "conflicts": [
+    [
+      "_condition"
+    ],
     [
       "_expression",
       "command_name"
