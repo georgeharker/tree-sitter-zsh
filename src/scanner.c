@@ -3204,6 +3204,13 @@ regex:
                     state.last_was_escape = false;
                     break;
                 case '\'':
+                    // An escaped quote outside quotes is a literal character:
+                    // ${w%\'}. (Inside $'\t' the flag can still be set from
+                    // the \t, so only outside a quoted string.)
+                    if (state.last_was_escape && !state.in_single_quote) {
+                        state.last_was_escape = false;
+                        break;
+                    }
                     // Enter or exit a single-quoted string.
                     if (state.in_single_quote) {
                         state.in_single_quote = false;

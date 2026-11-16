@@ -2734,7 +2734,7 @@
         ]
       },
       "replacement": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -2783,6 +2783,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "word",
+          "named": true
+        }
+      ]
     }
   },
   {
