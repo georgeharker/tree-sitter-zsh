@@ -234,7 +234,7 @@ module.exports = grammar({
     $._arithmetic_word,                // ARITHMETIC_WORD: identifier inside (( ))
     $.arithmetic_char_code,            // ARITHMETIC_CHAR_CODE: ##a #name in (( ))
     $._literal_dollar,                 // LITERAL_DOLLAR: a '$' that starts no expansion: "%B$%b" echo $;
-    $._subst_end,                      // SUBST_END: zero-width end of a :s/a/b/ modifier
+    $._subst_end,                      // SUBST_END: zero-width end of a modifier chain ($x:h:s/a/b/)
     $.__error_recovery,
   ],
 
@@ -1876,27 +1876,26 @@ module.exports = grammar({
 
     // Each modifier is lexed together with its ':' (:h, :t2, :P, :s/,
     // :gs/), so a ':' not followed by a modifier is just a ':' ("$A:$B").
-    expansion_modifier: $ => prec.right(4, repeat1(choice(
+    // The chain always ends with the scanner's zero-width _subst_end, so
+    // whatever follows $x:h:s/a/b in the surrounding context can't reach
+    // inside it: otherwise every context gets its own copy of the modifier
+    // (and :s pattern/replacement) states, which was over a third of the
+    // parse table.
+    expansion_modifier: $ => prec.right(4, seq(repeat1(choice(
       token.immediate(/:[aAce]/),
       token.immediate(/:h[0-9]*/),
       token.immediate(/:[lpPqQr]/),
       // :s/pat/rep/ and :gs/pat/rep/ (the closing '/' may be left off).
-      // It always ends with the scanner's zero-width _subst_end, so
-      // whatever follows $x:s/a/b in the surrounding context can't reach
-      // inside it: otherwise every context gets its own copy of the
-      // pattern/replacement states, which was about a third of the parse
-      // table.
       seq(
         token.immediate(/:g?s\//),
         $._pattern_start,
         field('search', $._param_pattern_no_slash),
         token.immediate('/'), optional(field('replace', $._param_replacement)),
         optional(seq(token.immediate('/'), optional(token.immediate(':G')))),
-        $._subst_end,
       ),
       token.immediate(/:[&ux]/),
       token.immediate(/:t[0-9]*/),
-    ))),
+    )), $._subst_end)),
 
     // Maintain same order as zsh docs
     expansion_with_modifier: $ => seq(

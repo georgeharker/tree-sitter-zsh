@@ -1989,12 +1989,9 @@ x $h a[1]
     argument: (variable_ref
       (simple_variable_name)
       index: (number))
-    argument: (concatenation
-      (variable_ref
-        (simple_variable_name)
-        modifier: (expansion_modifier))
-      (word)
-      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier))
     argument: (expansion
       name: (simple_variable_name)
       index: (number)))
@@ -2114,14 +2111,11 @@ $0::$cmd $a:$b $a:foo "$P:$PATH"
       modifier: (expansion_modifier
         search: (regex)
         replace: (regex)))
-    argument: (concatenation
-      (variable_ref
-        (simple_variable_name)
-        modifier: (expansion_modifier
-          search: (regex)
-          replace: (regex)))
-      (word)
-      (word)))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier
+        search: (regex)
+        replace: (regex))))
   (command
     name: (command_name
       (word))
@@ -2165,3 +2159,32 @@ $0::$cmd $a:$b $a:foo "$P:$PATH"
       (string_content)
       (variable_ref
         (simple_variable_name)))))
+
+================================================================================
+Modifiers - chains of substitutions, text after a modifier
+================================================================================
+
+w=$w:gs/a/aA/:gs/b/bB/:gs/[]//
+x $x:hfoo ${f:h:t}
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    (variable_assignment
+      name: (variable_name)
+      value: (variable_ref
+        (simple_variable_name)))
+    name: (command_name
+      (glob_pattern)))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name)
+        modifier: (expansion_modifier))
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier)))))
