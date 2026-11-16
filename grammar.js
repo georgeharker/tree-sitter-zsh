@@ -1686,10 +1686,14 @@ module.exports = grammar({
     // string_content starting with a blank right after an expansion
     // ("$R " lost the blank and the closing quote bypassed the scanner,
     // leaking CTX_STRING onto the context stack).
+    // A newline inside "..." is part of the string. (Excluding it left
+    // newlines to the extras: they were dropped from the tree, and before
+    // a closing quote the internal lexer produced the '"' itself, so the
+    // scanner never popped CTX_STRING.)
     _string_content_after_dollar: _ => token(
-      /([^"`$\\\r\n^=~+A-Za-z0-9_]|\\(.|\r?\n))([^"`$\\\r\n]|\\(.|\r?\n))*/),
+      /([^"`$\\^=~+A-Za-z0-9_]|\\(.|\r?\n))([^"`$\\]|\\(.|\r?\n))*/),
 
-    string_content: _ => token(/([^"`$\\\r\n]|\\(.|\r?\n))+/),
+    string_content: _ => token(/([^"`$\\]|\\(.|\r?\n))+/),
 
     translated_string: $ => prec(1, seq($._bare_dollar, $.string)),
 

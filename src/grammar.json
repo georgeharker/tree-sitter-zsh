@@ -9063,14 +9063,14 @@
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "([^\"`$\\\\\\r\\n^=~+A-Za-z0-9_]|\\\\(.|\\r?\\n))([^\"`$\\\\\\r\\n]|\\\\(.|\\r?\\n))*"
+        "value": "([^\"`$\\\\^=~+A-Za-z0-9_]|\\\\(.|\\r?\\n))([^\"`$\\\\]|\\\\(.|\\r?\\n))*"
       }
     },
     "string_content": {
       "type": "TOKEN",
       "content": {
         "type": "PATTERN",
-        "value": "([^\"`$\\\\\\r\\n]|\\\\(.|\\r?\\n))+"
+        "value": "([^\"`$\\\\]|\\\\(.|\\r?\\n))+"
       }
     },
     "translated_string": {

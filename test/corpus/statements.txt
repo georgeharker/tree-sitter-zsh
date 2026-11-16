@@ -1636,3 +1636,51 @@ print $(echo x \
         name: (command_name
           (word))
         argument: (word)))))
+
+================================================================================
+String - newlines are string content, including before the closing quote
+================================================================================
+
+d="x
+"
+e="\
+x
+"
+f="a
+  b"
+print "$x
+" y
+g="${x}
+$y
+"
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (string_content)))
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (string_content)))
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (string_content)))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (variable_ref
+        (simple_variable_name))
+      (string_content))
+    argument: (word))
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        name: (simple_variable_name))
+      (variable_ref
+        (simple_variable_name))
+      (string_content))))
