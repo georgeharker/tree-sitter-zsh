@@ -2172,7 +2172,10 @@ module.exports = grammar({
 
     comment: _ => token(prec(-20, /#[^\r\n]*/)),
 
-    _comment_word: _ => token(prec(-8, seq(
+    // token.immediate: a `#`-word only binds as a value when directly after
+    // `=` (var=#foo); otherwise a comment on the next line was taken as the
+    // value of an empty `var=` (PR #41).
+    _comment_word: _ => token.immediate(prec(-8, seq(
       choice(
         noneOf(...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),
