@@ -383,10 +383,6 @@ remote=${$(__git_prompt_git rev-parse --verify ${hook_com[branch]}@{upstream} --
                   name: (simple_variable_name)
                   index: (word))
                 (word))
-              argument: (concatenation
-                (word)
-                (word)
-                (word))
               argument: (word))
             redirect: (file_redirect
               descriptor: (file_descriptor)

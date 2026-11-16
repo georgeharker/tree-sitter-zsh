@@ -1419,6 +1419,20 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         if (is_default_word_start(lexer->lookahead)) {
             return scan_default_word(lexer);
         }
+        // Inside "..." zsh doesn't pair braces in a value, so a '{' there
+        // is one literal character: "${${Q:+{}:-x}" has the value '{' and
+        // the '}' closes. (Unquoted they pair, ${Q:+{}x} is '{}x', which
+        // the word token's {...} pieces cover.)
+        if (lexer->lookahead == '{') {
+            for (uint32_t i = scanner->context_stack.size; i > 0; i--) {
+                if (*array_get(&scanner->context_stack, i - 1) == CTX_STRING) {
+                    advance(lexer);
+                    lexer->mark_end(lexer);
+                    lexer->result_symbol = DEFAULT_WORD;
+                    return true;
+                }
+            }
+        }
     }
 
     if ((valid_symbols[SUBSCRIPT_PATTERN_WORD] ||
