@@ -1871,3 +1871,50 @@ x ${Q:+{}x} "${${Q:+{}:-a}"
       name: (command_name
         (word))
       argument: (word))))
+
+================================================================================
+Test command - line continuation before an expansion
+================================================================================
+
+if [[ ${a[(Ie)$p]} -gt 0 || \
+      ${b[(Ie)$p]} -gt 0 ]]; then
+  :
+fi
+[[ a || \
+  $b ]]
+[[ $x =~ \(a\) ]]
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (test_command
+      (binary_expression
+        left: (binary_expression
+          left: (expansion
+            name: (simple_variable_name)
+            flags: (zsh_array_subscript_flags)
+            index: (variable_ref
+              (simple_variable_name)))
+          operator: (test_operator)
+          right: (number))
+        right: (binary_expression
+          left: (expansion
+            name: (simple_variable_name)
+            flags: (zsh_array_subscript_flags)
+            index: (variable_ref
+              (simple_variable_name)))
+          operator: (test_operator)
+          right: (number))))
+    (command
+      name: (command_name
+        (word))))
+  (test_command
+    (binary_expression
+      left: (word)
+      right: (variable_ref
+        (simple_variable_name))))
+  (test_command
+    (binary_expression
+      left: (variable_ref
+        (simple_variable_name))
+      right: (regex))))
