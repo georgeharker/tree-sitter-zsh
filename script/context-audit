@@ -4,18 +4,28 @@
 #   script/context-audit FILE...          one line per file
 #   script/context-audit --summary FILE...  totals only
 #
-# Builds src/ with -DZSH_SCANNER_AUDIT (normal builds are unaffected).
-# Needs the tree-sitter C library (e.g. brew install tree-sitter); set
-# TREE_SITTER_PREFIX to its install prefix if it isn't found.
+# Builds src/ with -DZSH_SCANNER_AUDIT (normal builds are unaffected),
+# linked against tree-sitter's single-file library (lib/src/lib.c) because
+# the harness reads the final tree's scanner state, which is internal.
+# The tree-sitter sources are taken from $TREE_SITTER_SRC if set, else
+# shallow-cloned once (at the version that generated src/parser.c) into
+# .cache/ (gitignored; .clangd points there for editor support).
 # A complete file should end with depth=0; anything left on the stack is a
 # leaked context that later scanner decisions may silently depend on.
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
-prefix=${TREE_SITTER_PREFIX:-$(brew --prefix tree-sitter 2>/dev/null || echo /usr/local)}
+ts_version=v0.26.8
+ts=${TREE_SITTER_SRC:-$root/.cache/tree-sitter-$ts_version}
+if [ ! -f "$ts/lib/src/lib.c" ]; then
+  mkdir -p "$(dirname "$ts")"
+  git clone -q --depth 1 --branch "$ts_version" \
+    https://github.com/tree-sitter/tree-sitter "$ts" 2>/dev/null
+fi
 bin=$(mktemp -d)/context-audit
-cc -O2 -DZSH_SCANNER_AUDIT -I"$prefix/include" -I"$root/src" -o "$bin" \
+cc -O2 -DZSH_SCANNER_AUDIT -I"$ts/lib/include" -I"$ts/lib/include/tree_sitter" \
+  -I"$ts/lib/src" -I"$root/src" -o "$bin" \
   "$root/script/context-audit.c" "$root/src/parser.c" "$root/src/scanner.c" \
-  "$prefix/lib/libtree-sitter.a"
+  "$ts/lib/src/lib.c"
 summary=0
 if [ "${1:-}" = --summary ]; then summary=1; shift; fi
 # One line per file: FILE<TAB>AUDIT depth=N stack=... mismatch=... underflow=... errors=N
