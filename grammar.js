@@ -2238,10 +2238,23 @@ module.exports = grammar({
       seq(
         $.extglob_pattern,
         repeat1(seq(
-          choice($.string, $.expansion, $.command_substitution),
+          $._extglob_nonpiece,
           optional($.extglob_pattern),
         )),
       ),
+      // Starting with a string or expansion: (":"(\\|)"!"*),
+      // ("tar (GNU tar) "(#b)([0-9.-]##)*)
+      seq(
+        $._extglob_nonpiece,
+        repeat1(seq(
+          $.extglob_pattern,
+          optional($._extglob_nonpiece),
+        )),
+      ),
+    ),
+
+    _extglob_nonpiece: $ => choice(
+      $.string, $.raw_string, $.expansion, $.variable_ref, $.command_substitution,
     ),
 
     comment: _ => token(prec(-20, /#[^\r\n]*/)),
@@ -2478,6 +2491,7 @@ module.exports = grammar({
     )),
 
     _param_replacement: $ => choice(
+      alias($._default_word, $.word),   // ${a//x/(* }: text starting with ( ) < > | ; &
       alias($._literal_dollar, $.word),   // ${x//a/$}: a literal '$'
       alias(prec(-2, repeat1($._special_character)), $.word),
       alias($._regex_no_slash, $.regex),

@@ -182,3 +182,24 @@ print (#i)$PWD (#i)foo*
         (simple_variable_name)))
     argument: (glob_pattern
       flags: (zsh_extended_glob_flags))))
+
+================================================================================
+Pending: a case pattern group running across an expansion
+:skip
+================================================================================
+
+case $x in
+  ([[:blank:]]#($s|$e|)) a ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))

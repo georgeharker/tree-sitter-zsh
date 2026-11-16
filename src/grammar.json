@@ -12392,21 +12392,8 @@
                 "type": "SEQ",
                 "members": [
                   {
-                    "type": "CHOICE",
-                    "members": [
-                      {
-                        "type": "SYMBOL",
-                        "name": "string"
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "expansion"
-                      },
-                      {
-                        "type": "SYMBOL",
-                        "name": "command_substitution"
-                      }
-                    ]
+                    "type": "SYMBOL",
+                    "name": "_extglob_nonpiece"
                   },
                   {
                     "type": "CHOICE",
@@ -12424,6 +12411,64 @@
               }
             }
           ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_extglob_nonpiece"
+            },
+            {
+              "type": "REPEAT1",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "extglob_pattern"
+                  },
+                  {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "_extglob_nonpiece"
+                      },
+                      {
+                        "type": "BLANK"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "_extglob_nonpiece": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "raw_string"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "expansion"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "variable_ref"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "command_substitution"
         }
       ]
     },
@@ -14058,6 +14103,15 @@
     "_param_replacement": {
       "type": "CHOICE",
       "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_default_word"
+          },
+          "named": true,
+          "value": "word"
+        },
         {
           "type": "ALIAS",
           "content": {
