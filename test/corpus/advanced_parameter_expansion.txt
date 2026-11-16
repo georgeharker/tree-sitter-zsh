@@ -185,11 +185,9 @@ pretty_dotfiles_dir=`print -D $dotfiles_dir:P`
         name: (command_name
           (word))
         argument: (word)
-        argument: (concatenation
-          (variable_ref
-            (simple_variable_name)
-            modifier: (expansion_modifier))
-          (word))))))
+        argument: (variable_ref
+          (simple_variable_name)
+          modifier: (expansion_modifier))))))
 
 ================================================================================
 Path concat
@@ -205,8 +203,8 @@ export PATH="$PNPM_HOME:$PATH"
       name: (variable_name)
       value: (string
         (variable_ref
-          (simple_variable_name)
-          modifier: (expansion_modifier))
+          (simple_variable_name))
+        (string_content)
         (variable_ref
           (simple_variable_name))))))
 

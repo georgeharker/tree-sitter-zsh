@@ -72,6 +72,7 @@ enum TokenType {
     ARITHMETIC_WORD,         // identifier inside (( )) / $(( ))
     ARITHMETIC_CHAR_CODE,    // ##a / #name inside (( ))
     LITERAL_DOLLAR,          // a '$' that starts no expansion: "%B$%b" echo $;
+    SUBST_END,               // zero-width end of $x:s/a/b with no closing '/'
     ERROR_RECOVERY,
 };
 
@@ -138,6 +139,7 @@ const char *TokenNames[] = {
     "ARITHMETIC_WORD",
     "ARITHMETIC_CHAR_CODE",
     "LITERAL_DOLLAR",
+    "SUBST_END",
     "ERROR_RECOVERY",
 };
 #endif
@@ -161,6 +163,7 @@ typedef enum {
     CTX_BACKTICK = 10,   // `a b c`
     CTX_RAW_STRING = 11, // '...' string context
     CTX_SUBSCRIPT = 12,  // a[...] subscript (not an arithmetic expression)
+    CTX_MODIFIER_SUBST = 13, // $x:s/a/b/ outside ${...}, until SUBST_END
 } context_type_t;
 
 const char *ContextNames[] = {
@@ -179,6 +182,7 @@ const char *ContextNames[] = {
     "CTX_BACKTICK",                     // `a b c`
     "CTX_RAW_STRING",                   // '...' string context
     "CTX_SUBSCRIPT",
+    "CTX_MODIFIER_SUBST",
 };
 
 typedef struct {
@@ -366,7 +370,8 @@ static inline void skip_ws_maybe_nl(TSLexer *lexer, const bool *valid_symbols) {
 static inline bool in_pattern_context(Scanner *scanner) {
     context_type_t ctx = get_current_context(scanner);
     return ctx == CTX_PARAMETER_PATTERN_SUFFIX ||
-           ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE;
+           ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE ||
+           ctx == CTX_MODIFIER_SUBST;
 }
 
 static inline bool in_test_command(Scanner *scanner) {
@@ -1487,6 +1492,24 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 lexer->lookahead, was_just_exited_string, was_just_newline);
 #endif
 
+        // After $x a ':' is a modifier only if a modifier letter follows
+        // (modifiers are lexed with their ':', :h :t2 :s/ ...); otherwise
+        // it's a literal ':' joined to the word: $0::$cmd, $a:$b.
+        if (lexer->lookahead == ':' && was_just_variable_name &&
+            valid_symbols[CONCAT]) {
+            lexer->mark_end(lexer); // zero-width; the advance only peeks
+            advance(lexer);
+            int32_t m = lexer->lookahead;
+            if (m == 'a' || m == 'A' || m == 'c' || m == 'e' || m == 'h' ||
+                m == 'l' || m == 'p' || m == 'P' || m == 'q' || m == 'Q' ||
+                m == 'r' || m == 's' || m == 'g' || m == 't' || m == 'u' ||
+                m == 'x' || m == '&') {
+                return false; // a modifier: the internal lexer takes it
+            }
+            lexer->result_symbol = CONCAT;
+            return true;
+        }
+
         if (!(lexer->lookahead == 0 || iswspace(lexer->lookahead) ||
               lexer->lookahead == '>' || lexer->lookahead == '<' ||
               (lexer->lookahead == ')' &&
@@ -1504,7 +1527,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
               // `# c<newline>h t:$x`, where it blocked the concat.)
               // Prevent recursion on / pattern
               (lexer->lookahead == '/' &&
-               ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE) ||
+               (ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE ||
+                ctx == CTX_MODIFIER_SUBST)) ||
               (lexer->lookahead == '}' &&
                (in_parameter_expansion(scanner) ||
                 get_current_context(scanner) == CTX_COMPOUND)) ||
@@ -1636,6 +1660,38 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
 after_concat:
+
+    // End of a :s/pat/rep/ modifier (zero-width; always emitted, so it can
+    // pop CTX_MODIFIER_SUBST). Not before the closing '/' or ':G'; at a
+    // replacement character the replacement goes on (a piece right after
+    // another was joined by CONCAT above).
+    if (valid_symbols[SUBST_END] && !in_error_recovery(valid_symbols)) {
+        int32_t c = lexer->lookahead;
+        bool end = lexer->eof(lexer) || iswspace(c) || c == '}' || c == ')' ||
+                   c == '"' || c == '`' || c == ';' || c == '|' || c == '&' ||
+                   c == ']';
+        lexer->mark_end(lexer);
+        // A ':' ends it only before another modifier ($f:s/a/b/:t), not
+        // before ':G' (part of this one) or as replacement text (s/x/:/).
+        if (!end && c == ':') {
+            advance(lexer); // peek: the token stays zero-width
+            int32_t m = lexer->lookahead;
+            end = m == 'a' || m == 'A' || m == 'c' || m == 'e' || m == 'h' ||
+                  m == 'l' || m == 'p' || m == 'P' || m == 'q' || m == 'Q' ||
+                  m == 'r' || m == 's' || m == 'g' || m == 't' || m == 'u' ||
+                  m == 'x' || m == '&';
+        }
+        if (end) {
+            if (get_current_context(scanner) == CTX_MODIFIER_SUBST) {
+                exit_context(scanner, CTX_MODIFIER_SUBST);
+            }
+            lexer->result_symbol = SUBST_END;
+            return true;
+        }
+        if (c == ':') {
+            return false; // ':G' or text: the lexer moved, let it lex that
+        }
+    }
 
     // Handle string context tracking
     // Quotes. Whether a quote closes is read from the valid symbols, not the
@@ -2453,6 +2509,15 @@ after_concat:
             lexer->mark_end(lexer);
             return true;
         }
+        // $f:s/a/b/ outside ${...}: its own context, popped by the
+        // SUBST_END that always ends the modifier.
+        if (!in_parameter_expansion(scanner) && lexer->lookahead != '/' &&
+            !iswspace(lexer->lookahead) && !lexer->eof(lexer)) {
+            enter_context(scanner, CTX_MODIFIER_SUBST);
+            lexer->result_symbol = PATTERN_START;
+            lexer->mark_end(lexer);
+            return true;
+        }
     }
 
     // Handle PATTERN_SUFFIX_START - emitted after pattern operators in
@@ -3064,8 +3129,23 @@ regex:
             // Elsewhere (e.g. [[ x =~ (re) ]]) they still terminate.
             bool literal_close = in_pattern_context(scanner);
 
+            // $f:s/a/b outside ${...} is part of one word: a blank or a
+            // character that ends a word ends the pattern / replacement.
+            bool in_word_subst =
+                valid_symbols[REGEX_NO_SLASH] &&
+                get_current_context(scanner) == CTX_MODIFIER_SUBST;
+
             State state = {false, false, false, false, false, 0, 0, 0};
             while (!state.done) {
+                if (in_word_subst && !state.in_single_quote &&
+                    (lexer->eof(lexer) || iswspace(lexer->lookahead) ||
+                     lexer->lookahead == '"' || lexer->lookahead == '`' ||
+                     lexer->lookahead == ';' || lexer->lookahead == '|' ||
+                     lexer->lookahead == '&' ||
+                     (lexer->lookahead == ')' && state.paren_depth == 0))) {
+                    lexer->result_symbol = REGEX_NO_SLASH;
+                    return state.advanced_once;
+                }
                 switch (lexer->lookahead) {
                 case '\\':
                     state.last_was_escape = true;

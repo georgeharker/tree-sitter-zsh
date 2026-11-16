@@ -300,11 +300,6 @@
     ]
   },
   {
-    "type": "_expansion_word",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "always_clause",
     "named": true,
     "fields": {
@@ -2325,10 +2320,6 @@
         "required": false,
         "types": [
           {
-            "type": "_expansion_word",
-            "named": true
-          },
-          {
             "type": "ansi_c_string",
             "named": true
           },
@@ -2746,10 +2737,6 @@
         "multiple": false,
         "required": false,
         "types": [
-          {
-            "type": "_expansion_word",
-            "named": true
-          },
           {
             "type": "ansi_c_string",
             "named": true
@@ -5501,10 +5488,6 @@
     "named": false
   },
   {
-    "type": "g",
-    "named": false
-  },
-  {
     "type": "heredoc_content",
     "named": true
   },
@@ -5542,10 +5525,6 @@
   },
   {
     "type": "repeat",
-    "named": false
-  },
-  {
-    "type": "s",
     "named": false
   },
   {
