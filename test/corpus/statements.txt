@@ -2426,3 +2426,25 @@ a:b c
         (word)
         (word)))
     argument: (word)))
+
+================================================================================
+Glob - groups with an empty alternative
+================================================================================
+
+x $m/(sman|man)$1(|.*)/ *.info(|.gz|.bz2)(-.:t) *(N)y
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name))
+      (glob_pattern))
+    argument: (glob_pattern
+      qualifier: (zsh_glob_qualifier))
+    argument: (concatenation
+      (glob_pattern
+        qualifier: (zsh_glob_qualifier))
+      (word))))
