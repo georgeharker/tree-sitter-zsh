@@ -162,3 +162,23 @@ print $"hello"
     argument: (translated_string
       (string
         (string_content)))))
+
+================================================================================
+Pending: a flagged expansion glob followed by another flagged glob
+:skip
+================================================================================
+
+print (#i)$PWD (#i)foo*
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags)
+      pattern: (variable_ref
+        (simple_variable_name)))
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags))))

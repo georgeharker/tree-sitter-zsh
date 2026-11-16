@@ -7640,6 +7640,36 @@
               ]
             },
             {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "flags",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "zsh_extended_glob_flags"
+                  }
+                },
+                {
+                  "type": "FIELD",
+                  "name": "pattern",
+                  "content": {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "variable_ref"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "expansion"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
               "type": "PREC",
               "value": 1,
               "content": {
