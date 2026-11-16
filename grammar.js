@@ -1515,6 +1515,11 @@ module.exports = grammar({
           ),
         )),
       ),
+      // Flags before an expansion: (#i)$PWD, (#b)${~pat}
+      seq(
+        field('flags', $.zsh_extended_glob_flags),
+        field('pattern', choice($.variable_ref, $.expansion)),
+      ),
       // Words with qualifiers/modifiers (like /path/file(:h))
       prec(1, seq(
         optional(field('flags', $.zsh_extended_glob_flags)),

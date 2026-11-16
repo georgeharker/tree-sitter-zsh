@@ -2448,3 +2448,39 @@ x $m/(sman|man)$1(|.*)/ *.info(|.gz|.bz2)(-.:t) *(N)y
       (glob_pattern
         qualifier: (zsh_glob_qualifier))
       (word))))
+
+
+================================================================================
+Glob - flags before an expansion
+================================================================================
+
+print -- (#i)$PWD x
+print (#b)${~pat}*
+print (#i)foo*
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags)
+      pattern: (variable_ref
+        (simple_variable_name)))
+    argument: (word))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (glob_pattern
+        flags: (zsh_extended_glob_flags)
+        pattern: (expansion
+          style: (expansion_style)
+          name: (simple_variable_name)))
+      (glob_pattern)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern
+      flags: (zsh_extended_glob_flags))))

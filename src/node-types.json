@@ -3605,6 +3605,14 @@
         "required": false,
         "types": [
           {
+            "type": "expansion",
+            "named": true
+          },
+          {
+            "type": "variable_ref",
+            "named": true
+          },
+          {
             "type": "word",
             "named": true
           }
