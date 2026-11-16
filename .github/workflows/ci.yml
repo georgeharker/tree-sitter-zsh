@@ -55,7 +55,7 @@ jobs:
           name: failures-${{runner.os}}
           path: ${{steps.parse-files.outputs.failures}}
   context:
-    name: Check scanner context stack
+    name: Check scanner consistency
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -64,7 +64,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Corpus inputs leave no scanner contexts open
+      - name: Scanner context stack and incremental re-parses
         run: script/check-context
   fuzz:
     name: Fuzz scanner
