@@ -14,10 +14,9 @@ concurrency:
 
 jobs:
   npm:
-    # Local copy with swap workaround for Wasm OOM. To revert to upstream once
-    # the Wasm compiler is less memory-hungry, replace the uses line with:
-    #   uses: tree-sitter/workflows/.github/workflows/package-npm.yml@main
-    uses: ./.github/workflows/package-npm-local.yml
+    # Builds Wasm with `npm x -- tree-sitter`, i.e. the tree-sitter-cli in
+    # package.json; keep it >= 0.27 (wasi-sdk 34) for the Wasm memory fix.
+    uses: tree-sitter/workflows/.github/workflows/package-npm.yml@main
     secrets:
       NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
   crates:

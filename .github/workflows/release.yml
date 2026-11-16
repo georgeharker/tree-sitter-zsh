@@ -16,7 +16,6 @@ permissions:
 
 jobs:
   release:
-    # Local copy with swap workaround for Wasm OOM. To revert to upstream once
-    # the Wasm compiler is less memory-hungry, replace the uses line with:
-    #   uses: tree-sitter/workflows/.github/workflows/release.yml@main
-    uses: ./.github/workflows/release-local.yml
+    # tree-sitter 0.27's wasi-sdk fixed the Wasm build's memory use, so the
+    # upstream workflow works without the swap workaround.
+    uses: tree-sitter/workflows/.github/workflows/release.yml@main
