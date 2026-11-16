@@ -1496,8 +1496,11 @@ print "$/" "a $\\ b [$/]" "$" "${x}$"
     name: (command_name
       (word))
     argument: (string
+      (string_content)
       (string_content))
     argument: (string
+      (string_content)
+      (string_content)
       (string_content)
       (string_content)
       (string_content))
@@ -2006,3 +2009,59 @@ x $h a[1]
     argument: (variable_ref
       (simple_variable_name))
     argument: (glob_pattern)))
+
+================================================================================
+Literal dollar that starts no expansion
+================================================================================
+
+PROMPT="%B$%b a$ b"
+echo $; echo $ x a$ $%
+a=${b//$} ${b//$/x} ${b%$} ${b//x/$}
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (string_content)
+      (string_content)
+      (string_content)
+      (string_content)
+      (string_content)))
+  (command
+    name: (command_name
+      (word))
+    argument: (word))
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (word)
+    argument: (concatenation
+      (word)
+      (word))
+    argument: (concatenation
+      (word)
+      (word)))
+  (command
+    (variable_assignment
+      name: (variable_name)
+      value: (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          pattern: (word))))
+    name: (command_name
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          pattern: (word)
+          replacement: (regex))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (word)))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (word)))))

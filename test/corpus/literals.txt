@@ -1770,8 +1770,8 @@ echo "use this command: 's/$/aa/' "
       (word))
     argument: (string
       (string_content)
+      (string_content)
       (string_content))))
-
 
 ==================================================
 Double-hash and hash-with-glob-char comments

@@ -233,6 +233,7 @@ module.exports = grammar({
     $._test_pattern_glob,              // TEST_PATTERN_GLOB: [[ $x = (a|b)* ]]
     $._arithmetic_word,                // ARITHMETIC_WORD: identifier inside (( ))
     $.arithmetic_char_code,            // ARITHMETIC_CHAR_CODE: ##a #name in (( ))
+    $._literal_dollar,                 // LITERAL_DOLLAR: a '$' that starts no expansion: "%B$%b" echo $;
     $.__error_recovery,
   ],
 
@@ -1350,6 +1351,8 @@ module.exports = grammar({
       $.process_substitution,
       $.arithmetic_expansion,
       $.brace_expression,
+      // A '$' that can't start an expansion is literal (echo $; "%B$%b").
+      alias($._literal_dollar, $.word),
     ),
     
     _limited_primary_expression: $ => choice(
@@ -1666,6 +1669,7 @@ module.exports = grammar({
       repeat(seq(
         choice(
           $.string_content,
+          alias($._literal_dollar, $.string_content),
           // A literal '$' before text ("a$ b", "$:"). The text can't start
           // like a parameter or a style (^ = ~ +), so "$^jobs" "$=x" "$~p"
           // go through variable_ref instead of becoming '$' + text.
@@ -2410,6 +2414,7 @@ module.exports = grammar({
       optional(choice(token.immediate('%'),
                       token.immediate('#'))),
       choice(
+        alias($._literal_dollar, $.word),   // ${x//$} ${x%$}: a literal '$'
         $.dollar_variable,        // $var - allows ${foo/$pattern/repl}
         $.regex,
         $.string,
@@ -2433,6 +2438,7 @@ module.exports = grammar({
       optional(choice(token.immediate('%'),
                       token.immediate('#'))),
       choice(
+        alias($._literal_dollar, $.word),   // ${x//$} ${x%$}: a literal '$'
         alias($._regex_no_slash, $.regex),
         alias(token.immediate(/\s+/), $.word),
         alias($._expansion_word, $.word), // FIXME? YES / NO
@@ -2453,6 +2459,7 @@ module.exports = grammar({
     )),
 
     _param_replacement: $ => choice(
+      alias($._literal_dollar, $.word),   // ${x//a/$}: a literal '$'
       alias(prec(-2, repeat1($._special_character)), $._expansion_word),
       alias($._regex_no_slash, $.regex),
       alias($._expansion_word, $.word),
