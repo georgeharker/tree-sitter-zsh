@@ -236,6 +236,7 @@ module.exports = grammar({
     $.arithmetic_char_code,            // ARITHMETIC_CHAR_CODE: ##a #name in (( ))
     $._literal_dollar,                 // LITERAL_DOLLAR: a '$' that starts no expansion: "%B$%b" echo $;
     $._subst_end,                      // SUBST_END: zero-width end of a modifier chain ($x:h:s/a/b/)
+    $._function_name,                  // FUNCTION_NAME: zinit::setup() :helper(): a name read whole before ()
     $.__error_recovery,
   ],
 
@@ -679,7 +680,12 @@ module.exports = grammar({
              '(', ')')),
         ),
         seq(
-          field('name', optional($._word_or_word_with_colon)),
+          // zinit::setup() :helper() a.b(): the scanner reads a name made of
+          // several pieces whole when '()' follows it.
+          field('name', optional(choice(
+            $._word_or_word_with_colon,
+            alias($._function_name, $.word),
+          ))),
           '(', ')',
         ),
       ),

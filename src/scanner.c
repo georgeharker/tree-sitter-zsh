@@ -73,6 +73,7 @@ enum TokenType {
     ARITHMETIC_CHAR_CODE,    // ##a / #name inside (( ))
     LITERAL_DOLLAR,          // a '$' that starts no expansion: "%B$%b" echo $;
     SUBST_END,               // zero-width end of $x:s/a/b with no closing '/'
+    FUNCTION_NAME,           // zinit::setup() :helper(): a name read whole before ()
     ERROR_RECOVERY,
 };
 
@@ -140,6 +141,7 @@ const char *TokenNames[] = {
     "ARITHMETIC_CHAR_CODE",
     "LITERAL_DOLLAR",
     "SUBST_END",
+    "FUNCTION_NAME",
     "ERROR_RECOVERY",
 };
 #endif
@@ -425,6 +427,38 @@ static inline void skip_wsnl_continuation(TSLexer *lexer) {
 
 static inline bool in_error_recovery(const bool *valid_symbols) {
     return valid_symbols[ERROR_RECOVERY];
+}
+
+// The rest of a function name with ':' in it (zinit::setup, :helper,
+// _whois:whois.nic.ad.jp), when '()' follows. Called where the
+// VARIABLE_NAME handler would decline anyway, so a 'no' costs nothing.
+static bool scan_function_name(TSLexer *lexer) {
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer) || iswspace(c) || c == '(' || c == ')' ||
+            c == '<' || c == '>' || c == ';' || c == '&' || c == '|' ||
+            c == '\'' || c == '"' || c == '`' || c == '$' || c == '\\' ||
+            c == '{' || c == '}' || c == '[' || c == ']') {
+            break;
+        }
+        advance(lexer);
+    }
+    lexer->mark_end(lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        advance(lexer);
+    }
+    if (lexer->lookahead != '(') {
+        return false;
+    }
+    advance(lexer);
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        advance(lexer);
+    }
+    if (lexer->lookahead != ')') {
+        return false;
+    }
+    lexer->result_symbol = FUNCTION_NAME;
+    return true;
 }
 
 // Note that a name token ends here (the lexer is at its end). The flag
@@ -3000,6 +3034,9 @@ after_concat:
             if (lexer->lookahead == '{') {
                 goto brace_start;
             }
+            if (lexer->lookahead == ':' && valid_symbols[FUNCTION_NAME]) {
+                return scan_function_name(lexer);
+            }
             if (valid_symbols[EXPANSION_WORD]) {
                 goto expansion_word;
             }
@@ -3027,6 +3064,10 @@ after_concat:
             lexer->mark_end(lexer);
             lexer->result_symbol = FILE_DESCRIPTOR;
             return true;
+        }
+
+        if (valid_symbols[FUNCTION_NAME] && lexer->lookahead == ':') {
+            return scan_function_name(lexer);
         }
 
         if (valid_symbols[VARIABLE_NAME]) {

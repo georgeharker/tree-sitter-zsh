@@ -2384,3 +2384,45 @@ Arithmetic - lone # and the comma operator in parentheses
             (binary_expression
               left: (word)
               right: (word))))))))
+
+================================================================================
+Function names with colons
+================================================================================
+
+zinit::setup() { echo }
+:zinit-tmp() { echo }
+_whois:whois.nic.ad.jp () { echo }
+: foo
+a:b c
+--------------------------------------------------------------------------------
+
+(program
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (word))
+  (command
+    name: (command_name
+      (concatenation
+        (word)
+        (word)
+        (word)))
+    argument: (word)))
