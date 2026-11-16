@@ -1213,6 +1213,24 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     bool was_after_case_opener = scanner->after_case_opener;
     scanner->after_case_opener = false;
 
+    // Empty assignment value (`var=` followed by whitespace, newline or a
+    // terminator). Must run before handlers that skip whitespace and
+    // newlines (e.g. BARE_DOLLAR hunting for a `$`), which would consume the
+    // newline after `=` and take a word on the next line as the value. In
+    // zsh any whitespace after `=` means the value is empty. (PR #41)
+    // Not inside ${...}: there "${x:+ (y)}" may have a blank before the
+    // value, which DEFAULT_WORD handles; the later EMPTY_VALUE check covers
+    // genuinely empty defaults.
+    if (valid_symbols[EMPTY_VALUE] && !in_error_recovery(valid_symbols) &&
+        !in_parameter_expansion(scanner) &&
+        (iswspace(lexer->lookahead) || lexer->eof(lexer) ||
+         lexer->lookahead == ';' || lexer->lookahead == '&' ||
+         lexer->lookahead == '}')) {
+        lexer->mark_end(lexer);
+        lexer->result_symbol = EMPTY_VALUE;
+        return true;
+    }
+
     // Identifier inside arithmetic: [A-Za-z_][A-Za-z0-9_]*. Lexed here so
     // the shell word token (which would take `a,` `i++` `a-b` whole) never
     // sees it.
