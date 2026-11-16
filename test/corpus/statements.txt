@@ -2188,3 +2188,63 @@ x $x:hfoo ${f:h:t}
       (expansion_with_modifier
         name: (simple_variable_name)
         modifier: (expansion_modifier)))))
+
+================================================================================
+Short loop forms: repeat with a variable count, while/until with a { } body
+================================================================================
+
+repeat $n; do echo; done
+repeat $P
+do
+  echo
+done
+while (( a )) { echo }
+while { (( a-- )) } { echo }
+until [[ -f x ]] { sleep 1 }
+--------------------------------------------------------------------------------
+
+(program
+  (repeat_statement
+    count: (variable_ref
+      (simple_variable_name))
+    body: (do_group
+      (command
+        name: (command_name
+          (word)))))
+  (repeat_statement
+    count: (variable_ref
+      (simple_variable_name))
+    body: (do_group
+      (command
+        name: (command_name
+          (word)))))
+  (while_statement
+    condition: (command
+      name: (command_name
+        (arithmetic_expansion
+          (word))))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (while_statement
+    condition: (compound_statement
+      (command
+        name: (command_name
+          (arithmetic_expansion
+            (postfix_expression
+              (word))))))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word)))))
+  (while_statement
+    condition: (test_command
+      (unary_expression
+        operator: (test_operator)
+        (word)))
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))
+        argument: (number)))))

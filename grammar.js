@@ -144,6 +144,7 @@ module.exports = grammar({
   name: 'zsh',
 
   conflicts: $ => [
+    [$._condition],
     [$._expression, $.command_name],
     [$.command, $.variable_assignments],
     [$.redirected_statement, $.command],
@@ -537,12 +538,13 @@ module.exports = grammar({
     while_statement: $ => seq(
       choice('while', 'until'),
       field('condition', $._condition),
-      field('body', $.do_group),
+      // zsh's short form: while (( i )) { ... }
+      field('body', choice($.do_group, $.compound_statement)),
     ),
 
     repeat_statement: $ => prec.right(seq(
       'repeat',
-      field('count', choice($.number, $.word, $._simple_variable_name, $.expansion)),
+      field('count', choice($.number, $.word, $._simple_variable_name, $.variable_ref, $.expansion)),
       choice(
         seq($._terminator, field('body', $.do_group)),
         $._statement,
