@@ -17,4 +17,4 @@ on:
 
 jobs:
   validate:
-    uses: neovim-treesitter/.github/.github/workflows/self-contained-validate.yml@main
+    uses: neovim-treesitter/.github/.github/workflows/self-contained-validate.yml@cef62aa4093b4413d9b0671e36e369ed53042a3e # main

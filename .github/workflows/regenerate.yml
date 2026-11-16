@@ -13,5 +13,5 @@ concurrency:
 
 jobs:
   regenerate:
-    uses: tree-sitter/workflows/.github/workflows/regenerate.yml@main
+    uses: tree-sitter/workflows/.github/workflows/regenerate.yml@d66eebce6bd661badf0ce10f1ce8f90ea8a89279 # main
     if: github.actor == 'dependabot[bot]'

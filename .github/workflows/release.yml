@@ -18,4 +18,4 @@ jobs:
   release:
     # tree-sitter 0.27's wasi-sdk fixed the Wasm build's memory use, so the
     # upstream workflow works without the swap workaround.
-    uses: tree-sitter/workflows/.github/workflows/release.yml@main
+    uses: tree-sitter/workflows/.github/workflows/release.yml@d66eebce6bd661badf0ce10f1ce8f90ea8a89279 # main
