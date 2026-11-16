@@ -1751,3 +1751,33 @@ x 'a'\
   (command
     name: (command_name
       (word))))
+
+================================================================================
+Case - item starting with a group after another item
+================================================================================
+
+case $x in
+  a*|*b*)
+  ;|
+  (b|c)d*)
+  ;|
+  (f) x ;;
+esac
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (extglob_pattern)
+      value: (extglob_pattern)
+      fallthrough: (case_test_next))
+    (case_item
+      value: (extglob_pattern)
+      fallthrough: (case_test_next))
+    (case_item
+      value: (word)
+      (command
+        name: (command_name
+          (word))))))
