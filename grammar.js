@@ -237,6 +237,7 @@ module.exports = grammar({
     $._literal_dollar,                 // LITERAL_DOLLAR: a '$' that starts no expansion: "%B$%b" echo $;
     $._subst_end,                      // SUBST_END: zero-width end of a modifier chain ($x:h:s/a/b/)
     $._function_name,                  // FUNCTION_NAME: zinit::setup() :helper(): a name read whole before ()
+    $._modifier_other,                 // MODIFIER_OTHER: :fs#a#b# :F:2:s/a/b/ :s#a#b#: read whole by the scanner
     $.__error_recovery,
   ],
 
@@ -1913,6 +1914,10 @@ module.exports = grammar({
       ),
       token.immediate(/:[&ux]/),
       token.immediate(/:t[0-9]*/),
+      // :f / :F:n: (repeat the next modifier) and :s with a delimiter other
+      // than '/' (:s#a#b#): one scanner token, as the delimiter is chosen
+      // in the text.
+      $._modifier_other,
     )), $._subst_end)),
 
     // Maintain same order as zsh docs
