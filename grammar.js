@@ -2242,15 +2242,23 @@ module.exports = grammar({
 
     _special_variable_name: $ => choice($.special_variable_name, $._raw_dollar),
 
+    // A balanced {...} with no blank, separator, ',' or '.' inside is a
+    // literal part of a word in zsh ({}, {b}, x@{upstream}, a{b}c), e.g.
+    // `find . -exec ls {} +` in a brace group, where the '}' must not close
+    // the group. (With ',' or '..' it's a brace expansion, scanned
+    // separately; at a command start '{' opens a group, and the scanner
+    // emits that first.)
     _word: _ => token(seq(
       choice(
         noneOf('#', ':', ...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),
+        seq('{', repeat(noneOf(',', '.', ...SPECIAL_CHARACTERS)), '}'),
       ),
       repeat(choice(
         noneOf(...SPECIAL_CHARACTERS),
         seq('\\', noneOf('\\s')),
         '\\ ',
+        seq('{', repeat(noneOf(',', '.', ...SPECIAL_CHARACTERS)), '}'),
       )),
     )),
 

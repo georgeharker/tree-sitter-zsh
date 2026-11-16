@@ -1174,15 +1174,8 @@ print {a} x@{upstream} 2>/dev/null
     body: (command
       name: (command_name
         (word))
-      argument: (concatenation
-        (word)
-        (word)
-        (word))
       argument: (word)
-      argument: (concatenation
-        (word)
-        (word)
-        (word)))
+      argument: (word))
     redirect: (file_redirect
       descriptor: (file_descriptor)
       destination: (word))))
@@ -1818,3 +1811,63 @@ h t:$T
       (word)
       (variable_ref
         (simple_variable_name)))))
+
+================================================================================
+Balanced braces inside a word are literal
+================================================================================
+
+f() {
+  find p -exec ls {} + | sort
+}
+{ echo a {b} x@{upstream} {b}x{c} }
+x ${Q:+{}x} "${${Q:+{}:-a}"
+{echo false}
+--------------------------------------------------------------------------------
+
+(program
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (pipeline
+        (command
+          name: (command_name
+            (word))
+          argument: (word)
+          argument: (word)
+          argument: (word)
+          argument: (word)
+          argument: (word))
+        (command
+          name: (command_name
+            (word))))))
+  (compound_statement
+    (command
+      name: (command_name
+        (word))
+      argument: (word)
+      argument: (word)
+      argument: (word)
+      argument: (word)))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (word))))
+    argument: (string
+      (expansion
+        (expansion_default
+          name: (expansion
+            (expansion_default
+              name: (simple_variable_name)
+              default: (expansion_default_list
+                (word))))
+          default: (expansion_default_list
+            (word))))))
+  (compound_statement
+    (command
+      name: (command_name
+        (word))
+      argument: (word))))
