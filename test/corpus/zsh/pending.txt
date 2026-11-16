@@ -72,3 +72,53 @@ pc['x']=1
       name: (variable_name)
       index: (raw_string))
     value: (number)))
+
+================================================================================
+Pending: glob group in the middle of a word is a group, not a qualifier
+:skip
+================================================================================
+
+print 'x'(-c)-n
+print x(-c)-n
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (raw_string)
+      (glob_pattern)))
+  (command
+    name: (command_name
+      (word))
+    argument: (glob_pattern)))
+
+================================================================================
+Pending: quotes at the start of lines in a multi-line array (context stack)
+:skip
+================================================================================
+
+a=(
+  'x'
+  'y'
+  "w"
+)
+print "(dev)nodev[don't interpret devices]"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (raw_string)
+      (raw_string)
+      (string
+        (string_content))))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (string_content))))
