@@ -1,4 +1,0 @@
--I/opt/homebrew/include
--I/usr/local/include
--I../src
--DZSH_SCANNER_AUDIT

@@ -137,3 +137,28 @@ print (*~a)
     name: (command_name
       (word))
     argument: (glob_pattern)))
+
+================================================================================
+Pending: literal $ before a blank or : inside a string, and $"..."
+:skip
+================================================================================
+
+print "a$ b" "$:x"
+print $"hello"
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (string_content))
+    argument: (string
+      (string_content)))
+  (command
+    name: (command_name
+      (word))
+    argument: (translated_string
+      (string
+        (string_content)))))

@@ -7149,7 +7149,7 @@
             "type": "IMMEDIATE_TOKEN",
             "content": {
               "type": "PATTERN",
-              "value": "\\d+"
+              "value": "-?\\d+"
             }
           },
           "named": true,
@@ -7168,18 +7168,47 @@
             "type": "IMMEDIATE_TOKEN",
             "content": {
               "type": "PATTERN",
-              "value": "\\d+"
+              "value": "-?\\d+"
             }
           },
           "named": true,
           "value": "number"
         },
         {
-          "type": "IMMEDIATE_TOKEN",
-          "content": {
-            "type": "STRING",
-            "value": "}"
-          }
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "IMMEDIATE_TOKEN",
+                  "content": {
+                    "type": "STRING",
+                    "value": ".."
+                  }
+                },
+                {
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "IMMEDIATE_TOKEN",
+                    "content": {
+                      "type": "PATTERN",
+                      "value": "-?\\d+"
+                    }
+                  },
+                  "named": true,
+                  "value": "number"
+                }
+              ]
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": "}"
         }
       ]
     },
@@ -8937,23 +8966,24 @@
                 "type": "CHOICE",
                 "members": [
                   {
+                    "type": "SYMBOL",
+                    "name": "string_content"
+                  },
+                  {
                     "type": "SEQ",
                     "members": [
                       {
-                        "type": "CHOICE",
-                        "members": [
-                          {
-                            "type": "SYMBOL",
-                            "name": "_bare_dollar"
-                          },
-                          {
-                            "type": "BLANK"
-                          }
-                        ]
+                        "type": "SYMBOL",
+                        "name": "_bare_dollar"
                       },
                       {
-                        "type": "SYMBOL",
-                        "name": "string_content"
+                        "type": "ALIAS",
+                        "content": {
+                          "type": "SYMBOL",
+                          "name": "_string_content_after_dollar"
+                        },
+                        "named": true,
+                        "value": "string_content"
                       }
                     ]
                   },
@@ -9012,6 +9042,13 @@
           "value": "\""
         }
       ]
+    },
+    "_string_content_after_dollar": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "([^\"`$\\\\\\r\\n^=~+A-Za-z0-9_]|\\\\(.|\\r?\\n))([^\"`$\\\\\\r\\n]|\\\\(.|\\r?\\n))*"
+      }
     },
     "string_content": {
       "type": "TOKEN",
