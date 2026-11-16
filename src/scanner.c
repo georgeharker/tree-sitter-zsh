@@ -70,6 +70,7 @@ enum TokenType {
     TEST_PATTERN_WORD,       // [[ $x = -- ]]: plain pattern piece
     TEST_PATTERN_GLOB,       // [[ $x = (a|b)* ]]: glob pattern piece
     ARITHMETIC_WORD,         // identifier inside (( )) / $(( ))
+    ARITHMETIC_CHAR_CODE,    // ##a / #name inside (( ))
     ERROR_RECOVERY,
 };
 
@@ -134,6 +135,7 @@ const char *TokenNames[] = {
     "TEST_PATTERN_WORD",
     "TEST_PATTERN_GLOB",
     "ARITHMETIC_WORD",
+    "ARITHMETIC_CHAR_CODE",
     "ERROR_RECOVERY",
 };
 #endif
@@ -156,6 +158,7 @@ typedef enum {
     CTX_COMPOUND = 9,    // "{ x; y; z; }"
     CTX_BACKTICK = 10,   // `a b c`
     CTX_RAW_STRING = 11, // '...' string context
+    CTX_SUBSCRIPT = 12,  // a[...] subscript (not an arithmetic expression)
 } context_type_t;
 
 const char *ContextNames[] = {
@@ -173,6 +176,7 @@ const char *ContextNames[] = {
     "CTX_COMPOUND",                     // "{ x; y; z; }"
     "CTX_BACKTICK",                     // `a b c`
     "CTX_RAW_STRING",                   // '...' string context
+    "CTX_SUBSCRIPT",
 };
 
 typedef struct {
@@ -312,7 +316,8 @@ static inline void exit_context_through(Scanner *scanner,
 // Helper functions for checking contexts
 static inline bool in_expansion_context(Scanner *scanner) {
     context_type_t ctx = get_current_context(scanner);
-    return ctx == CTX_PARAMETER || ctx == CTX_ARITHMETIC || ctx == CTX_COMMAND;
+    return ctx == CTX_PARAMETER || ctx == CTX_ARITHMETIC ||
+           ctx == CTX_SUBSCRIPT || ctx == CTX_COMMAND;
 }
 
 static inline bool in_pattern_context(Scanner *scanner) {
@@ -1225,6 +1230,41 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->result_symbol = ARITHMETIC_WORD;
             return true;
         }
+        // ##a is the character code of a (##\n of a newline), #name the
+        // code of the first character of $name. Inside arithmetic '#' isn't
+        // a comment, so this has to come before the comment extra.
+        if (lexer->lookahead == '#' && valid_symbols[ARITHMETIC_CHAR_CODE]) {
+            advance(lexer);
+            if (lexer->lookahead == '#') {
+                advance(lexer);
+                // ##$chr: the code of $chr's value. Emit just "##"; the
+                // expansion follows as the rest of the same operand.
+                if (lexer->lookahead == '$') {
+                    lexer->mark_end(lexer);
+                    lexer->result_symbol = ARITHMETIC_CHAR_CODE;
+                    return true;
+                }
+                if (lexer->lookahead == '\\') {
+                    advance(lexer);
+                }
+                if (!lexer->eof(lexer) && lexer->lookahead != '\n') {
+                    advance(lexer);
+                    lexer->mark_end(lexer);
+                    lexer->result_symbol = ARITHMETIC_CHAR_CODE;
+                    return true;
+                }
+                return false;
+            }
+            if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {
+                while (iswalnum(lexer->lookahead) || lexer->lookahead == '_') {
+                    advance(lexer);
+                }
+                lexer->mark_end(lexer);
+                lexer->result_symbol = ARITHMETIC_CHAR_CODE;
+                return true;
+            }
+            return false; // lexer moved: only skips the handlers below here
+        }
     }
 
     // Only at the start of the operand: both piece kinds are valid there.
@@ -1323,8 +1363,17 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
 
+    // Inside arithmetic only a piece can follow a piece directly ($x$y,
+    // x$i, $(cmd)$x); an operator (a++ a-b x+=1) or bracket never joins.
+    // (Subscripts run in CTX_SUBSCRIPT, so a[foo::bar] isn't affected.)
+    bool arith_no_concat =
+        get_current_context(scanner) == CTX_ARITHMETIC &&
+        !(lexer->lookahead == '$' || lexer->lookahead == '`' ||
+          lexer->lookahead == '"' || lexer->lookahead == '\'' ||
+          iswalnum(lexer->lookahead) || lexer->lookahead == '_');
     if ((valid_symbols[CONCAT] || valid_symbols[CONCAT_REGEX]) &&
-        !in_error_recovery(valid_symbols) && !skipped_blank_before) {
+        !in_error_recovery(valid_symbols) && !skipped_blank_before &&
+        !arith_no_concat) {
         context_type_t ctx = get_current_context(scanner);
 #if DEBUG
         fprintf(stderr,
@@ -1787,6 +1836,15 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // and then a group.
     // A value starting with a bracket class there is read whole as well:
     // ([[:alnum:]]#[" "$TAB]#(\?|)=*) has quotes and $ inside the class.
+    // Also directly after another piece of a case pattern (no blank), e.g.
+    // after the expansion in (#bi)${~dspat}((19|20)..)[-/]...: in case
+    // patterns ( is always a group (zshexpn: qualifiers only exist in
+    // filename generation), so this must not become an arithmetic "((".
+    bool case_pattern_continues =
+        valid_symbols[EXTGLOB_PATTERN] && !valid_symbols[ESAC] &&
+        !scan_started_on_blank &&
+        get_current_context(scanner) != CTX_ARITHMETIC &&
+        get_current_context(scanner) != CTX_TEST;
     if (valid_symbols[EXTGLOB_PATTERN] &&
         (scanner->saw_pipe_in_case || was_after_case_opener) &&
         !valid_symbols[OPENING_PAREN] && !in_error_recovery(valid_symbols) &&
@@ -1799,9 +1857,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         return scan_case_pattern_rest(lexer, 0);
     }
     if (valid_symbols[EXTGLOB_PATTERN] &&
-        (scanner->saw_pipe_in_case || was_after_case_opener) &&
-        !valid_symbols[OPENING_PAREN] && !in_error_recovery(valid_symbols) &&
-        lexer->lookahead == '(') {
+        (scanner->saw_pipe_in_case || was_after_case_opener ||
+         case_pattern_continues) &&
+        (!valid_symbols[OPENING_PAREN] || case_pattern_continues) &&
+        !in_error_recovery(valid_symbols) && lexer->lookahead == '(') {
         scanner->saw_pipe_in_case = false;
         if (scan_case_group_pattern(lexer, true)) {
             return true;
@@ -1887,8 +1946,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             } else if (lexer->lookahead == '(' &&
                        valid_symbols[DOUBLE_OPENING_PAREN] &&
                        // [[ a || (( -n $x ) && b ) ]]: inside [[ ]] "((" is
-                       // two nested groups, not arithmetic
-                       get_current_context(scanner) != CTX_TEST) {
+                       // two nested groups, not arithmetic. Same inside
+                       // arithmetic: (( x + ((a == 1) ? b : c) )).
+                       get_current_context(scanner) != CTX_TEST &&
+                       get_current_context(scanner) != CTX_ARITHMETIC) {
                 advance(lexer);
                 lexer->mark_end(lexer);
                 // This is ((...)) - increment arithmetic depth
@@ -1965,8 +2026,16 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         }
     }
 
+    // In a string "$0 [ -q ]" a '[' after a blank is string content, not a
+    // subscript. Earlier handlers may already have skipped the blank, so use
+    // the lookahead captured on entry.
+    // (TEST_COMMAND_START is never valid inside a real string; requiring
+    // that keeps a stale CTX_STRING on the stack from blocking `if [[`.)
+    bool bracket_after_blank_in_string =
+        scan_started_on_blank && get_current_context(scanner) == CTX_STRING &&
+        !valid_symbols[TEST_COMMAND_START];
     if ((valid_symbols[OPENING_BRACKET] || valid_symbols[TEST_COMMAND_START]) &&
-        !in_error_recovery(valid_symbols)) {
+        !in_error_recovery(valid_symbols) && !bracket_after_blank_in_string) {
 #if DEBUG
         fprintf(stderr,
                 "DEBUG: CHECKING TEST_COMMAND_START=%d OPENING_BRACKET=%d "
@@ -2021,7 +2090,9 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
                 fprintf(stderr, "DEBUG: Detected OPENING_BRACKET [\n");
 #endif
-                enter_context(scanner, CTX_ARITHMETIC);
+                // Its own context: subscripts aren't arithmetic expressions
+                // (a[foo::bar], a[${x}:${y}]); $[ ... ] stays CTX_ARITHMETIC.
+                enter_context(scanner, CTX_SUBSCRIPT);
                 return true;
             }
         }
@@ -2058,7 +2129,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
 #if DEBUG
                 fprintf(stderr, "DEBUG: Detected CLOSING_BRACKET ]\n");
 #endif
-                exit_context(scanner, CTX_ARITHMETIC);
+                exit_context(scanner,
+                             get_current_context(scanner) == CTX_SUBSCRIPT
+                                 ? CTX_SUBSCRIPT
+                                 : CTX_ARITHMETIC);
                 return true;
             }
             // If only one ], don't consume it - let normal parsing handle it
@@ -2358,10 +2432,12 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         context_type_t cur_ctx = get_current_context(scanner);
         skip_ws(lexer);
         if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
-            (lexer->lookahead == ':' && cur_ctx == CTX_ARITHMETIC)) {
+            (lexer->lookahead == ':' &&
+             (cur_ctx == CTX_ARITHMETIC || cur_ctx == CTX_SUBSCRIPT))) {
             int consumed = 0;
             while (iswalnum(lexer->lookahead) || lexer->lookahead == '_' ||
-                   (lexer->lookahead == ':' && cur_ctx == CTX_ARITHMETIC)) {
+                   (lexer->lookahead == ':' &&
+             (cur_ctx == CTX_ARITHMETIC || cur_ctx == CTX_SUBSCRIPT))) {
                 advance(lexer);
                 consumed++;
             }
@@ -2421,8 +2497,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             // by a word: let the grammar's expansion_style '#' take it, as
             // for $+name. (Returning false after the advance only skips the
             // handlers below for this position.)
+            // Same for $#* and $#@ (the number of positional parameters).
             if (was_hash && was_just_bare_dollar &&
-                (iswalpha(lexer->lookahead) || lexer->lookahead == '_')) {
+                (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
+                 lexer->lookahead == '*' || lexer->lookahead == '@')) {
                 return false;
             }
             // Consume additional digits for multi-digit positional params
@@ -2521,7 +2599,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->mark_end(lexer);
             advance(lexer);
             if (lexer->lookahead == '=' || lexer->lookahead == '[' ||
-                (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC) ||
+                (lexer->lookahead == ':' &&
+             (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT)) ||
                 lexer->lookahead == '-' || lexer->lookahead == '%' ||
                 lexer->lookahead == '/') {
                 return false;
@@ -2580,7 +2659,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
         if (iswdigit(lexer->lookahead)) {
             advance(lexer);
         } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
-                   (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC)) {
+                   (lexer->lookahead == ':' &&
+             (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT))) {
             is_number = false;
             advance(lexer);
         } else {
@@ -2600,7 +2680,8 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             if (iswdigit(lexer->lookahead)) {
                 advance(lexer);
             } else if (iswalpha(lexer->lookahead) || lexer->lookahead == '_' ||
-                       (lexer->lookahead == ':' && ctx == CTX_ARITHMETIC)) {
+                       (lexer->lookahead == ':' &&
+             (ctx == CTX_ARITHMETIC || ctx == CTX_SUBSCRIPT))) {
                 is_number = false;
                 advance(lexer);
             } else {

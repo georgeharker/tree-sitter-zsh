@@ -17,3 +17,58 @@ print ${x:s:a:b:}
         modifier: (expansion_modifier
           search: (regex)
           replace: (regex))))))
+
+================================================================================
+Pending: blank inside a case pattern within the opener's parentheses
+:skip
+================================================================================
+
+case $l in
+  ((#b)([0-9a-f]##) ##(*)) x ;;
+esac
+
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))))
+
+================================================================================
+Pending: string ending in [ after an expansion and a blank
+:skip
+================================================================================
+
+print "$x ["
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (variable_ref
+        (simple_variable_name))
+      (string_content))))
+
+================================================================================
+Pending: quoted key in an associative array assignment
+:skip
+================================================================================
+
+pc['x']=1
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (subscript
+      name: (variable_name)
+      index: (raw_string))
+    value: (number)))

@@ -353,3 +353,344 @@ print $[ a + 1 ]
       (binary_expression
         left: (word)
         right: (number)))))
+
+================================================================================
+Arithmetic - embedded expansions, command substitutions and backticks
+================================================================================
+
+print $(( $x + 1 )) $(( ${x:-3} * 2 )) $(( $#x + 1 )) $(( $1 + $2 ))
+print $(( $(echo 3) + 1 )) $(( `echo 3` + 1 )) $(( $(( 1 + 2 )) * 3 ))
+print $(( a[$(echo 1)] )) $(( ${a[`echo 1`]} )) $(( "$x" + 1 ))
+(( n = $(echo 3) * 2 ))
+(( n = `echo 3` * 2 ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (variable_ref
+          (simple_variable_name))
+        right: (number)))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (expansion
+          (expansion_default
+            name: (simple_variable_name)
+            default: (expansion_default_list
+              (number))))
+        right: (number)))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (variable_ref
+          (expansion_style)
+          (simple_variable_name))
+        right: (number)))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (variable_ref
+          (special_variable_name))
+        right: (variable_ref
+          (special_variable_name)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number)))
+        right: (number)))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number)))
+        right: (number)))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (arithmetic_expansion
+          (binary_expression
+            left: (number)
+            right: (number)))
+        right: (number))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (subscript
+        name: (variable_name)
+        index: (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number)))))
+    argument: (arithmetic_expansion
+      (expansion
+        name: (simple_variable_name)
+        index: (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number)))))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (string
+          (variable_ref
+            (simple_variable_name)))
+        right: (number))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (command_substitution
+              (command
+                name: (command_name
+                  (word))
+                argument: (number)))
+            right: (number))))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (command_substitution
+              (command
+                name: (command_name
+                  (word))
+                argument: (number)))
+            right: (number)))))))
+
+================================================================================
+Arithmetic - adjacent pieces form one operand
+================================================================================
+
+print $(( $x$y )) $(( x$i )) $(( $(echo 3)$x )) $(( 1$(echo 2) ))
+print $(( `echo 1``echo 2` ))
+(( x$i = 4 ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (concatenation
+        (variable_ref
+          (simple_variable_name))
+        (variable_ref
+          (simple_variable_name))))
+    argument: (arithmetic_expansion
+      (concatenation
+        (word)
+        (variable_ref
+          (simple_variable_name))))
+    argument: (arithmetic_expansion
+      (concatenation
+        (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number)))
+        (variable_ref
+          (simple_variable_name))))
+    argument: (arithmetic_expansion
+      (concatenation
+        (number)
+        (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (concatenation
+        (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number)))
+        (command_substitution
+          (command
+            name: (command_name
+              (word))
+            argument: (number))))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (concatenation
+            (word)
+            (variable_ref
+              (simple_variable_name)))
+          right: (number))))))
+
+================================================================================
+Arithmetic - character codes, nested $[ ] and nested groups
+================================================================================
+
+print $(( ##a )) $(( #x )) $(( ##\n ))
+(( hash += (hash << 5) + ##$chr ))
+print $(( $[1+2] ))
+(( offset = future*offset + ((future == 1) ? rows-2 : -1) ))
+(( ri = LINES * .${ri%%%} ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (arithmetic_char_code))
+    argument: (arithmetic_expansion
+      (arithmetic_char_code))
+    argument: (arithmetic_expansion
+      (arithmetic_char_code)))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (parenthesized_expression
+              (binary_expression
+                left: (word)
+                right: (number)))
+            right: (concatenation
+              (arithmetic_char_code)
+              (variable_ref
+                (simple_variable_name))))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (arithmetic_expansion
+        (binary_expression
+          left: (number)
+          right: (number)))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (binary_expression
+              left: (word)
+              right: (word))
+            right: (parenthesized_expression
+              (ternary_expression
+                condition: (parenthesized_expression
+                  (binary_expression
+                    left: (word)
+                    right: (number)))
+                consequence: (binary_expression
+                  left: (word)
+                  right: (number))
+                alternative: (unary_expression
+                  (number)))))))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (word)
+            right: (concatenation
+              (number)
+              (expansion
+                (expansion_pattern
+                  name: (simple_variable_name)
+                  pattern: (regex))))))))))
+
+================================================================================
+Arithmetic - $#* and $#@
+================================================================================
+
+if (( ! $#* )); then :; fi
+(( $#* > 1 )) && print $#@
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (command
+      name: (command_name
+        (arithmetic_expansion
+          (unary_expression
+            (variable_ref
+              (expansion_style)
+              (special_variable_name))))))
+    (command
+      name: (command_name
+        (word))))
+  (list
+    (command
+      name: (command_name
+        (arithmetic_expansion
+          (binary_expression
+            left: (variable_ref
+              (expansion_style)
+              (special_variable_name))
+            right: (number)))))
+    (command
+      name: (command_name
+        (word))
+      argument: (variable_ref
+        (expansion_style)
+        (special_variable_name)))))
+
+================================================================================
+Arithmetic - old $[ ] form
+================================================================================
+
+NUMERIC=$[_ilw_count+1]
+n=${x:-$[ARGC+c]}
+: "${PSCMD:=$history[$[HISTCMD-1]]}"
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (arithmetic_expansion
+      (binary_expression
+        left: (word)
+        right: (number))))
+  (variable_assignment
+    name: (variable_name)
+    value: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (arithmetic_expansion
+            (binary_expression
+              left: (word)
+              right: (word)))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        (expansion_default
+          name: (simple_variable_name)
+          default: (expansion_default_list
+            (variable_ref
+              (simple_variable_name)
+              index: (arithmetic_expansion
+                (binary_expression
+                  left: (word)
+                  right: (number))))))))))

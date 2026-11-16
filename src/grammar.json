@@ -7601,6 +7601,15 @@
             "type": "ALIAS",
             "content": {
               "type": "SYMBOL",
+              "name": "_arithmetic_concatenation"
+            },
+            "named": true,
+            "value": "concatenation"
+          },
+          {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
               "name": "_arithmetic_word"
             },
             "named": true,
@@ -7623,6 +7632,14 @@
             },
             "named": true,
             "value": "number"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "arithmetic_char_code"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "arithmetic_expansion"
           },
           {
             "type": "SYMBOL",
@@ -8413,6 +8430,82 @@
         }
       ]
     },
+    "_arithmetic_concatenation": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "_arithmetic_piece"
+          },
+          {
+            "type": "REPEAT1",
+            "content": {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_concat"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "_arithmetic_piece"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "_arithmetic_piece": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "arithmetic_char_code"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_arithmetic_word"
+          },
+          "named": true,
+          "value": "word"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_arithmetic_number"
+          },
+          "named": true,
+          "value": "number"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "variable_ref"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "expansion"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "command_substitution"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "arithmetic_expansion"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "string"
+        }
+      ]
+    },
     "_arithmetic_subscript": {
       "type": "PREC_LEFT",
       "value": 0,
@@ -8454,7 +8547,7 @@
         "value": 1,
         "content": {
           "type": "PATTERN",
-          "value": "0[xX][0-9A-Fa-f]+|[0-9]+#[0-9A-Za-z@_]+|([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][-+]?[0-9]+)?"
+          "value": "0[xX][0-9A-Fa-f]+|[0-9]+#[0-9A-Za-z@_]+|([0-9]+\\.?[0-9]*|\\.[0-9]*)([eE][-+]?[0-9]+)?"
         }
       }
     },
@@ -11970,33 +12063,41 @@
               "name": "extglob_pattern"
             },
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "string"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "expansion"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "command_substitution"
-                }
-              ]
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "extglob_pattern"
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
+              "type": "REPEAT1",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "string"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "expansion"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "command_substitution"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "extglob_pattern"
+                      },
+                      {
+                        "type": "BLANK"
+                      }
+                    ]
+                  }
+                ]
+              }
             }
           ]
         }
@@ -13698,6 +13799,10 @@
     [
       "_regex_match_literal",
       "_expansion_or_variable"
+    ],
+    [
+      "_arithmetic_piece",
+      "_expansion_or_variable"
     ]
   ],
   "precedences": [],
@@ -13937,6 +14042,10 @@
     {
       "type": "SYMBOL",
       "name": "_arithmetic_word"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "arithmetic_char_code"
     },
     {
       "type": "SYMBOL",

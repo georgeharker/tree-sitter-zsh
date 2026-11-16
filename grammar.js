@@ -151,6 +151,8 @@ module.exports = grammar({
     [$.repeat_statement, $.command],
     [$._expression, $._regex_match_literal], // Resolve regex expression conflict
     [$._regex_match_literal, $._expansion_or_variable], // Additional regex conflicts
+    // (( $x$y )): arithmetic concatenation vs the test_command (( path
+    [$._arithmetic_piece, $._expansion_or_variable],
   ],
 
   inline: $ => [
@@ -230,6 +232,7 @@ module.exports = grammar({
     $._test_pattern_word,              // TEST_PATTERN_WORD: [[ $x = -- ]]
     $._test_pattern_glob,              // TEST_PATTERN_GLOB: [[ $x = (a|b)* ]]
     $._arithmetic_word,                // ARITHMETIC_WORD: identifier inside (( ))
+    $.arithmetic_char_code,            // ARITHMETIC_CHAR_CODE: ##a #name in (( ))
     $.__error_recovery,
   ],
 
@@ -1493,9 +1496,12 @@ module.exports = grammar({
       // Identifiers and numbers lexed for arithmetic (the scanner emits
       // _arithmetic_word in CTX_ARITHMETIC), so i++ a-b a,b split into
       // operands and operators instead of one shell word.
+      alias($._arithmetic_concatenation, $.concatenation),
       alias($._arithmetic_word, $.word),
       alias($._arithmetic_subscript, $.subscript),
       alias($._arithmetic_number, $.number),
+      $.arithmetic_char_code,   // ##a (code of a), #name (code of $name's 1st char)
+      $.arithmetic_expansion,   // $[1+2] / $(( )) nested
       $.number,
       $.subscript,
       $.variable_ref,
@@ -1546,6 +1552,22 @@ module.exports = grammar({
     ),
 
     // Function call in arithmetic context: sqrt(x), sin(a), abs(n), etc.
+    // Adjacent pieces form one operand: $x$y, x$i (the name x1), 1$x
+    _arithmetic_concatenation: $ => prec.left(seq(
+      $._arithmetic_piece,
+      repeat1(seq($._concat, $._arithmetic_piece)),
+    )),
+    _arithmetic_piece: $ => choice(
+      $.arithmetic_char_code,   // ##$chr
+      alias($._arithmetic_word, $.word),
+      alias($._arithmetic_number, $.number),
+      $.variable_ref,
+      $.expansion,
+      $.command_substitution,
+      $.arithmetic_expansion,
+      $.string,
+    ),
+
     // x[1] / x[(i)a] inside (( )): same shape as subscript
     _arithmetic_subscript: $ => prec.left(seq(
       field('name', alias($._arithmetic_word, $.variable_name)),
@@ -1556,7 +1578,8 @@ module.exports = grammar({
 
     // 0x1F 1.5 .5 1e3 16#ff 2#1010 (zshmisc "ARITHMETIC EVALUATION")
     _arithmetic_number: _ => token(prec(1,
-      /0[xX][0-9A-Fa-f]+|[0-9]+#[0-9A-Za-z@_]+|([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?/)),
+      // (a lone '.' only matters before an expansion: .${frac} is a float)
+      /0[xX][0-9A-Fa-f]+|[0-9]+#[0-9A-Za-z@_]+|([0-9]+\.?[0-9]*|\.[0-9]*)([eE][-+]?[0-9]+)?/)),
 
     // $(( [##8] x )) / $(( [#16_4] x )): output base
     arithmetic_base: _ => token(/\[##?[0-9]+(_[0-9]*)?\]/),
@@ -2134,12 +2157,16 @@ module.exports = grammar({
       ')',
     ),
 
+    // Pattern pieces alternating with strings / expansions:
+    // (#bi)${~dspat}((19|20)[0-9][0-9])[-/]${~monthpat}[-/](<1-31>)*)
     _extglob_blob: $ => choice(
       $.extglob_pattern,
       seq(
         $.extglob_pattern,
-        choice($.string, $.expansion, $.command_substitution),
-        optional($.extglob_pattern),
+        repeat1(seq(
+          choice($.string, $.expansion, $.command_substitution),
+          optional($.extglob_pattern),
+        )),
       ),
     ),
 
