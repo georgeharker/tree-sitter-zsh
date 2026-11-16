@@ -238,6 +238,8 @@ module.exports = grammar({
     $._subst_end,                      // SUBST_END: zero-width end of a modifier chain ($x:h:s/a/b/)
     $._function_name,                  // FUNCTION_NAME: zinit::setup() :helper(): a name read whole before ()
     $._modifier_other,                 // MODIFIER_OTHER: :fs#a#b# :F:2:s/a/b/ :s#a#b#: read whole by the scanner
+    $._brace_else,                     // BRACE_ELSE: `} else` of a short if, one token
+    $._brace_elif,                     // BRACE_ELIF: `} elif` of a short if, one token
     $.__error_recovery,
   ],
 
@@ -593,15 +595,33 @@ module.exports = grammar({
       alias($._arithmetic_command_name, $.command_name)),
     _arithmetic_command_name: $ => $.arithmetic_expansion,
 
-    if_statement: $ => seq(
-      'if',
-      field('condition', $._condition),
-      'then',
-      optional($._terminated_statement),
-      repeat($.elif_clause),
-      optional($.else_clause),
-      'fi',
+    if_statement: $ => choice(
+      seq(
+        'if',
+        field('condition', $._condition),
+        'then',
+        optional($._terminated_statement),
+        repeat($.elif_clause),
+        optional($.else_clause),
+        'fi',
+      ),
+      // zsh's short form: if [[ ... ]] { ... } elif (( ... )) { ... } else
+      // { ... }. Only with a condition that closes itself ([[ ]], (( )) or
+      // { }): after a plain command the '{' is just another argument.
+      prec.right(seq(
+        'if',
+        field('condition', $._short_condition),
+        field('body', $.compound_statement),
+      )),
     ),
+
+    _short_condition: $ => choice(
+      $.test_command,
+      $.compound_statement,
+      alias($._arithmetic_only_command, $.command),  // if (( a )) { ... }
+    ),
+    _elif_clause_short: $ => seq('elif', $._short_condition, $.compound_statement),
+    _else_clause_short: $ => seq('else', $.compound_statement),
 
     elif_clause: $ => seq(
       'elif',
@@ -738,9 +758,24 @@ module.exports = grammar({
       // External '}' (CLOSING_BRACE): the scanner pops CTX_COMPOUND here.
       // An internal token never reached the scanner, so every { } group
       // used to leave CTX_COMPOUND on the context stack.
-      '}',
+      $._block_close,
       optional($.always_clause),
     ),
+
+    // End of a { } block. A short if goes on from here with `} else` /
+    // `} elif`, single scanner tokens (so no `else` keyword can follow a
+    // block, which would make every statement's end ambiguous):
+    //   if [[ a ]] { ... } elif (( b )) { ... } else { ... }
+    _block_close: $ => choice(
+      '}',
+      seq(alias($._brace_else, '} else'), alias($._else_block, $.else_clause)),
+      seq(alias($._brace_elif, '} elif'), alias($._elif_block, $.elif_clause)),
+    ),
+    _else_block: $ => seq(
+      alias($._brace_start, '{'), optional($._maybe_terminated_statement), $._block_close),
+    _elif_block: $ => seq(
+      field('condition', $._short_condition),
+      alias($._brace_start, '{'), optional($._maybe_terminated_statement), $._block_close),
 
     // Always clause that can attach to compound statements
     always_clause: $ => seq(
