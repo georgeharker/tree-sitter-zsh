@@ -36,20 +36,20 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Set up tree-sitter
-        uses: tree-sitter/setup-action/cli@v2
+        uses: tree-sitter/setup-action/cli@faab9a23fa6195da0f1cf868219cc1e89f238d3d # v2
       - name: Run parser and binding tests
-        uses: tree-sitter/parser-test-action@v2
+        uses: tree-sitter/parser-test-action@aba4a3de737f86f8ce83be38166a1ab521d4c960 # v2
         with:
           test-rust: true
       - name: Parse sample files
-        uses: tree-sitter/parse-action@v4
+        uses: tree-sitter/parse-action@f44ffa94f802024f27e821a72e6f2f3efc5dd521 # v4
         id: parse-files
         with:
           files: examples/**
       - name: Upload failures artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: "!cancelled() && steps.parse-files.outcome == 'failure'"
         with:
           name: failures-${{runner.os}}
@@ -61,7 +61,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
       - name: Scanner context stack and incremental re-parses
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 2
       - name: Check for scanner changes
@@ -83,17 +83,17 @@ jobs:
             printf 'changed=true\n' >> "$GITHUB_OUTPUT"
           fi
       - name: Run the fuzzer
-        uses: tree-sitter/fuzz-action@v4
+        uses: tree-sitter/fuzz-action@6a1dcff00aefd038ba418bd63732a9add4901266 # v4
         if: steps.scanner-check.outputs.changed == 'true'
   query:
     name: Validate queries
     runs-on: ubuntu-latest
     steps:
       - name: Set up repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Set up tree-sitter
-        uses: tree-sitter/setup-action/cli@v2
+        uses: tree-sitter/setup-action/cli@faab9a23fa6195da0f1cf868219cc1e89f238d3d # v2
 
       - name: Build parser
         run: tree-sitter build
@@ -106,7 +106,7 @@ jobs:
 
   nvim-query:
     name: Validate nvim queries
-    uses: neovim-treesitter/.github/.github/workflows/self-contained-validate.yml@main
+    uses: neovim-treesitter/.github/.github/workflows/self-contained-validate.yml@cef62aa4093b4413d9b0671e36e369ed53042a3e # main
     with:
       lang: zsh
       queries-dir: nvim-queries
