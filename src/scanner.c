@@ -1661,25 +1661,35 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     }
 after_concat:
 
-    // End of a :s/pat/rep/ modifier (zero-width; always emitted, so it can
-    // pop CTX_MODIFIER_SUBST). Not before the closing '/' or ':G'; at a
-    // replacement character the replacement goes on (a piece right after
-    // another was joined by CONCAT above).
+    // End of a modifier chain ($x:h:t, $f:s/a/b/; zero-width, always
+    // emitted, so it can also pop CTX_MODIFIER_SUBST). Not before another
+    // modifier (':' + a modifier letter, or ':G' after s///) or a
+    // substitution's '/'. Where a replacement may start or continue
+    // (REGEX_NO_SLASH valid) only a blank or a word-ending character ends
+    // it; anywhere else (after :h) any other character does: $x:hfoo.
     if (valid_symbols[SUBST_END] && !in_error_recovery(valid_symbols)) {
         int32_t c = lexer->lookahead;
-        bool end = lexer->eof(lexer) || iswspace(c) || c == '}' || c == ')' ||
-                   c == '"' || c == '`' || c == ';' || c == '|' || c == '&' ||
-                   c == ']';
+        bool end;
         lexer->mark_end(lexer);
-        // A ':' ends it only before another modifier ($f:s/a/b/:t), not
-        // before ':G' (part of this one) or as replacement text (s/x/:/).
-        if (!end && c == ':') {
+        if (c == ':') {
             advance(lexer); // peek: the token stays zero-width
             int32_t m = lexer->lookahead;
-            end = m == 'a' || m == 'A' || m == 'c' || m == 'e' || m == 'h' ||
-                  m == 'l' || m == 'p' || m == 'P' || m == 'q' || m == 'Q' ||
-                  m == 'r' || m == 's' || m == 'g' || m == 't' || m == 'u' ||
-                  m == 'x' || m == '&';
+            end = !(m == 'a' || m == 'A' || m == 'c' || m == 'e' ||
+                    m == 'h' || m == 'l' || m == 'p' || m == 'P' ||
+                    m == 'q' || m == 'Q' || m == 'r' || m == 's' ||
+                    m == 'g' || m == 't' || m == 'u' || m == 'x' ||
+                    m == '&' || m == 'G');
+            if (end && valid_symbols[REGEX_NO_SLASH]) {
+                end = false; // a ':' starting the replacement: s/x/:/
+            }
+        } else if (c == '/') {
+            end = false;
+        } else if (valid_symbols[REGEX_NO_SLASH]) {
+            end = lexer->eof(lexer) || iswspace(c) || c == '}' || c == ')' ||
+                  c == '"' || c == '`' || c == ';' || c == '|' || c == '&' ||
+                  c == ']';
+        } else {
+            end = true;
         }
         if (end) {
             if (get_current_context(scanner) == CTX_MODIFIER_SUBST) {
@@ -1689,7 +1699,7 @@ after_concat:
             return true;
         }
         if (c == ':') {
-            return false; // ':G' or text: the lexer moved, let it lex that
+            return false; // the lexer moved: let it lex the ':'
         }
     }
 
@@ -2513,7 +2523,11 @@ after_concat:
         // SUBST_END that always ends the modifier.
         if (!in_parameter_expansion(scanner) && lexer->lookahead != '/' &&
             !iswspace(lexer->lookahead) && !lexer->eof(lexer)) {
-            enter_context(scanner, CTX_MODIFIER_SUBST);
+            // One context per modifier chain ($w:gs/a/b/:gs/c/d/): the
+            // chain's single SUBST_END pops it.
+            if (get_current_context(scanner) != CTX_MODIFIER_SUBST) {
+                enter_context(scanner, CTX_MODIFIER_SUBST);
+            }
             lexer->result_symbol = PATTERN_START;
             lexer->mark_end(lexer);
             return true;
