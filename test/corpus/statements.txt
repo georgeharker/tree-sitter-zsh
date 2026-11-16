@@ -2567,3 +2567,26 @@ r[(r)]="''"
       flags: (zsh_array_subscript_flags))
     value: (string
       (string_content))))
+
+================================================================================
+Substitution with a blank replacement
+================================================================================
+
+x ${u:gs/+/ /} ${u//a/b c}
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier
+          search: (regex)
+          replace: (word))))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (regex)))))
