@@ -1105,7 +1105,8 @@ module.exports = grammar({
       ),
       seq(
         field('flags', alias($._subscript_pattern_flags, $.zsh_array_subscript_flags)),
-        field('index', $._subscript_pattern),
+        // ${r[(r)]}: the pattern may be empty
+        optional(field('index', $._subscript_pattern)),
       ),
     ),
 
@@ -1117,7 +1118,8 @@ module.exports = grammar({
       ),
       seq(
         field('flags', alias($._subscript_pattern_flags, $.zsh_array_subscript_flags)),
-        field('index', $._subscript_pattern),
+        // ${r[(r)]}: the pattern may be empty
+        optional(field('index', $._subscript_pattern)),
       ),
     ),
 
