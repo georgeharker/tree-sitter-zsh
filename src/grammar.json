@@ -10081,11 +10081,31 @@
                           "type": "CHOICE",
                           "members": [
                             {
-                              "type": "FIELD",
-                              "name": "replacement",
+                              "type": "REPEAT1",
                               "content": {
-                                "type": "SYMBOL",
-                                "name": "_param_replacement"
+                                "type": "CHOICE",
+                                "members": [
+                                  {
+                                    "type": "FIELD",
+                                    "name": "replacement",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_param_replacement"
+                                    }
+                                  },
+                                  {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "IMMEDIATE_TOKEN",
+                                      "content": {
+                                        "type": "STRING",
+                                        "value": "/"
+                                      }
+                                    },
+                                    "named": true,
+                                    "value": "word"
+                                  }
+                                ]
                               }
                             },
                             {
@@ -10141,11 +10161,31 @@
                           "type": "CHOICE",
                           "members": [
                             {
-                              "type": "FIELD",
-                              "name": "replacement",
+                              "type": "REPEAT1",
                               "content": {
-                                "type": "SYMBOL",
-                                "name": "_param_replacement"
+                                "type": "CHOICE",
+                                "members": [
+                                  {
+                                    "type": "FIELD",
+                                    "name": "replacement",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_param_replacement"
+                                    }
+                                  },
+                                  {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "IMMEDIATE_TOKEN",
+                                      "content": {
+                                        "type": "STRING",
+                                        "value": "/"
+                                      }
+                                    },
+                                    "named": true,
+                                    "value": "word"
+                                  }
+                                ]
                               }
                             },
                             {
@@ -10208,11 +10248,31 @@
                           "type": "CHOICE",
                           "members": [
                             {
-                              "type": "FIELD",
-                              "name": "replacement",
+                              "type": "REPEAT1",
                               "content": {
-                                "type": "SYMBOL",
-                                "name": "_param_replacement"
+                                "type": "CHOICE",
+                                "members": [
+                                  {
+                                    "type": "FIELD",
+                                    "name": "replacement",
+                                    "content": {
+                                      "type": "SYMBOL",
+                                      "name": "_param_replacement"
+                                    }
+                                  },
+                                  {
+                                    "type": "ALIAS",
+                                    "content": {
+                                      "type": "IMMEDIATE_TOKEN",
+                                      "content": {
+                                        "type": "STRING",
+                                        "value": "/"
+                                      }
+                                    },
+                                    "named": true,
+                                    "value": "word"
+                                  }
+                                ]
                               }
                             },
                             {
@@ -10620,6 +10680,17 @@
             "content": {
               "type": "STRING",
               "value": "~"
+            }
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 3,
+          "content": {
+            "type": "IMMEDIATE_TOKEN",
+            "content": {
+              "type": "PATTERN",
+              "value": "[\\^=~][\\^=~]+"
             }
           }
         }

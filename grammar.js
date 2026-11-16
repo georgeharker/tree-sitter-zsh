@@ -1838,7 +1838,7 @@ module.exports = grammar({
             optional(
               seq(
                 token.immediate('/'),
-                optional(field('replacement', $._param_replacement))
+                optional(repeat1(choice(field('replacement', $._param_replacement), alias(token.immediate('/'), $.word))))
               )
             )
         ),
@@ -1848,7 +1848,7 @@ module.exports = grammar({
             optional(
               seq(
                 token.immediate('/'),
-                optional(field('replacement', $._param_replacement)),
+                optional(repeat1(choice(field('replacement', $._param_replacement), alias(token.immediate('/'), $.word)))),
               )
             ),
         ),
@@ -1858,7 +1858,7 @@ module.exports = grammar({
             optional(
               seq(
                 token.immediate('/'),
-                optional(field('replacement', $._param_replacement)),
+                optional(repeat1(choice(field('replacement', $._param_replacement), alias(token.immediate('/'), $.word)))),
               )
             ),
         )
@@ -1916,6 +1916,8 @@ module.exports = grammar({
       prec(1, token.immediate('=')),  // ${= var} - SH_WORD_SPLIT
       prec(2, token.immediate('~~')),  // ${~~ var} - GLOB_SUBST
       prec(1, token.immediate('~')),  // ${~ var} - GLOB_SUBST
+      // Combinations: ${^~x} ${=~x} ${~^x} ...
+      prec(3, token.immediate(/[\^=~][\^=~]+/)),
     ),
 
     expansion: $ => seq(

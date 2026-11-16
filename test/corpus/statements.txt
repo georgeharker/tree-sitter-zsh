@@ -2248,3 +2248,68 @@ until [[ -f x ]] { sleep 1 }
         name: (command_name
           (word))
         argument: (number)))))
+
+================================================================================
+Parameter expansion - slashes in a replacement, escaped quote in a pattern, combined styles
+================================================================================
+
+x ${p//\//\\/} ${x//X/b/c} ${l//---//}
+x ${w%\'} ${^~i} ${a:+$d/${^~i[@]}}
+m="${m//$'\n'[[:space:]]##$'\n'/$nl}"
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (regex)
+        (word)))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (regex)
+        (word)
+        replacement: (regex)))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        (word))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)))
+    argument: (expansion
+      style: (expansion_style)
+      name: (simple_variable_name))
+    argument: (expansion
+      (expansion_default
+        name: (simple_variable_name)
+        default: (expansion_default_list
+          (concatenation
+            (variable_ref
+              (simple_variable_name))
+            (word)
+            (expansion
+              style: (expansion_style)
+              name: (simple_variable_name)
+              index: (array_at)))))))
+  (variable_assignment
+    name: (variable_name)
+    value: (string
+      (expansion
+        (expansion_pattern
+          name: (simple_variable_name)
+          pattern: (concatenation
+            (ansi_c_string)
+            (regex))
+          replacement: (variable_ref
+            (simple_variable_name)))))))
