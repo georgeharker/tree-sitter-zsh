@@ -2540,3 +2540,30 @@ x ${a//x/(} ${a//#\(/(* }
         name: (simple_variable_name)
         pattern: (regex)
         replacement: (word)))))
+
+================================================================================
+Subscript - pattern flags with an empty pattern
+================================================================================
+
+x ${r[(r)]} ${#r[(r),-1]}
+r[(r)]="''"
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags))
+    argument: (expansion
+      style: (expansion_style)
+      name: (simple_variable_name)
+      flags: (zsh_array_subscript_flags)
+      index: (word)))
+  (variable_assignment
+    name: (subscript
+      name: (variable_name)
+      flags: (zsh_array_subscript_flags))
+    value: (string
+      (string_content))))
