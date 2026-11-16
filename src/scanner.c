@@ -204,6 +204,7 @@ typedef struct {
     bool ext_saw_outside_quote;
     Array(context_type_t) context_stack; // Proper context stack
     bool just_returned_variable_name; // Track if we just returned VARIABLE_NAME
+    uint16_t variable_name_col; // ... and the column where that token ended
     bool just_returned_bare_dollar;   // Track if we just returned BARE_DOLLAR
     bool just_exited_string; // Track if we just exited a string context
     bool just_newline;       // Track if we just handled newline
@@ -419,6 +420,16 @@ static inline bool in_error_recovery(const bool *valid_symbols) {
     return valid_symbols[ERROR_RECOVERY];
 }
 
+// Note that a name token ends here (the lexer is at its end). The flag
+// keeps $x[1] / $x:h / ${x#p} apart, and only holds while the next scan
+// starts right where the name ended: tokens the internal lexer produces in
+// between can't clear it (`zformat ... $h s:"$x"`), so the column tells.
+static inline void note_variable_name(Scanner *scanner, TSLexer *lexer) {
+    uint32_t col = lexer->get_column(lexer);
+    scanner->just_returned_variable_name = true;
+    scanner->variable_name_col = col > 0xffff ? 0xffff : (uint16_t)col;
+}
+
 static inline void reset_string(String *string) {
     if (string->size > 0) {
         memset(string->contents, 0, string->size);
@@ -445,6 +456,7 @@ static inline void reset(Scanner *scanner) {
     scanner->ext_saw_outside_quote = false;
     scanner->context_stack.size = 0; // Clear context stack
     scanner->just_returned_variable_name = false;
+    scanner->variable_name_col = 0;
     scanner->just_returned_bare_dollar = false;
     scanner->just_exited_string = false;
     scanner->just_newline = false;
@@ -494,6 +506,8 @@ static unsigned serialize(Scanner *scanner, char *buffer) {
     buffer[size++] = (char)scanner->test_pattern_depth;
     buffer[size++] = (char)scanner->after_case_opener;
     buffer[size++] = (char)scanner->saw_pipe_in_case;
+    buffer[size++] = (char)(scanner->variable_name_col & 0xff);
+    buffer[size++] = (char)(scanner->variable_name_col >> 8);
 
     // Serialize context stack
     for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
@@ -554,6 +568,8 @@ static void deserialize(Scanner *scanner, const char *buffer, unsigned length) {
         scanner->test_pattern_depth = (uint8_t)buffer[size++];
         scanner->after_case_opener = buffer[size++];
         scanner->saw_pipe_in_case = buffer[size++];
+        scanner->variable_name_col = (uint8_t)buffer[size++];
+        scanner->variable_name_col |= (uint16_t)((uint8_t)buffer[size++] << 8);
 
         // Deserialize context stack
         scanner->context_stack.size = 0;
@@ -1248,10 +1264,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     bool skipped_blank_before = false;
 
     // Clear flag at start and capture its previous value
-    // Set after a name token, to keep $x[1] / $x:h / ${x#p} apart. Only
-    // set for names inside an expansion: an assignment name (id=x:$h) is
-    // always followed by '=' from the internal lexer, which can't clear it.
-    bool was_just_variable_name = scanner->just_returned_variable_name;
+    // (See note_variable_name. Not set for assignment names: id=x:$h.)
+    bool was_just_variable_name =
+        scanner->just_returned_variable_name &&
+        lexer->get_column(lexer) == scanner->variable_name_col;
     scanner->just_returned_variable_name = false;
 
     bool was_just_bare_dollar = scanner->just_returned_bare_dollar;
@@ -2652,7 +2668,7 @@ after_concat:
                 lexer->mark_end(lexer);
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false;
-                scanner->just_returned_variable_name = true;
+                note_variable_name(scanner, lexer);
                 lexer->result_symbol = SIMPLE_VARIABLE_NAME;
 #if DEBUG
                 fprintf(stderr, "SCANNER: SIMPLE_VARIABLE_NAME found\n");
@@ -2684,8 +2700,7 @@ after_concat:
                 lexer->mark_end(lexer);
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false;
-                was_just_variable_name = scanner->just_returned_variable_name =
-                    true;
+                note_variable_name(scanner, lexer);
                 lexer->result_symbol = SPECIAL_VARIABLE_NAME;
                 return true;
             }
@@ -2716,8 +2731,7 @@ after_concat:
             }
             lexer->mark_end(lexer);
             was_just_bare_dollar = scanner->just_returned_bare_dollar = false;
-            was_just_variable_name = scanner->just_returned_variable_name =
-                true;
+            note_variable_name(scanner, lexer);
             lexer->result_symbol = SPECIAL_VARIABLE_NAME;
             return true;
         }
@@ -2747,8 +2761,9 @@ after_concat:
                     fprintf(stderr, "SCANNER: VARIABLE_NAME after \\\n");
 #endif
                     lexer->result_symbol = VARIABLE_NAME;
-                    scanner->just_returned_variable_name =
-                        in_parameter_expansion(scanner);
+                    if (in_parameter_expansion(scanner)) {
+                        note_variable_name(scanner, lexer);
+                    }
                     return true;
                 }
 
@@ -2789,8 +2804,9 @@ after_concat:
                 lexer->result_symbol = VARIABLE_NAME;
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false;
-                scanner->just_returned_variable_name =
-                    in_parameter_expansion(scanner);
+                if (in_parameter_expansion(scanner)) {
+                    note_variable_name(scanner, lexer);
+                }
                 return true;
             }
             // Digit not followed by = or [ — fall through to let the normal
@@ -2920,8 +2936,9 @@ after_concat:
                     lexer->result_symbol = VARIABLE_NAME;
                     was_just_bare_dollar = scanner->just_returned_bare_dollar =
                         false;
-                    scanner->just_returned_variable_name =
-                        in_parameter_expansion(scanner);
+                    if (in_parameter_expansion(scanner)) {
+                        note_variable_name(scanner, lexer);
+                    }
                     return true;
                 }
                 return false;
@@ -2944,8 +2961,9 @@ after_concat:
                 lexer->result_symbol = VARIABLE_NAME;
                 was_just_bare_dollar = scanner->just_returned_bare_dollar =
                     false;
-                scanner->just_returned_variable_name =
-                    in_parameter_expansion(scanner);
+                if (in_parameter_expansion(scanner)) {
+                    note_variable_name(scanner, lexer);
+                }
                 return true;
             }
 
@@ -2958,8 +2976,9 @@ after_concat:
 #if DEBUG
                 fprintf(stderr, "SCANNER: VARIABLE_NAME after ?\n");
 #endif
-                scanner->just_returned_variable_name =
-                    in_parameter_expansion(scanner);
+                if (in_parameter_expansion(scanner)) {
+                    note_variable_name(scanner, lexer);
+                }
                 return iswalpha(lexer->lookahead);
             }
         }
