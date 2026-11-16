@@ -3528,7 +3528,21 @@ extglob_pattern:
 
             State state = {false, was_non_alpha, scanner->last_glob_paren_depth,
                            0, 0};
+            uint32_t start_col = lexer->get_column(lexer);
             while (!state.done) {
+                // A quote outside any group or bracket class ends the piece
+                // (quoted text is its own node: (?*' '*)). Inside a group
+                // the piece runs on as before: *('`'|['<>=$']'(')*)
+                // can't continue a group's alternatives after a quote.
+                if ((lexer->lookahead == '\'' || lexer->lookahead == '"') &&
+                    state.bracket_depth == 0 && state.paren_depth == 0) {
+                    lexer->mark_end(lexer);
+                    if (lexer->get_column(lexer) == start_col) {
+                        return false;
+                    }
+                    lexer->result_symbol = EXTGLOB_PATTERN;
+                    return true;
+                }
                 switch (lexer->lookahead) {
                 case '\0':
                     return false;

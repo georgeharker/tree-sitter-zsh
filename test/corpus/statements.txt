@@ -2484,3 +2484,59 @@ print (#i)foo*
       (word))
     argument: (glob_pattern
       flags: (zsh_extended_glob_flags))))
+
+================================================================================
+Case patterns starting with a string, quotes between pattern pieces, ( in a replacement
+================================================================================
+
+case $x in
+  (":"(\\|)"!"*) a ;;
+  ("tar (G) "(#b)([0-9.-]##)*) b ;;
+  (?*' '?*' '*) c ;;
+esac
+x ${a//x/(} ${a//#\(/(* }
+--------------------------------------------------------------------------------
+
+(program
+  (case_statement
+    value: (variable_ref
+      (simple_variable_name))
+    (case_item
+      value: (string
+        (string_content))
+      value: (extglob_pattern)
+      value: (string
+        (string_content))
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (string
+        (string_content))
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word))))
+    (case_item
+      value: (extglob_pattern)
+      value: (raw_string)
+      value: (extglob_pattern)
+      value: (raw_string)
+      value: (extglob_pattern)
+      (command
+        name: (command_name
+          (word)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (word)))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)
+        replacement: (word)))))
