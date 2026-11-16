@@ -1853,6 +1853,43 @@ after_concat:
                 skip_wsnl(lexer);
             }
         }
+        if (!valid_symbols[CONCAT] && !valid_symbols[CONCAT_REGEX] &&
+            get_current_context(scanner) == CTX_TEST &&
+            !valid_symbols[REGEX] && !valid_symbols[REGEX_NO_SLASH] &&
+            !valid_symbols[REGEX_NO_SPACE] &&
+            !valid_symbols[TEST_PATTERN_WORD] &&
+            !valid_symbols[TEST_PATTERN_GLOB]) {
+            // Also step over line continuations ([[ $a || \<newline>
+            // $b ]]): otherwise the internal lexer skips them and then
+            // can't produce the '$'. Only in [[ ]], and not where a regex
+            // or pattern may start: those (and handlers elsewhere) need to
+            // see a leading '\' themselves. A '\' that doesn't start one is
+            // consumed by now: finish an escaped paren here, as the
+            // NEWLINE handler does, else leave it to the internal lexer.
+            while (lexer->lookahead == '\\') {
+                skip(lexer);
+                if (lexer->lookahead == '\r') {
+                    skip(lexer);
+                }
+                if (lexer->lookahead == '\n') {
+                    skip(lexer);
+                    skip_wsnl(lexer);
+                    continue;
+                }
+                if ((lexer->lookahead == '(' &&
+                     valid_symbols[ESCAPED_OPEN_PAREN]) ||
+                    (lexer->lookahead == ')' &&
+                     valid_symbols[ESCAPED_CLOSE_PAREN])) {
+                    bool is_open = lexer->lookahead == '(';
+                    advance(lexer);
+                    lexer->mark_end(lexer);
+                    lexer->result_symbol =
+                        is_open ? ESCAPED_OPEN_PAREN : ESCAPED_CLOSE_PAREN;
+                    return true;
+                }
+                return false;
+            }
+        }
 
         if (lexer->lookahead == '$') {
 #if DEBUG
