@@ -2065,3 +2065,28 @@ a=${b//$} ${b//$/x} ${b%$} ${b//x/$}
         name: (simple_variable_name)
         pattern: (regex)
         replacement: (word)))))
+
+================================================================================
+Anonymous function with the function keyword
+================================================================================
+
+function {
+  echo $1
+}
+function f { echo }
+--------------------------------------------------------------------------------
+
+(program
+  (function_definition
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))
+        argument: (variable_ref
+          (special_variable_name)))))
+  (function_definition
+    name: (word)
+    body: (compound_statement
+      (command
+        name: (command_name
+          (word))))))
