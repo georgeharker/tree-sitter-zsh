@@ -263,8 +263,8 @@ static inline void enter_context(Scanner *scanner, context_type_t context) {
 
 #ifdef ZSH_SCANNER_AUDIT
 // Audit build only (-DZSH_SCANNER_AUDIT): counts context-stack mismatches
-// and reports them, plus the contexts left open, when the scanner is
-// destroyed. Used to find leaks; never compiled into normal builds.
+// (see tree_sitter_zsh_audit_report). Used to find leaks; never compiled
+// into normal builds.
 #define AUDIT_NCTX 16
 static unsigned audit_mismatch[AUDIT_NCTX][AUDIT_NCTX]; // [found][wanted]
 static unsigned audit_underflow[AUDIT_NCTX];            // exit on empty stack
@@ -3556,9 +3556,14 @@ void tree_sitter_zsh_external_scanner_deserialize(void *payload,
     deserialize(scanner, state, length);
 }
 
-void tree_sitter_zsh_external_scanner_destroy(void *payload) {
-    Scanner *scanner = (Scanner *)payload;
 #ifdef ZSH_SCANNER_AUDIT
+// Audit build only: print a scanner's open contexts, plus the mismatched
+// and underflowing pops counted (across all parse branches) since the
+// last report. script/context-audit.c calls this on a scanner restored
+// from the final tree's last external token, i.e. the state that is in
+// force at the end of the file on the parse that won.
+void tree_sitter_zsh_audit_report(void *payload) {
+    Scanner *scanner = (Scanner *)payload;
     fprintf(stderr, "AUDIT depth=%u stack=", scanner->context_stack.size);
     for (uint32_t i = 0; i < scanner->context_stack.size; i++) {
         fprintf(stderr, "%s%s", i ? "," : "",
@@ -3582,7 +3587,11 @@ void tree_sitter_zsh_external_scanner_destroy(void *payload) {
         }
     }
     fprintf(stderr, " ");
+}
 #endif
+
+void tree_sitter_zsh_external_scanner_destroy(void *payload) {
+    Scanner *scanner = (Scanner *)payload;
     for (size_t i = 0; i < scanner->heredocs.size; i++) {
         Heredoc *heredoc = array_get(&scanner->heredocs, i);
         array_delete(&heredoc->current_leading_word);

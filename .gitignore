@@ -48,3 +48,6 @@ zig-out/
 *.zip
 
 .codecompanion/
+
+# script/context-audit's tree-sitter checkout
+.cache/

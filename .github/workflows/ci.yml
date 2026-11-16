@@ -64,14 +64,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - name: Build the tree-sitter C library
-        run: |-
-          git clone --depth 1 --branch v0.26.8 https://github.com/tree-sitter/tree-sitter "$RUNNER_TEMP/tree-sitter"
-          make -C "$RUNNER_TEMP/tree-sitter" install PREFIX="$RUNNER_TEMP/ts"
       - name: Corpus inputs leave no scanner contexts open
         run: script/check-context
-        env:
-          TREE_SITTER_PREFIX: ${{runner.temp}}/ts
   fuzz:
     name: Fuzz scanner
     runs-on: ubuntu-latest
