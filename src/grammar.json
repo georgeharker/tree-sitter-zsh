@@ -6869,6 +6869,15 @@
         {
           "type": "SYMBOL",
           "name": "brace_expression"
+        },
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_literal_dollar"
+          },
+          "named": true,
+          "value": "word"
         }
       ]
     },
@@ -8984,6 +8993,15 @@
                   {
                     "type": "SYMBOL",
                     "name": "string_content"
+                  },
+                  {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_literal_dollar"
+                    },
+                    "named": true,
+                    "value": "string_content"
                   },
                   {
                     "type": "SEQ",
@@ -13722,6 +13740,15 @@
           "type": "CHOICE",
           "members": [
             {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_literal_dollar"
+              },
+              "named": true,
+              "value": "word"
+            },
+            {
               "type": "SYMBOL",
               "name": "dollar_variable"
             },
@@ -13828,6 +13855,15 @@
               "type": "ALIAS",
               "content": {
                 "type": "SYMBOL",
+                "name": "_literal_dollar"
+              },
+              "named": true,
+              "value": "word"
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
                 "name": "_regex_no_slash"
               },
               "named": true,
@@ -13902,6 +13938,15 @@
     "_param_replacement": {
       "type": "CHOICE",
       "members": [
+        {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_literal_dollar"
+          },
+          "named": true,
+          "value": "word"
+        },
         {
           "type": "ALIAS",
           "content": {
@@ -14272,6 +14317,10 @@
     {
       "type": "SYMBOL",
       "name": "arithmetic_char_code"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_literal_dollar"
     },
     {
       "type": "SYMBOL",

@@ -71,6 +71,7 @@ enum TokenType {
     TEST_PATTERN_GLOB,       // [[ $x = (a|b)* ]]: glob pattern piece
     ARITHMETIC_WORD,         // identifier inside (( )) / $(( ))
     ARITHMETIC_CHAR_CODE,    // ##a / #name inside (( ))
+    LITERAL_DOLLAR,          // a '$' that starts no expansion: "%B$%b" echo $;
     ERROR_RECOVERY,
 };
 
@@ -136,6 +137,7 @@ const char *TokenNames[] = {
     "TEST_PATTERN_GLOB",
     "ARITHMETIC_WORD",
     "ARITHMETIC_CHAR_CODE",
+    "LITERAL_DOLLAR",
     "ERROR_RECOVERY",
 };
 #endif
@@ -1842,7 +1844,8 @@ after_concat:
     // }
 
     // Handle BARE_DOLLAR for parameter expansion: $ followed by {
-    if ((valid_symbols[BARE_DOLLAR] || valid_symbols[RAW_DOLLAR]) &&
+    if ((valid_symbols[BARE_DOLLAR] || valid_symbols[RAW_DOLLAR] ||
+         valid_symbols[LITERAL_DOLLAR]) &&
         !in_error_recovery(valid_symbols)) {
 #if DEBUG
         fprintf(stderr,
@@ -1921,6 +1924,27 @@ after_concat:
             // variable names ($?, $#, $-) not bare dollar signs, so RAW_DOLLAR
             // must not be emitted for them there.
             bool in_string = get_current_context(scanner) == CTX_STRING;
+            // A '$' that can't start an expansion is a literal character
+            // (zsh prints it as is): echo $; "%B$%b" "a$ b" $/ $%. Before
+            // the RAW_DOLLAR check, which would take a '$' before a blank
+            // in a string, where it's only valid before the closing quote.
+            // ('$"' is still RAW_DOLLAR / $"...".)
+            int32_t n = lexer->lookahead;
+            // (A case pattern's ($) stays an extglob_pattern, below.)
+            bool case_pattern_dollar = n == ')' &&
+                                       valid_symbols[EXTGLOB_PATTERN] &&
+                                       was_after_case_opener;
+            if (valid_symbols[LITERAL_DOLLAR] && !case_pattern_dollar &&
+                (lexer->eof(lexer) || iswspace(n) || n == ';' || n == '&' ||
+                 n == '|' || n == ')' || n == ']' || n == '}' || n == '%' ||
+                 n == '/' || n == ',' || n == '.' || n == ':' || n == '<' ||
+                 n == '>' || n == '`' || n == '\\')) {
+                lexer->mark_end(lexer);
+                lexer->result_symbol = LITERAL_DOLLAR;
+                was_just_bare_dollar = scanner->just_returned_bare_dollar =
+                    false;
+                return true;
+            }
             if (valid_symbols[RAW_DOLLAR] &&
                 (lexer->lookahead == ':' ||
                  (lexer->lookahead == '?' && !in_string) ||
