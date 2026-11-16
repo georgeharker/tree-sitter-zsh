@@ -69,6 +69,7 @@ enum TokenType {
     DEFAULT_WORD,            // ${X:-(none)} ${X:-<unset>}: literal ( < > ...
     TEST_PATTERN_WORD,       // [[ $x = -- ]]: plain pattern piece
     TEST_PATTERN_GLOB,       // [[ $x = (a|b)* ]]: glob pattern piece
+    ARITHMETIC_WORD,         // identifier inside (( )) / $(( ))
     ERROR_RECOVERY,
 };
 
@@ -132,6 +133,7 @@ const char *TokenNames[] = {
     "DEFAULT_WORD",
     "TEST_PATTERN_WORD",
     "TEST_PATTERN_GLOB",
+    "ARITHMETIC_WORD",
     "ERROR_RECOVERY",
 };
 #endif
@@ -1206,6 +1208,25 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     bool was_after_case_opener = scanner->after_case_opener;
     scanner->after_case_opener = false;
 
+    // Identifier inside arithmetic: [A-Za-z_][A-Za-z0-9_]*. Lexed here so
+    // the shell word token (which would take `a,` `i++` `a-b` whole) never
+    // sees it.
+    if (valid_symbols[ARITHMETIC_WORD] && !in_error_recovery(valid_symbols) &&
+        get_current_context(scanner) == CTX_ARITHMETIC) {
+        while (lexer->lookahead == ' ' || lexer->lookahead == '\t' ||
+               lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+            skip(lexer);
+        }
+        if (iswalpha(lexer->lookahead) || lexer->lookahead == '_') {
+            while (iswalnum(lexer->lookahead) || lexer->lookahead == '_') {
+                advance(lexer);
+            }
+            lexer->mark_end(lexer);
+            lexer->result_symbol = ARITHMETIC_WORD;
+            return true;
+        }
+    }
+
     // Only at the start of the operand: both piece kinds are valid there.
     // Operands starting with $ " ' ` fall through to the normal handlers.
     if (valid_symbols[TEST_PATTERN_WORD] && valid_symbols[TEST_PATTERN_GLOB] &&
@@ -1931,7 +1952,12 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                     was_just_bare_dollar = scanner->just_returned_bare_dollar =
                         false; // Reset flag
                     lexer->mark_end(lexer);
-                    enter_context(scanner, CTX_COMMAND);
+                    // Inside arithmetic a bare '(' is a grouping paren:
+                    // stay in arithmetic ((( (a + b) * c ))).
+                    enter_context(scanner,
+                                  get_current_context(scanner) == CTX_ARITHMETIC
+                                      ? CTX_ARITHMETIC
+                                      : CTX_COMMAND);
                     lexer->result_symbol = OPENING_PAREN;
                     return true;
                 }

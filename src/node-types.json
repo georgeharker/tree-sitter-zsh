@@ -420,6 +420,10 @@
       "required": true,
       "types": [
         {
+          "type": "arithmetic_base",
+          "named": true
+        },
+        {
           "type": "arithmetic_call",
           "named": true
         },
@@ -1452,7 +1456,7 @@
         ]
       },
       "index": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -1736,7 +1740,7 @@
         ]
       },
       "flags": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -1746,7 +1750,7 @@
         ]
       },
       "index": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -1990,7 +1994,7 @@
         ]
       },
       "flags": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -2000,7 +2004,7 @@
         ]
       },
       "index": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -2371,7 +2375,7 @@
     "named": true,
     "fields": {
       "flags": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -2381,7 +2385,7 @@
         ]
       },
       "index": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -2732,7 +2736,7 @@
     "named": true,
     "fields": {
       "flags": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -2742,7 +2746,7 @@
         ]
       },
       "index": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -3044,7 +3048,7 @@
     "named": true,
     "fields": {
       "flags": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -3054,7 +3058,7 @@
         ]
       },
       "index": {
-        "multiple": false,
+        "multiple": true,
         "required": false,
         "types": [
           {
@@ -5282,6 +5286,10 @@
   {
     "type": "always",
     "named": false
+  },
+  {
+    "type": "arithmetic_base",
+    "named": true
   },
   {
     "type": "case",

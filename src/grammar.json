@@ -6927,6 +6927,18 @@
                 ]
               },
               {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "arithmetic_base"
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              },
+              {
                 "type": "SEQ",
                 "members": [
                   {
@@ -7585,6 +7597,33 @@
       "content": {
         "type": "CHOICE",
         "members": [
+          {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_arithmetic_word"
+            },
+            "named": true,
+            "value": "word"
+          },
+          {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_arithmetic_subscript"
+            },
+            "named": true,
+            "value": "subscript"
+          },
+          {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_arithmetic_number"
+            },
+            "named": true,
+            "value": "number"
+          },
           {
             "type": "SYMBOL",
             "name": "number"
@@ -8374,6 +8413,58 @@
         }
       ]
     },
+    "_arithmetic_subscript": {
+      "type": "PREC_LEFT",
+      "value": 0,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "name",
+            "content": {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_arithmetic_word"
+              },
+              "named": true,
+              "value": "variable_name"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "["
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_subscript_body_with_string"
+          },
+          {
+            "type": "STRING",
+            "value": "]"
+          }
+        ]
+      }
+    },
+    "_arithmetic_number": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PREC",
+        "value": 1,
+        "content": {
+          "type": "PATTERN",
+          "value": "0[xX][0-9A-Fa-f]+|[0-9]+#[0-9A-Za-z@_]+|([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][-+]?[0-9]+)?"
+        }
+      }
+    },
+    "arithmetic_base": {
+      "type": "TOKEN",
+      "content": {
+        "type": "PATTERN",
+        "value": "\\[##?[0-9]+(_[0-9]*)?\\]"
+      }
+    },
     "arithmetic_call": {
       "type": "PREC",
       "value": 2,
@@ -8384,8 +8475,22 @@
             "type": "FIELD",
             "name": "name",
             "content": {
-              "type": "SYMBOL",
-              "name": "word"
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "word"
+                },
+                {
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_arithmetic_word"
+                  },
+                  "named": true,
+                  "value": "word"
+                }
+              ]
             }
           },
           {
@@ -8999,29 +9104,24 @@
           ]
         },
         {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "STRING",
-                  "value": "["
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_subscript_body"
-                },
-                {
-                  "type": "STRING",
-                  "value": "]"
-                }
-              ]
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "STRING",
+                "value": "["
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_subscript_body"
+              },
+              {
+                "type": "STRING",
+                "value": "]"
+              }
+            ]
+          }
         }
       ]
     },
@@ -13833,6 +13933,10 @@
     {
       "type": "SYMBOL",
       "name": "_test_pattern_glob"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_arithmetic_word"
     },
     {
       "type": "SYMBOL",

@@ -152,3 +152,204 @@ echo $(( abs(-5) ))
         name: (word)
         argument: (unary_expression
           (number))))))
+
+================================================================================
+Arithmetic - arithmetic comma operator
+================================================================================
+
+(( a++, b++ ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (postfix_expression
+          (word))
+        (postfix_expression
+          (word))))))
+
+================================================================================
+Arithmetic - arithmetic operators between identifiers without blanks
+================================================================================
+
+print $(( a-b ))
+(( i++ ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (word)
+        right: (word))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (postfix_expression
+          (word))))))
+
+================================================================================
+Arithmetic - arithmetic output base
+================================================================================
+
+print $(( [##8] 10 ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (arithmetic_base)
+      (number))))
+
+================================================================================
+Arithmetic - arithmetic with a flagged pattern expansion
+================================================================================
+
+(( ${(M)#line:#[^-]*} > 1 ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (expansion
+            flags: (expansion_flags)
+            style: (expansion_style)
+            (expansion_pattern
+              name: (simple_variable_name)
+              pattern: (regex)))
+          right: (number))))))
+
+================================================================================
+Arithmetic - numbers: hex, floats, exponents, base#digits
+================================================================================
+
+print $(( 0x1F + 1 )) $(( 16#ff )) $(( 2#1010 )) $(( 1e3 )) $(( 1.5 ))
+(( ri = LINES * .5 ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (number)
+        right: (number)))
+    argument: (arithmetic_expansion
+      (number))
+    argument: (arithmetic_expansion
+      (number))
+    argument: (arithmetic_expansion
+      (number))
+    argument: (arithmetic_expansion
+      (number)))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (word)
+            right: (number)))))))
+
+================================================================================
+Arithmetic - calls, subscripts and grouping parens
+================================================================================
+
+print $(( sin(1) )) $(( x[1] + 2 )) $(( x[(i)a] ))
+print $(( (a + b) * c ))
+x=$(( a<<2 | b ))
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (arithmetic_call
+        name: (word)
+        argument: (number)))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (subscript
+          name: (variable_name)
+          index: (number))
+        right: (number)))
+    argument: (arithmetic_expansion
+      (subscript
+        name: (variable_name)
+        flags: (zsh_array_subscript_flags)
+        index: (word))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (parenthesized_expression
+          (binary_expression
+            left: (word)
+            right: (word)))
+        right: (word))))
+  (variable_assignment
+    name: (variable_name)
+    value: (arithmetic_expansion
+      (binary_expression
+        left: (binary_expression
+          left: (word)
+          right: (number))
+        right: (word)))))
+
+================================================================================
+Arithmetic - comma lists and ternaries with length expansions
+================================================================================
+
+(( i = w - 1, C -= i ))
+(( f = $#f ? 1 : -1 ))
+print $[ a + 1 ]
+
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (binary_expression
+            left: (word)
+            right: (number)))
+        (binary_expression
+          left: (word)
+          right: (word)))))
+  (command
+    name: (command_name
+      (arithmetic_expansion
+        (binary_expression
+          left: (word)
+          right: (ternary_expression
+            condition: (variable_ref
+              (expansion_style)
+              (simple_variable_name))
+            consequence: (number)
+            alternative: (unary_expression
+              (number)))))))
+  (command
+    name: (command_name
+      (word))
+    argument: (arithmetic_expansion
+      (binary_expression
+        left: (word)
+        right: (number)))))

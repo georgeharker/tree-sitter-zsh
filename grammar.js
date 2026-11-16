@@ -229,6 +229,7 @@ module.exports = grammar({
     $._default_word,                   // DEFAULT_WORD: ${X:-(none)} ${X:-<unset>}
     $._test_pattern_word,              // TEST_PATTERN_WORD: [[ $x = -- ]]
     $._test_pattern_glob,              // TEST_PATTERN_GLOB: [[ $x = (a|b)* ]]
+    $._arithmetic_word,                // ARITHMETIC_WORD: identifier inside (( ))
     $.__error_recovery,
   ],
 
@@ -1351,6 +1352,7 @@ module.exports = grammar({
           alias(seq($._bare_dollar, '(('), "$(("),
           '(('
         ),
+        optional($.arithmetic_base),
         commaSep1($._arithmetic_expression),
         '))'
       ),
@@ -1488,6 +1490,12 @@ module.exports = grammar({
     )),
 
     _arithmetic_literal: $ => prec(1, choice(
+      // Identifiers and numbers lexed for arithmetic (the scanner emits
+      // _arithmetic_word in CTX_ARITHMETIC), so i++ a-b a,b split into
+      // operands and operators instead of one shell word.
+      alias($._arithmetic_word, $.word),
+      alias($._arithmetic_subscript, $.subscript),
+      alias($._arithmetic_number, $.number),
       $.number,
       $.subscript,
       $.variable_ref,
@@ -1538,8 +1546,23 @@ module.exports = grammar({
     ),
 
     // Function call in arithmetic context: sqrt(x), sin(a), abs(n), etc.
+    // x[1] / x[(i)a] inside (( )): same shape as subscript
+    _arithmetic_subscript: $ => prec.left(seq(
+      field('name', alias($._arithmetic_word, $.variable_name)),
+      '[',
+      $._subscript_body_with_string,
+      ']',
+    )),
+
+    // 0x1F 1.5 .5 1e3 16#ff 2#1010 (zshmisc "ARITHMETIC EVALUATION")
+    _arithmetic_number: _ => token(prec(1,
+      /0[xX][0-9A-Fa-f]+|[0-9]+#[0-9A-Za-z@_]+|([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?/)),
+
+    // $(( [##8] x )) / $(( [#16_4] x )): output base
+    arithmetic_base: _ => token(/\[##?[0-9]+(_[0-9]*)?\]/),
+
     arithmetic_call: $ => prec(2, seq(
-      field('name', $.word),
+      field('name', choice($.word, alias($._arithmetic_word, $.word))),
       token.immediate('('),
       optional(seq(
         field('argument', $._arithmetic_expression),
@@ -1662,7 +1685,9 @@ module.exports = grammar({
         $._raw_command_expansion,
         $._limited_primary_expression
       ),
-      optional(seq(  // Postfix subscript operator (left-associating)
+      // Postfix subscripts; inside braces they chain: ${a[1][2,3]} is
+      // characters 2-3 of element 1.
+      repeat(seq(
         '[',
         $._subscript_body,
         ']'
