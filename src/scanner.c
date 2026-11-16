@@ -74,6 +74,7 @@ enum TokenType {
     LITERAL_DOLLAR,          // a '$' that starts no expansion: "%B$%b" echo $;
     SUBST_END,               // zero-width end of $x:s/a/b with no closing '/'
     FUNCTION_NAME,           // zinit::setup() :helper(): a name read whole before ()
+    MODIFIER_OTHER,          // :fs#a#b# :F:2:s/a/b/ :s#a#b#: a modifier read whole
     ERROR_RECOVERY,
 };
 
@@ -142,6 +143,7 @@ const char *TokenNames[] = {
     "LITERAL_DOLLAR",
     "SUBST_END",
     "FUNCTION_NAME",
+    "MODIFIER_OTHER",
     "ERROR_RECOVERY",
 };
 #endif
@@ -427,6 +429,98 @@ static inline void skip_wsnl_continuation(TSLexer *lexer) {
 
 static inline bool in_error_recovery(const bool *valid_symbols) {
     return valid_symbols[ERROR_RECOVERY];
+}
+
+static inline bool is_plain_modifier_letter(int32_t c) {
+    return c == 'a' || c == 'A' || c == 'c' || c == 'e' || c == 'h' ||
+           c == 'l' || c == 'p' || c == 'P' || c == 'q' || c == 'Q' ||
+           c == 'r' || c == 't' || c == 'u' || c == 'x' || c == '&';
+}
+
+// Read text up to an unescaped delimiter d (consumed), stopping at the end
+// of the word. True if d was found.
+static bool scan_to_delimiter(TSLexer *lexer, int32_t d) {
+    while (!lexer->eof(lexer) && lexer->lookahead != d &&
+           lexer->lookahead != '\n' && lexer->lookahead != '}') {
+        if (lexer->lookahead == '\\') {
+            lexer->advance(lexer, false);
+            if (lexer->eof(lexer)) {
+                return false;
+            }
+        }
+        lexer->advance(lexer, false);
+    }
+    if (lexer->lookahead != d) {
+        return false;
+    }
+    lexer->advance(lexer, false);
+    return true;
+}
+
+// The rest of a modifier the grammar's tokens can't express, the lexer
+// just past its ':' (the caller marked the end before the ':'):
+//   :f<modifier>  :F<d>n<d><modifier>  (repeat the next modifier)
+//   :s<d>pat<d>rep[<d>] / :gs<d>... with a delimiter other than '/'
+// After :f / :F the modifier may be any of these, :s/../../ included. On a
+// match the whole modifier is marked as one MODIFIER_OTHER token. On no
+// match the caller goes on, with the lexer possibly moved.
+static bool scan_modifier_other(TSLexer *lexer) {
+    bool repeat = false;
+    if (lexer->lookahead == 'f') {
+        lexer->advance(lexer, false);
+        repeat = true;
+    } else if (lexer->lookahead == 'F') {
+        lexer->advance(lexer, false);
+        int32_t d = lexer->lookahead;
+        if (lexer->eof(lexer) || iswalnum(d) || iswspace(d)) {
+            return false;
+        }
+        lexer->advance(lexer, false);
+        if (!scan_to_delimiter(lexer, d)) {
+            return false;
+        }
+        repeat = true;
+    }
+    if (repeat && is_plain_modifier_letter(lexer->lookahead)) {
+        lexer->advance(lexer, false);
+        while (iswdigit(lexer->lookahead)) {
+            lexer->advance(lexer, false);
+        }
+        lexer->mark_end(lexer);
+        lexer->result_symbol = MODIFIER_OTHER;
+        return true;
+    }
+    if (lexer->lookahead == 'g') {
+        lexer->advance(lexer, false);
+    }
+    if (lexer->lookahead != 's') {
+        return false;
+    }
+    lexer->advance(lexer, false);
+    int32_t d = lexer->lookahead;
+    if (lexer->eof(lexer) || iswalnum(d) || iswspace(d) || d == '}' ||
+        (d == '/' && !repeat)) {
+        return false; // :s/../../ alone is the grammar's own token
+    }
+    lexer->advance(lexer, false);
+    if (!scan_to_delimiter(lexer, d)) {
+        return false;
+    }
+    // The replacement runs to the next delimiter, or the end of the word.
+    while (!lexer->eof(lexer) && lexer->lookahead != d &&
+           !iswspace(lexer->lookahead) && lexer->lookahead != '}' &&
+           lexer->lookahead != '"') {
+        if (lexer->lookahead == '\\') {
+            lexer->advance(lexer, false);
+        }
+        lexer->advance(lexer, false);
+    }
+    if (lexer->lookahead == d) {
+        lexer->advance(lexer, false);
+    }
+    lexer->mark_end(lexer);
+    lexer->result_symbol = MODIFIER_OTHER;
+    return true;
 }
 
 // The rest of a function name with ':' in it (zinit::setup, :helper,
@@ -1540,6 +1634,9 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
             lexer->mark_end(lexer); // zero-width; the advance only peeks
             advance(lexer);
             int32_t m = lexer->lookahead;
+            if (valid_symbols[MODIFIER_OTHER] && scan_modifier_other(lexer)) {
+                return true;
+            }
             if (m == 'a' || m == 'A' || m == 'c' || m == 'e' || m == 'h' ||
                 m == 'l' || m == 'p' || m == 'P' || m == 'q' || m == 'Q' ||
                 m == 'r' || m == 's' || m == 'g' || m == 't' || m == 'u' ||
@@ -1714,6 +1811,9 @@ after_concat:
         if (c == ':') {
             advance(lexer); // peek: the token stays zero-width
             int32_t m = lexer->lookahead;
+            if (valid_symbols[MODIFIER_OTHER] && scan_modifier_other(lexer)) {
+                return true;
+            }
             end = !(m == 'a' || m == 'A' || m == 'c' || m == 'e' ||
                     m == 'h' || m == 'l' || m == 'p' || m == 'P' ||
                     m == 'q' || m == 'Q' || m == 'r' || m == 's' ||
@@ -3868,6 +3968,14 @@ brace_start:
             lexer->result_symbol = BRACE_EXPR_START;
             return true;
         }
+    }
+
+    // ${x:fs#a#b#}: a modifier start no handler above took.
+    if (valid_symbols[MODIFIER_OTHER] && !in_error_recovery(valid_symbols) &&
+        lexer->lookahead == ':') {
+        lexer->mark_end(lexer);
+        advance(lexer);
+        return scan_modifier_other(lexer);
     }
 
 #if DEBUG

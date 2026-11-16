@@ -10638,6 +10638,10 @@
                     "type": "PATTERN",
                     "value": ":t[0-9]*"
                   }
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "_modifier_other"
                 }
               ]
             }
@@ -14534,6 +14538,10 @@
     {
       "type": "SYMBOL",
       "name": "_function_name"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_modifier_other"
     },
     {
       "type": "SYMBOL",

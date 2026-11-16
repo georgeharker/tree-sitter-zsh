@@ -2590,3 +2590,53 @@ x ${u:gs/+/ /} ${u//a/b c}
         name: (simple_variable_name)
         pattern: (regex)
         replacement: (regex)))))
+
+================================================================================
+Modifiers - :f, :F:n: and :s with other delimiters
+================================================================================
+
+n=( ${n:r:fs#/#::#} )
+x $n:fs#/#::# ${f:gs#/#.#} $f:s#a#b# ${f:F:2:s/a/b/} $f:fh
+x $a:foo ${x:#p}
+--------------------------------------------------------------------------------
+
+(program
+  (variable_assignment
+    name: (variable_name)
+    value: (array
+      (expansion
+        (expansion_with_modifier
+          name: (simple_variable_name)
+          modifier: (expansion_modifier)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier)))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier))
+    argument: (expansion
+      (expansion_with_modifier
+        name: (simple_variable_name)
+        modifier: (expansion_modifier)))
+    argument: (variable_ref
+      (simple_variable_name)
+      modifier: (expansion_modifier)))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name))
+      (word)
+      (word))
+    argument: (expansion
+      (expansion_pattern
+        name: (simple_variable_name)
+        pattern: (regex)))))
