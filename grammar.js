@@ -1393,12 +1393,16 @@ module.exports = grammar({
       )
     ),
 
+    // {1..5} {1..10..2} {01..03} {-2..2}. The closing '}' is the external
+    // CLOSING_BRACE, so the scanner pops the CTX_BRACE_EXPANSION it pushed
+    // at '{' (an internal '}' never reached it: every range leaked it).
     brace_expression: $ => seq(
       alias($._brace_expr_start, '{'),
-      alias(token.immediate(/\d+/), $.number),
+      alias(token.immediate(/-?\d+/), $.number),
       token.immediate('..'),
-      alias(token.immediate(/\d+/), $.number),
-      token.immediate('}'),
+      alias(token.immediate(/-?\d+/), $.number),
+      optional(seq(token.immediate('..'), alias(token.immediate(/-?\d+/), $.number))),
+      '}',
     ),
 
     // A robust glob pattern must contain at least one glob metacharacter
@@ -1653,7 +1657,11 @@ module.exports = grammar({
       '"',
       repeat(seq(
         choice(
-          seq(optional($._bare_dollar), $.string_content),
+          $.string_content,
+          // A literal '$' before text ("a$ b", "$:"). The text can't start
+          // like a parameter or a style (^ = ~ +), so "$^jobs" "$=x" "$~p"
+          // go through variable_ref instead of becoming '$' + text.
+          seq($._bare_dollar, alias($._string_content_after_dollar, $.string_content)),
           $.expansion,
           $.variable_ref,
           $.command_substitution,
@@ -1670,6 +1678,9 @@ module.exports = grammar({
     // string_content starting with a blank right after an expansion
     // ("$R " lost the blank and the closing quote bypassed the scanner,
     // leaking CTX_STRING onto the context stack).
+    _string_content_after_dollar: _ => token(
+      /([^"`$\\\r\n^=~+A-Za-z0-9_]|\\(.|\r?\n))([^"`$\\\r\n]|\\(.|\r?\n))*/),
+
     string_content: _ => token(/([^"`$\\\r\n]|\\(.|\r?\n))+/),
 
     translated_string: $ => prec(1, seq($._bare_dollar, $.string)),

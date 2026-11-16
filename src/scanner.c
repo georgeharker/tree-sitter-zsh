@@ -1555,7 +1555,10 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
     // lexed by the internal lexer) then simply has no context to pop, which
     // keeps the stack balanced instead of inverting every later string.
     if (valid_symbols[DOUBLE_QUOTE]) {
-        bool closing = !valid_symbols[SINGLE_QUOTE] && !was_just_bare_dollar;
+        // (No '$' exception here: right after '$' SINGLE_QUOTE is valid, so
+        // $"..." already opens. The bare-dollar flag can also be stale when
+        // the internal lexer produced the token in between, as in "$/".)
+        bool closing = !valid_symbols[SINGLE_QUOTE];
         if (!closing) {
             skip_ws_maybe_nl(lexer, valid_symbols);
         }

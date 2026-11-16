@@ -1,0 +1,9 @@
+# Editor/LSP support only. script/context-audit.c uses the tree-sitter C
+# library headers (brew install tree-sitter), which aren't in the repo.
+If:
+  PathMatch: script/.*\.c
+CompileFlags:
+  Add:
+    - -I/opt/homebrew/include
+    - -I/usr/local/include
+    - -DZSH_SCANNER_AUDIT
