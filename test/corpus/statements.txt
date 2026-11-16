@@ -1954,3 +1954,55 @@ x $x:h $x[1]
     argument: (variable_ref
       (simple_variable_name)
       index: (number))))
+
+================================================================================
+Modifiers and subscripts only directly after a variable name
+================================================================================
+
+zformat -f c $h s:"$argv[1]"
+x $x:h $x[1] $x:t:r ${x[1]}
+x $h a[1]
+--------------------------------------------------------------------------------
+
+(program
+  (command
+    name: (command_name
+      (word))
+    argument: (word)
+    argument: (word)
+    argument: (variable_ref
+      (simple_variable_name))
+    argument: (concatenation
+      (word)
+      (word)
+      (string
+        (variable_ref
+          (simple_variable_name)
+          index: (number)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name)
+        modifier: (expansion_modifier))
+      (word))
+    argument: (variable_ref
+      (simple_variable_name)
+      index: (number))
+    argument: (concatenation
+      (variable_ref
+        (simple_variable_name)
+        modifier: (expansion_modifier))
+      (word)
+      (word)
+      (word))
+    argument: (expansion
+      name: (simple_variable_name)
+      index: (number)))
+  (command
+    name: (command_name
+      (word))
+    argument: (variable_ref
+      (simple_variable_name))
+    argument: (glob_pattern)))
