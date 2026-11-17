@@ -1,24 +1,37 @@
 name: Publish package (npm)
 
-# A copy of tree-sitter/workflows' package-npm.yml (d66eebce) without the
-# windows-11-arm Node build: node-gyp can't find Visual Studio on that runner
-# image, which fails the build matrix and skips the publish. The npm package
-# therefore has no win32-arm64 prebuild (it falls back to building from source).
+# A copy of tree-sitter/workflows' package-npm.yml (d66eebce). Upstream's
+# windows-11-arm build fails (tree-sitter/workflows#78): that runner image now
+# has only Visual Studio 2026, which the node-gyp bundled with Node 22's npm
+# (11.x) can't find; node-gyp >= 12.1 can. This repo has node-gyp as a
+# devDependency, so `npm i` (node-gyp-build) and prebuildify both use it.
 #
-# Called by publish.yml for release tags; can also be run by hand for an
-# existing tag (Actions > Publish package (npm) > Run workflow).
+# Called by publish.yml for release tags. Can also be run by hand from the
+# Actions tab (Publish package (npm) > Run workflow) for any branch or tag:
+# with "publish" unticked it builds everything and runs `npm publish --dry-run`.
 
 permissions:
   contents: read
 
 on:
   workflow_call:
+    inputs:
+      publish:
+        type: boolean
+        default: true
+    secrets:
+      NPM_TOKEN:
+        required: true
   workflow_dispatch:
     inputs:
       ref:
-        description: Tag to publish (e.g. v0.64.0)
-        required: true
+        description: Branch or tag to build (default is the run's ref)
+        required: false
         type: string
+      publish:
+        description: Publish to npm (unticked = npm publish --dry-run)
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{github.workflow}}-${{inputs.ref || github.ref}}
@@ -69,7 +82,7 @@ jobs:
       matrix:
         os:
           - windows-2022
-          # - windows-11-arm  # no Visual Studio for node-gyp on this image
+          - windows-11-arm
           - ubuntu-24.04
           - ubuntu-24.04-arm
           - macos-15
@@ -104,8 +117,9 @@ jobs:
     permissions:
       contents: read
       id-token: write # npm trusted publishing / provenance
+    # A dry run needs no npm environment (and its approval rules, if any).
     environment:
-      name: npm
+      name: ${{inputs.publish && 'npm' || ''}}
       url: https://www.npmjs.com/package/tree-sitter-zsh
     steps:
       - name: Checkout repository
@@ -132,6 +146,10 @@ jobs:
         continue-on-error: true
         run: mv -v prebuilds/*.wasm .
       - name: Publish to npm
+        if: ${{inputs.publish}}
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+      - name: Publish to npm (dry run)
+        if: ${{!inputs.publish}}
+        run: npm publish --dry-run
