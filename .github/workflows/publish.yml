@@ -7,6 +7,8 @@ on:
   push:
     # Not prerelease tags (v0.64.0-dev.1): those get a GitHub prerelease only.
     tags: ["*", "!*-*"]
+  # Dispatched on the new tag by bump-version.yml.
+  workflow_dispatch:
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}
@@ -14,6 +16,7 @@ concurrency:
 
 jobs:
   npm:
+    if: github.ref_type == 'tag' && !contains(github.ref_name, '-')
     permissions:
       contents: read
       id-token: write # trusted publishing / provenance
@@ -26,6 +29,7 @@ jobs:
     secrets:
       NPM_TOKEN: ${{secrets.NPM_TOKEN}}
   crates:
+    if: github.ref_type == 'tag' && !contains(github.ref_name, '-')
     permissions:
       contents: read
       id-token: write # trusted publishing / provenance
@@ -33,6 +37,7 @@ jobs:
     secrets:
       CARGO_REGISTRY_TOKEN: ${{secrets.CARGO_TOKEN}}
   pypi:
+    if: github.ref_type == 'tag' && !contains(github.ref_name, '-')
     permissions:
       contents: read
       id-token: write # trusted publishing / provenance
