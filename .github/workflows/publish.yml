@@ -5,7 +5,8 @@ permissions:
 
 on:
   push:
-    tags: ["*"]
+    # Not prerelease tags (v0.64.0-dev.1): those get a GitHub prerelease only.
+    tags: ["*", "!*-*"]
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}
