@@ -250,11 +250,10 @@ module.exports = grammar({
     /\\( |\t|\v|\f)/,
   ],
 
+  // (_statement, _statement_or_comment and _primary_expression are inlined,
+  // so they can't be supertypes; tree-sitter 0.27 ignores them there.)
   supertypes: $ => [
-    $._statement,
-    $._statement_or_comment,
     $._expression,
-    $._primary_expression,
   ],
 
   word: $ => $._word,

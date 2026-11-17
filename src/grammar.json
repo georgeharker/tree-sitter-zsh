@@ -14846,10 +14846,7 @@
     "_word_or_word_with_colon"
   ],
   "supertypes": [
-    "_statement",
-    "_statement_or_comment",
-    "_expression",
-    "_primary_expression"
+    "_expression"
   ],
   "reserved": {}
 }
