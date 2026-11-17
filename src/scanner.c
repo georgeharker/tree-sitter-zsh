@@ -599,8 +599,13 @@ static inline void reset(Scanner *scanner) {
     scanner->just_exited_string = false;
     scanner->just_newline = false;
     scanner->saw_pipe_in_case = false;
+    // The entries are dropped below (size = 0), so free their strings: a
+    // later heredoc_new() overwrites the slot and would leak them (found by
+    // the fuzzer: `<<` then a control character).
     for (uint32_t i = 0; i < scanner->heredocs.size; i++) {
-        reset_heredoc(array_get(&scanner->heredocs, i));
+        Heredoc *heredoc = array_get(&scanner->heredocs, i);
+        array_delete(&heredoc->current_leading_word);
+        array_delete(&heredoc->delimiter);
     }
     // Unlike context_stack.size above, heredocs.size previously survived a
     // reset untouched. heredocs.size only ever grows during scanning (no
@@ -920,6 +925,8 @@ static bool scan_heredoc_content(Scanner *scanner, TSLexer *lexer,
             lexer->mark_end(lexer);
             if (scan_heredoc_end_identifier(heredoc, lexer)) {
                 if (lexer->result_symbol == HEREDOC_END) {
+                    array_delete(&heredoc->current_leading_word);
+                    array_delete(&heredoc->delimiter);
                     array_pop(&scanner->heredocs);
                 }
                 return true;
