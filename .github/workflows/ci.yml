@@ -26,6 +26,10 @@ concurrency:
   group: ${{github.workflow}}-${{github.ref}}
   cancel-in-progress: true
 
+# Every job only reads the repository.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test parser
@@ -37,6 +41,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@faab9a23fa6195da0f1cf868219cc1e89f238d3d # v2
       - name: Run parser and binding tests
@@ -73,6 +79,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          persist-credentials: false
           fetch-depth: 2
       - name: Check for scanner changes
         id: scanner-check
@@ -91,6 +98,8 @@ jobs:
     steps:
       - name: Set up repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
 
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@faab9a23fa6195da0f1cf868219cc1e89f238d3d # v2

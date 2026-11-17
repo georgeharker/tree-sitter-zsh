@@ -2,7 +2,6 @@ name: Publish package
 
 permissions:
   contents: read
-  id-token: write
 
 on:
   push:
@@ -14,16 +13,25 @@ concurrency:
 
 jobs:
   npm:
+    permissions:
+      contents: read
+      id-token: write # trusted publishing / provenance
     # Builds Wasm with `npm x -- tree-sitter`, i.e. the tree-sitter-cli in
     # package.json; keep it >= 0.27 (wasi-sdk 34) for the Wasm memory fix.
     uses: tree-sitter/workflows/.github/workflows/package-npm.yml@d66eebce6bd661badf0ce10f1ce8f90ea8a89279 # main
     secrets:
       NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
   crates:
+    permissions:
+      contents: read
+      id-token: write # trusted publishing / provenance
     uses: tree-sitter/workflows/.github/workflows/package-crates.yml@d66eebce6bd661badf0ce10f1ce8f90ea8a89279 # main
     secrets:
       CARGO_REGISTRY_TOKEN: ${{secrets.CARGO_TOKEN}}
   pypi:
+    permissions:
+      contents: read
+      id-token: write # trusted publishing / provenance
     uses: tree-sitter/workflows/.github/workflows/package-pypi.yml@d66eebce6bd661badf0ce10f1ce8f90ea8a89279 # main
     secrets:
       PYPI_API_TOKEN: ${{secrets.PYPI_TOKEN}}
