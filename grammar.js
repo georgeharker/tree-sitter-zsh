@@ -2362,12 +2362,12 @@ module.exports = grammar({
       $.word,
       alias($._word_with_colon, $.word)),
 
-    _terminator: _ => choice(';', /\n/, /&([ \t]*;)?/, /&!([ \t]*;)?/, /&\|([ \t]*;)?/),
+    _terminator: _ => choice(';', /\n/, alias(/&([ \t]*;)?/, '&'), alias(/&!([ \t]*;)?/, '&!'), alias(/&\|([ \t]*;)?/, '&|')),
 
     // Terminator for use inside case item bodies (between statements).
     // Does NOT include ;; ;& ;| so they are not consumed as inter-statement
     // separators and remain available as the explicit case item termination field.
-    _case_body_terminator: _ => choice(';', /\n/, /&([ \t]*;)?/, /&!([ \t]*;)?/, /&\|([ \t]*;)?/),
+    _case_body_terminator: _ => choice(';', /\n/, alias(/&([ \t]*;)?/, '&'), alias(/&!([ \t]*;)?/, '&!'), alias(/&\|([ \t]*;)?/, '&|')),
 
     // Like _statements but uses _case_body_terminator between statements so
     // that ;; ;& ;| on a new line end the body rather than being consumed.

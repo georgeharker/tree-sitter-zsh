@@ -13028,16 +13028,31 @@
           "value": "\\n"
         },
         {
-          "type": "PATTERN",
-          "value": "&([ \\t]*;)?"
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "&([ \\t]*;)?"
+          },
+          "named": false,
+          "value": "&"
         },
         {
-          "type": "PATTERN",
-          "value": "&!([ \\t]*;)?"
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "&!([ \\t]*;)?"
+          },
+          "named": false,
+          "value": "&!"
         },
         {
-          "type": "PATTERN",
-          "value": "&\\|([ \\t]*;)?"
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "&\\|([ \\t]*;)?"
+          },
+          "named": false,
+          "value": "&|"
         }
       ]
     },
@@ -13053,16 +13068,31 @@
           "value": "\\n"
         },
         {
-          "type": "PATTERN",
-          "value": "&([ \\t]*;)?"
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "&([ \\t]*;)?"
+          },
+          "named": false,
+          "value": "&"
         },
         {
-          "type": "PATTERN",
-          "value": "&!([ \\t]*;)?"
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "&!([ \\t]*;)?"
+          },
+          "named": false,
+          "value": "&!"
         },
         {
-          "type": "PATTERN",
-          "value": "&\\|([ \\t]*;)?"
+          "type": "ALIAS",
+          "content": {
+            "type": "PATTERN",
+            "value": "&\\|([ \\t]*;)?"
+          },
+          "named": false,
+          "value": "&|"
         }
       ]
     },

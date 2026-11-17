@@ -2406,6 +2406,18 @@
             "named": false
           },
           {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
+          {
             "type": ")",
             "named": false
           },
@@ -2840,6 +2852,18 @@
             "named": false
           },
           {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
+          {
             "type": ")",
             "named": false
           },
@@ -3179,6 +3203,18 @@
         "types": [
           {
             "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
             "named": false
           },
           {
@@ -3699,6 +3735,18 @@
             "named": false
           },
           {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
+          {
             "type": ")",
             "named": false
           },
@@ -4188,6 +4236,18 @@
             "named": false
           },
           {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
+          {
             "type": ")",
             "named": false
           },
@@ -4561,6 +4621,18 @@
         "types": [
           {
             "type": "$(",
+            "named": false
+          },
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
             "named": false
           },
           {
@@ -4969,6 +5041,18 @@
         "multiple": true,
         "required": false,
         "types": [
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
           {
             "type": ";",
             "named": false
@@ -5630,6 +5714,18 @@
         "multiple": true,
         "required": true,
         "types": [
+          {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
           {
             "type": ";",
             "named": false
@@ -7134,6 +7230,18 @@
         "required": true,
         "types": [
           {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
+          {
             "type": ";",
             "named": false
           },
@@ -7780,6 +7888,18 @@
         "required": true,
         "types": [
           {
+            "type": "&",
+            "named": false
+          },
+          {
+            "type": "&!",
+            "named": false
+          },
+          {
+            "type": "&|",
+            "named": false
+          },
+          {
             "type": ";",
             "named": false
           },
@@ -7956,6 +8076,10 @@
     "named": false
   },
   {
+    "type": "&!",
+    "named": false
+  },
+  {
     "type": "&&",
     "named": false
   },
@@ -7985,6 +8109,10 @@
   },
   {
     "type": "&>|",
+    "named": false
+  },
+  {
+    "type": "&|",
     "named": false
   },
   {
