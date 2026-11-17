@@ -2781,3 +2781,82 @@ fi
       (command
         name: (command_name
           (word))))))
+
+================================================================================
+Backtick substitution after a word piece, escaped backtick after an expansion
+================================================================================
+
+for prefix in $P; do
+  packages="$packages
+    "`ls "$prefix"/lib | grep -v x`
+done
+p=$p`ls x`
+x a`b`c
+printf "${B}%s \`${O}%s${R}\`${R}\n" a
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    variable: (simple_variable_name)
+    value: (variable_ref
+      (simple_variable_name))
+    body: (do_group
+      (variable_assignment
+        name: (variable_name)
+        value: (concatenation
+          (string
+            (variable_ref
+              (simple_variable_name))
+            (string_content))
+          (command_substitution
+            (pipeline
+              (command
+                name: (command_name
+                  (word))
+                argument: (concatenation
+                  (string
+                    (variable_ref
+                      (simple_variable_name)))
+                  (word)))
+              (command
+                name: (command_name
+                  (word))
+                argument: (word)
+                argument: (word))))))))
+  (variable_assignment
+    name: (variable_name)
+    value: (concatenation
+      (variable_ref
+        (simple_variable_name))
+      (command_substitution
+        (command
+          name: (command_name
+            (word))
+          argument: (word)))))
+  (command
+    name: (command_name
+      (word))
+    argument: (concatenation
+      (word)
+      (command_substitution
+        (command
+          name: (command_name
+            (word))))
+      (word)))
+  (command
+    name: (command_name
+      (word))
+    argument: (string
+      (expansion
+        name: (simple_variable_name))
+      (string_content)
+      (expansion
+        name: (simple_variable_name))
+      (string_content)
+      (expansion
+        name: (simple_variable_name))
+      (string_content)
+      (expansion
+        name: (simple_variable_name))
+      (string_content))
+    argument: (word)))

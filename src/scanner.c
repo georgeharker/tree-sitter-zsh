@@ -73,10 +73,10 @@ enum TokenType {
     ARITHMETIC_CHAR_CODE,    // ##a / #name inside (( ))
     LITERAL_DOLLAR,          // a '$' that starts no expansion: "%B$%b" echo $;
     SUBST_END,               // zero-width end of $x:s/a/b with no closing '/'
-    FUNCTION_NAME,           // zinit::setup() :helper(): a name read whole before ()
-    MODIFIER_OTHER,          // :fs#a#b# :F:2:s/a/b/ :s#a#b#: a modifier read whole
-    BRACE_ELSE,              // `} else` of a short if, one token
-    BRACE_ELIF,              // `} elif` of a short if, one token
+    FUNCTION_NAME,  // zinit::setup() :helper(): a name read whole before ()
+    MODIFIER_OTHER, // :fs#a#b# :F:2:s/a/b/ :s#a#b#: a modifier read whole
+    BRACE_ELSE,     // `} else` of a short if, one token
+    BRACE_ELIF,     // `} elif` of a short if, one token
     ERROR_RECOVERY,
 };
 
@@ -165,12 +165,12 @@ typedef enum {
     CTX_PARAMETER_PATTERN_SUFFIX =
         6, // ${var%pattern} and ${var#pattern} - suffix/prefix removal
     CTX_PARAMETER_PATTERN_SUBSTITUTE =
-        7,               // ${var/pattern/replacement} - substitution
-    CTX_STRING = 8,      // "..." string context
-    CTX_COMPOUND = 9,    // "{ x; y; z; }"
-    CTX_BACKTICK = 10,   // `a b c`
-    CTX_RAW_STRING = 11, // '...' string context
-    CTX_SUBSCRIPT = 12,  // a[...] subscript (not an arithmetic expression)
+        7,                   // ${var/pattern/replacement} - substitution
+    CTX_STRING = 8,          // "..." string context
+    CTX_COMPOUND = 9,        // "{ x; y; z; }"
+    CTX_BACKTICK = 10,       // `a b c`
+    CTX_RAW_STRING = 11,     // '...' string context
+    CTX_SUBSCRIPT = 12,      // a[...] subscript (not an arithmetic expression)
     CTX_MODIFIER_SUBST = 13, // $x:s/a/b/ outside ${...}, until SUBST_END
 } context_type_t;
 
@@ -218,11 +218,11 @@ typedef struct {
     bool ext_saw_outside_quote;
     Array(context_type_t) context_stack; // Proper context stack
     bool just_returned_variable_name; // Track if we just returned VARIABLE_NAME
-    uint16_t variable_name_col; // ... and the column where that token ended
-    bool just_returned_bare_dollar;   // Track if we just returned BARE_DOLLAR
-    bool just_exited_string; // Track if we just exited a string context
-    bool just_newline;       // Track if we just handled newline
-    bool saw_pipe_in_case;   // Track if | was seen in current case arm pattern
+    uint16_t variable_name_col;     // ... and the column where that token ended
+    bool just_returned_bare_dollar; // Track if we just returned BARE_DOLLAR
+    bool just_exited_string;        // Track if we just exited a string context
+    bool just_newline;              // Track if we just handled newline
+    bool saw_pipe_in_case; // Track if | was seen in current case arm pattern
     Array(Heredoc) heredocs;
 } Scanner;
 
@@ -378,8 +378,7 @@ static inline void skip_ws_maybe_nl(TSLexer *lexer, const bool *valid_symbols) {
 static inline bool in_pattern_context(Scanner *scanner) {
     context_type_t ctx = get_current_context(scanner);
     return ctx == CTX_PARAMETER_PATTERN_SUFFIX ||
-           ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE ||
-           ctx == CTX_MODIFIER_SUBST;
+           ctx == CTX_PARAMETER_PATTERN_SUBSTITUTE || ctx == CTX_MODIFIER_SUBST;
 }
 
 static inline bool in_test_command(Scanner *scanner) {
@@ -1710,24 +1709,26 @@ static bool scan(Scanner *scanner, TSLexer *lexer, const bool *valid_symbols) {
                 if (lexer->eof(lexer)) {
                     return false;
                 }
-                if (lexer->lookahead == '`') {
-                    advance(lexer);
-                }
-                if ((iswspace(lexer->lookahead) &&
-                     lexer->lookahead != '\n' // HACK
-                     ) ||
-                    lexer->eof(lexer)) {
-                    lexer->result_symbol = concat_type;
-                    return true;
-                }
+                // A backtick right after a word piece always continues the
+                // word ($p`ls`, "a"`b`c). The end was marked before the
+                // backtick, so the concat stays zero-width. (Falling through
+                // to the generic path below re-marked the end after the
+                // whole `...`, so the concat swallowed it, and with it the
+                // newline after: `p="$p"`ls`` then `done` on the next line
+                // became one command.)
+                lexer->result_symbol = concat_type;
+                return true;
             }
             // strings w/ expansions that contains escaped quotes or
             // backslashes need this to return a concat
             if (lexer->lookahead == '\\') {
                 lexer->mark_end(lexer);
                 advance(lexer);
+                // (\` and \$ too: "${b}\`x\`" is an escaped backtick, not
+                // the start of a command substitution.)
                 if (lexer->lookahead == '"' || lexer->lookahead == '\'' ||
-                    lexer->lookahead == '\\') {
+                    lexer->lookahead == '\\' || lexer->lookahead == '`' ||
+                    lexer->lookahead == '$') {
                     lexer->result_symbol = concat_type;
                     return true;
                 }
@@ -1818,11 +1819,10 @@ after_concat:
             if (valid_symbols[MODIFIER_OTHER] && scan_modifier_other(lexer)) {
                 return true;
             }
-            end = !(m == 'a' || m == 'A' || m == 'c' || m == 'e' ||
-                    m == 'h' || m == 'l' || m == 'p' || m == 'P' ||
-                    m == 'q' || m == 'Q' || m == 'r' || m == 's' ||
-                    m == 'g' || m == 't' || m == 'u' || m == 'x' ||
-                    m == '&' || m == 'G');
+            end = !(m == 'a' || m == 'A' || m == 'c' || m == 'e' || m == 'h' ||
+                    m == 'l' || m == 'p' || m == 'P' || m == 'q' || m == 'Q' ||
+                    m == 'r' || m == 's' || m == 'g' || m == 't' || m == 'u' ||
+                    m == 'x' || m == '&' || m == 'G');
             if (end && valid_symbols[REGEX_NO_SLASH]) {
                 end = false; // a ':' starting the replacement: s/x/:/
             }
@@ -2045,7 +2045,8 @@ after_concat:
                 // On a later line an `else` belongs to an enclosing
                 // if ... then ... else.
                 if (valid_symbols[BRACE_ELSE] || valid_symbols[BRACE_ELIF]) {
-                    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                    while (lexer->lookahead == ' ' ||
+                           lexer->lookahead == '\t') {
                         advance(lexer);
                     }
                     if (lexer->lookahead == 'e') {
