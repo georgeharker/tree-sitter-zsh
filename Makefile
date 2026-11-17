@@ -4,7 +4,7 @@ endif
 
 LANGUAGE_NAME := tree-sitter-zsh
 HOMEPAGE_URL := https://github.com/georgeharker/tree-sitter-zsh
-VERSION := 0.64.0-dev.1
+VERSION := 0.64.0
 
 # repository
 SRC_DIR := src
