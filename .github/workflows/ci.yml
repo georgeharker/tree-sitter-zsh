@@ -21,8 +21,6 @@ on:
       - nvim-queries/**
       - script/**
   workflow_dispatch:
-  # Run by bump-version.yml before it tags a release.
-  workflow_call:
 
 concurrency:
   group: ${{github.workflow}}-${{github.ref}}

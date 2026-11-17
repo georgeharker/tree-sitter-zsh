@@ -1,5 +1,9 @@
 name: Create release
 
+# Creates the GitHub release (Wasm + full source tarball) when a version tag
+# is pushed; see script/bump-version.sh. A version with a suffix
+# (v0.65.0-dev.1) is marked as a prerelease, not latest.
+
 on:
   push:
     tags: ["*"]

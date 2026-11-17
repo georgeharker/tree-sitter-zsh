@@ -1,5 +1,10 @@
 name: Publish package
 
+# Publishes to npm, crates.io and PyPI when a release tag is pushed:
+#   script/bump-version.sh patch && git push --atomic origin main vX.Y.Z
+# A prerelease tag (vX.Y.Z-dev.1) publishes nothing; release.yml makes it a
+# GitHub prerelease.
+
 permissions:
   contents: read
 
@@ -7,7 +12,7 @@ on:
   push:
     # Not prerelease tags (v0.64.0-dev.1): those get a GitHub prerelease only.
     tags: ["*", "!*-*"]
-  # Dispatched on the new tag by bump-version.yml.
+  # Re-run a release by hand: Run workflow, "Use workflow from" the tag.
   workflow_dispatch:
 
 concurrency:
