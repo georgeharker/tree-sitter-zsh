@@ -54,19 +54,18 @@ jobs:
       - name: Set up NodeJS
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          cache: npm
           node-version: 22
-      - name: Install dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Set up tree-sitter
+        uses: tree-sitter/setup-action/cli@faab9a23fa6195da0f1cf868219cc1e89f238d3d # v2
       - name: Bump version
         run: |-
           semver='^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
           if [[ -n $VERSION ]]; then
             [[ $VERSION =~ $semver ]] || {
               echo "::error::not a version: $VERSION"; exit 1; }
-            npm x -- tree-sitter version "$VERSION"
+            tree-sitter version "$VERSION"
           else
-            npm x -- tree-sitter version --bump "$BUMP"
+            tree-sitter version --bump "$BUMP"
           fi
           new=$(jq -r .metadata.version tree-sitter.json)
           [[ $new =~ $semver ]] || {
