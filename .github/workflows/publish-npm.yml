@@ -34,7 +34,9 @@ on:
         default: false
 
 concurrency:
-  group: ${{github.workflow}}-${{inputs.ref || github.ref}}
+  # Not github.workflow: when publish.yml calls this, that is the caller's
+  # name, the group equals the caller's own, and the run fails to start.
+  group: publish-npm-${{inputs.ref || github.ref}}
   cancel-in-progress: true
 
 defaults:
