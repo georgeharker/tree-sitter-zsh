@@ -46,11 +46,11 @@ jobs:
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@faab9a23fa6195da0f1cf868219cc1e89f238d3d # v2
       - name: Run parser and binding tests
-        uses: tree-sitter/parser-test-action@aba4a3de737f86f8ce83be38166a1ab521d4c960 # v2
+        uses: tree-sitter/parser-test-action@92e35c06b51ea26c80ffbd3cc8d9286d9110df17 # v3
         with:
           test-rust: true
       - name: Parse sample files
-        uses: tree-sitter/parse-action@f44ffa94f802024f27e821a72e6f2f3efc5dd521 # v4
+        uses: tree-sitter/parse-action@47beaa8ba0b5c8b44ef0879b2f647ca7f0a1257d # v5
         id: parse-files
         with:
           files: examples/**
